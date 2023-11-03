@@ -1,9 +1,11 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
+#include <poll.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "system/osd.h"
 #include "system/system.h"
 #include "system/keymap_hw.h"
 #include "system/settings.h"
@@ -100,20 +102,20 @@ int main(int argc, char *argv[])
                             break;
                         case HW_BTN_VOLUME_DOWN :
                             if(is_menu_pressed) {
-                                settings_setBrightness(settings.brightness - 1, true, false)
+                                settings_setBrightness(settings.brightness - 1, true, false);
                                 osd_showBrightnessBar(settings.brightness);
                             } else {
-                                settings_setVolume(settings.volume - 1, true)
-                                osd_showVolumeBar(settings.volume);
+                                settings_setVolume(settings.volume - 1, true);
+                                osd_showVolumeBar(settings.volume, false);
                             }
                             break;
                         case HW_BTN_VOLUME_UP :
                             if(is_menu_pressed) {
-                                settings_setBrightness(settings.brightness + 1, true, false)
+                                settings_setBrightness(settings.brightness + 1, true, false);
                                 osd_showBrightnessBar(settings.brightness);
                             } else {
-                                settings_setVolume(settings.volume + 1, true)
-                                osd_showVolumeBar(settings.volume);
+                                settings_setVolume(settings.volume + 1, true);
+                                osd_showVolumeBar(settings.volume, false);
                             }
                             break;
                         default:
@@ -132,7 +134,7 @@ int main(int argc, char *argv[])
     SDL_FreeSurface(video);
     SDL_Quit();
 
-    system_shutdown()
+    system_shutdown();
 
     return EXIT_SUCCESS;
 }
