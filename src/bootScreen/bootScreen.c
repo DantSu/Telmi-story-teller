@@ -5,14 +5,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "system/battery.h"
+// #include "system/battery.h"
 #include "system/settings.h"
-#include "theme/config.h"
-#include "theme/render/battery.h"
-#include "theme/resources.h"
 #include "utils/file.h"
 #include "utils/flags.h"
 #include "utils/log.h"
+
+#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
+#define FALLBACK_FONT "/customer/app/Exo-2-Bold-Italic.ttf"
+
+SDL_Surface *loadImage(const char *name)
+{
+    char image_path[512];
+    sprintf(image_path, "%s%s.png", SYSTEM_RESOURCES, name);
+    return IMG_Load(image_path);
+}
+
+TTF_Font *loadFont(int size)
+{
+    return TTF_OpenFont(FALLBACK_FONT, size);
+}
 
 int main(int argc, char *argv[])
 {
@@ -22,9 +34,6 @@ int main(int argc, char *argv[])
 
     SDL_Init(SDL_INIT_VIDEO);
 
-    char theme_path[STR_MAX];
-    theme_getPath(theme_path);
-
     SDL_Surface *video = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
     SDL_Surface *screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
 
@@ -32,23 +41,19 @@ int main(int argc, char *argv[])
     bool show_battery = false;
     bool show_version = true;
 
-    if (argc > 1 && strcmp(argv[1], "End_Save") == 0) {
-        background = theme_loadImage(theme_path, "extra/Screen_Off_Save");
-        show_battery = true;
-    }
-    else if (argc > 1 && strcmp(argv[1], "End") == 0) {
-        background = theme_loadImage(theme_path, "extra/Screen_Off");
+    if (argc > 1 && strcmp(argv[1], "End") == 0) {
+        background = loadImage("Screen_Off");
         show_battery = true;
     }
     else if (argc > 1 && strcmp(argv[1], "lowBat") == 0) {
-        background = theme_loadImage(theme_path, "extra/lowBat");
+        background = loadImage("lowBat");
         if (!background) {
             show_battery = true;
         }
         show_version = false;
     }
     else {
-        background = theme_loadImage(theme_path, "extra/bootScreen");
+        background = loadImage("bootScreen");
     }
 
     char message_str[STR_MAX] = "";
@@ -63,8 +68,8 @@ int main(int argc, char *argv[])
 
     TTF_Init();
 
-    TTF_Font *font = theme_loadFont(theme_path, theme()->hint.font, 18);
-    SDL_Color color = theme()->total.color;
+    TTF_Font *font = loadFont(18);
+    SDL_Color color = {255, 255, 255};
 
     if (show_version) {
         const char *version_str = file_read("/mnt/SDCARD/.tmp_update/onionVersion/version.txt");
@@ -85,13 +90,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (show_battery) {
-        SDL_Surface *battery = theme_batterySurface(battery_getPercentage());
-        SDL_Rect battery_rect = {596 - battery->w / 2, 30 - battery->h / 2};
-        SDL_BlitSurface(battery, NULL, screen, &battery_rect);
-        SDL_FreeSurface(battery);
-        resources_free();
-    }
+    // if (show_battery) {
+    //     SDL_Surface *battery = theme_batterySurface(battery_getPercentage());
+    //     SDL_Rect battery_rect = {596 - battery->w / 2, 30 - battery->h / 2};
+    //     SDL_BlitSurface(battery, NULL, screen, &battery_rect);
+    //     SDL_FreeSurface(battery);
+    //     resources_free();
+    // }
 
     // Blit twice, to clear the video buffer
     SDL_BlitSurface(screen, NULL, video, NULL);
