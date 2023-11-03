@@ -1,6 +1,0 @@
-{
-"label":"Display Calibration",
-"icon":"../../Icons/Default/app/display.png",
-"launch":"launch.sh",
-"description":"240pSuite (Menu+Select to exit)"
-}

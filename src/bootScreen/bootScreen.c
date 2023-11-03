@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// #include "system/battery.h"
 #include "system/settings.h"
 #include "utils/file.h"
 #include "utils/flags.h"
@@ -89,15 +88,7 @@ int main(int argc, char *argv[])
             SDL_FreeSurface(message);
         }
     }
-
-    // if (show_battery) {
-    //     SDL_Surface *battery = theme_batterySurface(battery_getPercentage());
-    //     SDL_Rect battery_rect = {596 - battery->w / 2, 30 - battery->h / 2};
-    //     SDL_BlitSurface(battery, NULL, screen, &battery_rect);
-    //     SDL_FreeSurface(battery);
-    //     resources_free();
-    // }
-
+    
     // Blit twice, to clear the video buffer
     SDL_BlitSurface(screen, NULL, video, NULL);
     SDL_Flip(video);

@@ -252,6 +252,7 @@ check_timezone() {
 }
 
 check_installer() {
+    :
 }
 
 if [ -f $sysdir/config/.logging ]; then

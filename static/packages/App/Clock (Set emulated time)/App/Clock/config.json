@@ -1,7 +1,0 @@
-{
-  "label": "Clock",
-  "icon": "../../Icons/Default/app/clock.png",
-  "iconsel": "",
-  "launch": "launch.sh",
-  "description": "Set the current time"
-}
