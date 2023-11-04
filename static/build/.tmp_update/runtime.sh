@@ -104,7 +104,7 @@ get_info_value() {
 launch_storyteller() {
     log "\n:: Launch Story Teller"
     cd $sysdir
-    storyTeller
+    LD_PRELOAD="$miyoodir/lib/libpadsp.so" storyTeller
     sync
 }
 
