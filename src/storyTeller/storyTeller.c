@@ -125,6 +125,5 @@ int main(int argc, char *argv[])
     exit_loop:
     video_audio_quit();
     system_shutdown();
-
     return EXIT_SUCCESS;
 }

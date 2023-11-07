@@ -1,6 +1,6 @@
 ###########################################################
 
-TARGET=Onion StoryTeller
+TARGET=Telmi Story Teller
 VERSION=0.0.1
 RA_SUBVERSION=1.15.0.6
 
@@ -61,7 +61,7 @@ all: dist
 version: # used by workflow
 	@echo $(VERSION)
 print-version:
-	@echo Onion-Story-Teller v$(VERSION)
+	@echo Telmi-Story-Teller v$(VERSION)
 #	@echo RetroArch sub-v$(RA_SUBVERSION)
 
 $(CACHE)/.setup:
@@ -113,7 +113,7 @@ build: core apps external
 
 core: $(CACHE)/.setup
 	@$(ECHO) $(PRINT_RECIPE)
-# Build Onion binaries
+# Build Telmi binaries
 	@cd $(SRC_DIR)/bootScreen && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/storyTeller && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/chargingState && BUILD_DIR=$(BIN_DIR) make
@@ -207,8 +207,8 @@ dist: build
 #	@mkdir -p $(DIST_DIR)/RetroArch
 #	@mv $(BUILD_DIR)/retroarch.pak $(DIST_DIR)/RetroArch/
 #	@echo $(RA_SUBVERSION) > $(DIST_DIR)/RetroArch/ra_package_version.txt
-# Package Onion core
-	@echo -n "Packaging Onion..."
+# Package Telmi core
+	@echo -n "Packaging Telmi..."
 #	@cd $(BUILD_DIR) && 7z a -mtm=off $(DIST_DIR)/miyoo/app/.tmp_update/onion.pak . -x!RetroArch -bsp1 -bso0
 	@cd $(BUILD_DIR) && 7z a -mtm=off $(DIST_DIR)/miyoo/app/.tmp_update/onion.pak . -bsp1 -bso0
 	@echo " DONE"

@@ -83,7 +83,7 @@ main() {
 
 prompt_update() {
     # Prompt for update or fresh install
-    prompt -r -m "Welcome to the Onion installer!\nPlease choose an action:" \
+    prompt -r -m "Welcome to the Telmi installer!\nPlease choose an action:" \
         "Update (keep settings)" \
         "Reinstall (reset settings)" \
         "Update OS/RetroArch only"
@@ -174,7 +174,7 @@ get_install_stats() {
 
     echo "STATS"
     echo "Install RA check:" $install_ra
-    echo "Onion total:" $total_core
+    echo "Telmi total:" $total_core
     echo "RetroArch total:" $total_ra
 }
 
@@ -263,11 +263,11 @@ run_installation() {
 
     if [ $install_ra -eq 1 ]; then
         verify_file
-        install_core "1/2: $verb Onion..."
+        install_core "1/2: $verb Telmi..."
         install_retroarch "2/2: $verb RetroArch..."
     else
         verify_file
-        install_core "1/1: $verb Onion..."
+        install_core "1/1: $verb Telmi..."
         echo "Skipped installing RetroArch"
         rm -f $RA_PACKAGE_FILE
         rm -f $RA_PACKAGE_VERSION_FILE
@@ -373,7 +373,7 @@ run_installation() {
 }
 
 install_core() {
-    echo ":: Install Onion"
+    echo ":: Install Telmi"
     msg="$1"
 
     if [ ! -f "$CORE_PACKAGE_FILE" ]; then

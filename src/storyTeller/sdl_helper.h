@@ -57,6 +57,13 @@ void video_displayImage(const char *dir, const char *name)
     SDL_Flip(video);
 }
 
+void video_displayBlackScreen(void)
+{
+    SDL_FillRect(screen, NULL, 0);
+    SDL_BlitSurface(screen, NULL, video, NULL);
+    SDL_Flip(video);
+}
+
 
 void audio_play(const char *dir, const char *name) {
     if(music != NULL) {

@@ -22,39 +22,6 @@
 
 #define TIMEOUT_M 10
 #define CHECK_TIMEOUT 300
-#define SLIDE_TIMEOUT 10000
-
-static SDL_Surface *slide = NULL;
-
-SDL_Surface *_loadSlide(int index)
-{
-    char image_path[STR_MAX];
-    sprintf(image_path, "res/installSlide%d.png", index);
-    if (exists(image_path))
-        return IMG_Load(image_path);
-    return NULL;
-}
-
-void nextSlide(int *current_slide, int num_slides, int direction)
-{
-    if (slide != NULL) {
-        SDL_FreeSurface(slide);
-    }
-
-    int next_slide = *current_slide;
-
-    do {
-        next_slide += direction;
-
-        if (next_slide >= num_slides)
-            next_slide = -1;
-
-        if (next_slide < -1)
-            next_slide = num_slides - 1;
-    } while ((slide = _loadSlide(next_slide)) == NULL && next_slide != *current_slide && next_slide != -1);
-
-    *current_slide = next_slide;
-}
 
 int main(int argc, char *argv[])
 {
@@ -95,6 +62,7 @@ int main(int argc, char *argv[])
 
     SDL_Surface *waiting_bg = IMG_Load("res/waitingBG.png");
     SDL_Surface *progress_stripes = IMG_Load("res/progress_stripes.png");
+    SDL_Surface *install_bg = IMG_Load("res/installSlide.png");
 
     TTF_Font *font = TTF_OpenFont("/customer/app/Exo-2-Bold-Italic.ttf", 36);
     TTF_Font *font_small =
@@ -107,18 +75,14 @@ int main(int argc, char *argv[])
     SDL_Surface *surface_version = TTF_RenderUTF8_Blended(font_small, version_str, fg_color);
     SDL_Rect rect_version = {10, 10};
 
-    Uint32 progress_bg = SDL_MapRGB(video->format, 29, 30, 37);
-    Uint32 progress_color = SDL_MapRGB(video->format, 114, 71, 194);
-    Uint32 failed_color = SDL_MapRGB(video->format, 194, 71, 71);
+    Uint32 progress_bg = SDL_MapRGB(video->format, 27, 19, 54);
+    Uint32 progress_color = SDL_MapRGB(video->format, 255, 184, 59);
+    Uint32 failed_color = SDL_MapRGB(video->format, 203, 40, 40);
 
     SDL_Rect rectMessage = {10, 414};
     SDL_Rect rectProgress = {0, 470, 0, 10};
     SDL_Rect stripes_pos = {0, 470};
     SDL_Rect stripes_frame = {0, 0, 640, 10};
-
-    int current_slide = -1;
-    int num_slides = 9;
-    config_get("currentSlide", CONFIG_INT, &current_slide);
 
     bool quit = false;
     bool failed = false;
@@ -131,7 +95,6 @@ int main(int argc, char *argv[])
     uint32_t acc_ticks = 0, last_ticks = SDL_GetTicks(),
              time_step = 1000 / 24, // 12 fps
         check_timer = 0;
-    uint32_t slide_timer = last_ticks;
 
     while (!quit) {
         uint32_t ticks = SDL_GetTicks();
@@ -143,27 +106,14 @@ int main(int argc, char *argv[])
                 quit = true;
             else if (event.type == SDL_KEYUP) {
                 switch (event.key.keysym.sym) {
-                case SW_BTN_LEFT:
-                    nextSlide(&current_slide, num_slides, -1);
-                    slide_timer = ticks;
-                    break;
-                case SW_BTN_RIGHT:
-                    nextSlide(&current_slide, num_slides, 1);
-                    slide_timer = ticks;
-                    break;
-                case SW_BTN_A:
-                    if (exists(".waitConfirm"))
-                        quit = true;
-                    break;
-                default:
-                    break;
+                    case SW_BTN_A:
+                        if (exists(".waitConfirm"))
+                            quit = true;
+                        break;
+                    default:
+                        break;
                 }
             }
-        }
-
-        if (ticks - slide_timer > SLIDE_TIMEOUT) {
-            nextSlide(&current_slide, num_slides, 1);
-            slide_timer = ticks;
         }
 
         if (exists(".installed") || exists(".waitConfirm")) {
@@ -200,10 +150,10 @@ int main(int argc, char *argv[])
             break;
 
         if (acc_ticks >= time_step) {
-            if (slide == NULL)
-                SDL_BlitSurface(waiting_bg, NULL, screen, NULL);
+            if (progress > 0)
+                SDL_BlitSurface(install_bg, NULL, screen, NULL);
             else
-                SDL_BlitSurface(slide, NULL, screen, NULL);
+                SDL_BlitSurface(waiting_bg, NULL, screen, NULL);
 
             if (surface_version)
                 SDL_BlitSurface(surface_version, NULL, screen, &rect_version);
@@ -248,15 +198,11 @@ int main(int argc, char *argv[])
         SDL_Flip(video);
     }
 
-    config_setNumber("currentSlide", current_slide);
-
     TTF_CloseFont(font);
     TTF_CloseFont(font_small);
     TTF_Quit();
 
-    if (slide != NULL) {
-        SDL_FreeSurface(slide);
-    }
+    SDL_FreeSurface(install_bg);
     SDL_FreeSurface(waiting_bg);
     SDL_FreeSurface(surface_version);
     SDL_FreeSurface(screen);

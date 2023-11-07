@@ -6,6 +6,7 @@
 #include "system/display.h"
 #include "utils/str.h"
 #include "utils/json.h"
+#include "./sdl_helper.h"
 
 static char **storiesList = NULL;
 static cJSON *jsonRoot = NULL;
@@ -58,9 +59,10 @@ void stories_readStage(void)
     sprintf(story_path, "%s%s/assets/", STORIES_RESOURCES, storiesList[storyIndex]);
     
     if(!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "image")) && json_getString(stageNode, "image", imageFilename)) {
-        display_setScreen(true);
         video_displayImage(story_path, imageFilename);
+        display_setScreen(true);
     } else {
+        video_displayBlackScreen();
         display_setScreen(false);
     }
 
@@ -75,6 +77,10 @@ void stories_readStage(void)
 
 void stories_readAction(void)
 {
+    if(storiesCount == 0) {
+        return;
+    }
+    
     if(actionOptionIndex < 0) {
         actionOptionIndex = actionOptionsCount - 1;
     } else if (actionOptionIndex >= actionOptionsCount) {
@@ -125,6 +131,11 @@ void stories_reset(void)
 
 void stories_load(void)
 {
+    if(storiesCount == 0) {
+        video_displayImage(SYSTEM_RESOURCES, "noStory.png");
+        return;
+    }
+
     if(storyIndex < 0) {
         storyIndex = storiesCount - 1;
     } else if (storyIndex >= storiesCount) {
@@ -143,6 +154,10 @@ void stories_load(void)
 }
 
 void stories_transition(char* transition) {
+    if(storiesCount == 0) {
+        return;
+    }
+
     Mix_HookMusicFinished(NULL);
 
     cJSON *stageNode = stories_getStage();
