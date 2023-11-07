@@ -34,7 +34,7 @@ void video_audio_init(void)
 
 void video_audio_quit(void) 
 {
-    TTF_quit();
+    TTF_Quit();
 
     Mix_FreeMusic(music);
     Mix_CloseAudio();

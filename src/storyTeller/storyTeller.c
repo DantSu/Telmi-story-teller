@@ -40,8 +40,8 @@ int main(int argc, char *argv[])
     video_audio_init();
     settings_init();
     display_init();
-    settings_setVolume(6);
-    settings_setBrightness(3);
+    settings_setVolume(6, true);
+    settings_setBrightness(3, true, false);
 
     stories_init();
 
@@ -81,11 +81,17 @@ int main(int argc, char *argv[])
                         case HW_BTN_RIGHT :
                             stories_next();
                             break;
-                        case HW_BTN_A :
-                            
+                        case HW_BTN_START :
+                        case HW_BTN_SELECT :
+                            stories_pause();
                             break;
+                        case HW_BTN_A :
                         case HW_BTN_B :
-                            
+                            stories_ok();
+                            break;
+                        case HW_BTN_Y :
+                        case HW_BTN_X :
+                            stories_home();
                             break;
                         case HW_BTN_VOLUME_DOWN :
                             if(is_menu_pressed) {
@@ -117,7 +123,6 @@ int main(int argc, char *argv[])
     }
     
     exit_loop:
-
     video_audio_quit();
     system_shutdown();
 
