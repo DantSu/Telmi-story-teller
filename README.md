@@ -1,8 +1,9 @@
+![Telmi OS Splash screen](https://dantsu.com/files/Telmi_1280.png)
+
 # Telmi - An open source story teller and MP3 player for Miyoo
 
 Telmi OS is an open source story teller and MP3 player for Miyoo Mini and Miyoo Mini Plus.
 The story teller is compatible with stories exported from STUdio (v1 format).
-
 
 ## Installation
 
