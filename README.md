@@ -1,4 +1,4 @@
-![Telmi OS Splash screen](https://dantsu.com/files/Telmi_1280.png)
+<p align="center"><img = src="https://dantsu.com/files/Telmi_1280.png" alt="Telmi OS Splash screen" /></p>
 
 # Telmi - An open source story teller and MP3 player for Miyoo Mini
 
@@ -43,4 +43,4 @@ Paste your MP3 song directly in `/Music` folder at root of the micro SD card.
 
 # Video demo
 
-<p align="center"><a href="https://www.youtube.com/watch?v=0kqYJ-VKsNU" taget="_blank"><img = src="https://dantsu.com/files/Telmi_youtube.png" alt="Telmi OS Splash screen" /></a></p>
+<p align="center"><a href="https://www.youtube.com/watch?v=0kqYJ-VKsNU" taget="_blank"><img = src="https://dantsu.com/files/Telmi_youtube.png" alt="Youtube demonstration video of Telmi OS" /></a></p>
