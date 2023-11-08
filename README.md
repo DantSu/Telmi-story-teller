@@ -42,6 +42,6 @@ Paste your MP3 song directly in `/Music` folder at root of the micro SD card.
 - **Home + Volume DOWN** : Decrease brightness
 
 # Video demo
-```<p align="center">```
+<p align="center">
 [![Telmi OS Splash screen](https://dantsu.com/files/Telmi_youtube.png)](https://www.youtube.com/watch?v=0kqYJ-VKsNU)
-```</p>```
+</p>
