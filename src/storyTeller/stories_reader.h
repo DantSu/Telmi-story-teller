@@ -9,14 +9,14 @@
 #include "./sdl_helper.h"
 
 static char **storiesList = NULL;
-static cJSON *jsonRoot = NULL;
+static cJSON *storyJson = NULL;
 static int storiesCount = 0;
 static int storyIndex = 0;
-static int stageIndex = 0;
-static int actionIndex = -1;
-static int actionOptionIndex = 0;
-static int actionOptionsCount = 0;
-static bool autoplay = false;
+static int storyStageIndex = 0;
+static int storyActionIndex = -1;
+static int storyActionOptionIndex = 0;
+static int storyActionOptionsCount = 0;
+static bool storyAutoplay = false;
 static void (*callback_stories_autoplay)(void);
 
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
@@ -24,28 +24,28 @@ static void (*callback_stories_autoplay)(void);
 
 cJSON *stories_getStage(void)
 {
-    cJSON *stageNodes = cJSON_GetObjectItem(jsonRoot, "stageNodes");
+    cJSON *stageNodes = cJSON_GetObjectItem(storyJson, "stageNodes");
 
     if(stageNodes == NULL) {
         return NULL;
     }
 
-    return cJSON_GetArrayItem(stageNodes, stageIndex);
+    return cJSON_GetArrayItem(stageNodes, storyStageIndex);
 }
 
 cJSON *stories_getAction(void)
 {
-    if(actionIndex == -1) {
+    if(storyActionIndex == -1) {
         return NULL;
     }
 
-    cJSON *actionNodes = cJSON_GetObjectItem(jsonRoot, "actionNodes");
+    cJSON *actionNodes = cJSON_GetObjectItem(storyJson, "actionNodes");
 
     if(actionNodes == NULL) {
         return NULL;
     }
 
-    return cJSON_GetArrayItem(actionNodes, actionIndex);
+    return cJSON_GetArrayItem(actionNodes, storyActionIndex);
 }
 
 void stories_readStage(void)
@@ -69,10 +69,19 @@ void stories_readStage(void)
     if(!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "audio")) && json_getString(stageNode, "audio", soundFilename)) {
         audio_play(story_path, soundFilename);
         if(cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "controlSettings"), "autoplay"))) {
-            autoplay = true;
+            storyAutoplay = true;
             Mix_HookMusicFinished(callback_stories_autoplay);
         }
     }
+}
+
+void stories_reset(void) 
+{
+    Mix_HookMusicFinished(NULL);
+    storyAutoplay = false;
+    storyStageIndex = 0;
+    storyActionIndex = -1;
+    stories_readStage();
 }
 
 void stories_readAction(void)
@@ -81,10 +90,10 @@ void stories_readAction(void)
         return;
     }
     
-    if(actionOptionIndex < 0) {
-        actionOptionIndex = actionOptionsCount - 1;
-    } else if (actionOptionIndex >= actionOptionsCount) {
-        actionOptionIndex = 0;
+    if(storyActionOptionIndex < 0) {
+        storyActionOptionIndex = storyActionOptionsCount - 1;
+    } else if (storyActionOptionIndex >= storyActionOptionsCount) {
+        storyActionOptionIndex = 0;
     }
 
     cJSON *stageAction = stories_getAction();
@@ -97,35 +106,24 @@ void stories_readAction(void)
         return;
     }
     
-    cJSON *option = cJSON_GetArrayItem(options, actionOptionIndex);
+    cJSON *option = cJSON_GetArrayItem(options, storyActionOptionIndex);
     if(option == NULL) {
         return;
     }
     
     char *stageNodeUUID = cJSON_GetStringValue(option);
     char stageUUID[STR_MAX];
-    stageIndex = -1;
+    storyStageIndex = -1;
     do {
-        stageIndex += 1;
+        storyStageIndex += 1;
         cJSON *stageNode = stories_getStage();
         if(stageNode == NULL) {
-            stageIndex = 0;
-            actionIndex = -1;
-            return;
+            return stories_reset();
         }
         json_getString(stageNode, "uuid", stageUUID);
 
     } while(strcmp(stageUUID, stageNodeUUID) != 0);
     
-    stories_readStage();
-}
-
-void stories_reset(void) 
-{
-    Mix_HookMusicFinished(NULL);
-    autoplay = false;
-    stageIndex = 0;
-    actionIndex = -1;
     stories_readStage();
 }
 
@@ -145,8 +143,8 @@ void stories_load(void)
     char story_path[STR_MAX];
     sprintf(story_path, "%s%s/story.json", STORIES_RESOURCES, storiesList[storyIndex]);
 
-    jsonRoot = json_load(story_path);
-    if(jsonRoot == NULL) {
+    storyJson = json_load(story_path);
+    if(storyJson == NULL) {
         return;
     }
 
@@ -174,11 +172,11 @@ void stories_transition(char* transition) {
     char actionNodeId[STR_MAX], actionId[STR_MAX];
 
     json_getString(transitionNode, "actionNode", actionNodeId);
-    json_getInt(transitionNode, "optionIndex", &actionOptionIndex);
+    json_getInt(transitionNode, "optionIndex", &storyActionOptionIndex);
 
-    actionIndex = -1;
+    storyActionIndex = -1;
     do {
-        actionIndex += 1;
+        storyActionIndex += 1;
         actionNode = stories_getAction();
         if(actionNode == NULL) {
             return stories_reset();
@@ -187,35 +185,35 @@ void stories_transition(char* transition) {
 
     } while(strcmp(actionId, actionNodeId) != 0);
 
-    actionOptionsCount = cJSON_GetArraySize(cJSON_GetObjectItem(actionNode, "options"));
+    storyActionOptionsCount = cJSON_GetArraySize(cJSON_GetObjectItem(actionNode, "options"));
     return stories_readAction();
 }
 
 void stories_next(void)
 {
-    if(actionIndex == -1) {
+    if(storyActionIndex == -1) {
         storyIndex += 1;
         stories_load();
     } else {
-        actionOptionIndex += 1;
+        storyActionOptionIndex += 1;
         stories_readAction();
     }
 }
 
 void stories_previous(void)
 {
-    if(actionIndex == -1) {
+    if(storyActionIndex == -1) {
         storyIndex -= 1;
         stories_load();
     } else {
-        actionOptionIndex -= 1;
+        storyActionOptionIndex -= 1;
         stories_readAction();
     }
 }
 
 void stories_ok(void)
 {
-    if(autoplay) {
+    if(storyAutoplay) {
         return;
     }
     
@@ -225,7 +223,7 @@ void stories_ok(void)
 
 void stories_autoplay(void)
 {
-    autoplay = false;
+    storyAutoplay = false;
     stories_ok();
 }
 
@@ -241,16 +239,27 @@ void stories_pause(void)
     }
 }
 
-void stories_home(void)
+bool stories_home(void)
 {
-    stories_transition("homeTransition");
+    if(storyActionIndex == -1) {
+        Mix_HookMusicFinished(NULL);
+        if(Mix_PlayingMusic() == 1) {
+            if (Mix_PausedMusic() != 1) {
+                Mix_PauseMusic();
+            }
+        }
+        return true;
+    } else {
+        stories_transition("homeTransition");
+        return false;
+    }
 }
 
 void stories_init(void)
 {
     callback_stories_autoplay = &stories_autoplay;
 
-    video_displayImage(SYSTEM_RESOURCES, "storiesLoading.png");
+    video_displayImage(SYSTEM_RESOURCES, "loadingStories.png");
 
     int i=0;
     DIR *d;
@@ -258,7 +267,7 @@ void stories_init(void)
     d = opendir(STORIES_RESOURCES);
 
     while((dir = readdir(d)) != NULL) {
-        if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
+        if (dir->d_type == DT_DIR && strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
             i++;
         }
     }
@@ -269,8 +278,8 @@ void stories_init(void)
     i=0;
 
     while((dir = readdir(d)) != NULL) {
-        if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
-            filesList[i] = (char*) malloc(64 * sizeof(char));
+        if (dir->d_type == DT_DIR && strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
+            filesList[i] = (char*) malloc(STR_MAX * sizeof(char));
             strcpy(filesList[i], dir->d_name);
             i++;
         }

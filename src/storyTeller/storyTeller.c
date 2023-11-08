@@ -11,7 +11,7 @@
 #include "utils/log.h"
 
 #include "./sdl_helper.h"
-#include "./stories_helper.h"
+#include "./app_selector.h"
 
 
 // for ev.value
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     settings_setVolume(6, true);
     settings_setBrightness(3, true, false);
 
-    stories_init();
+    app_init();
 
     // Prepare for Poll button input
     input_fd = open("/dev/input/event0", O_RDONLY);
@@ -76,22 +76,22 @@ int main(int argc, char *argv[])
                             is_menu_pressed = false;
                             break;
                         case HW_BTN_LEFT :
-                            stories_previous();
+                            app_previous();
                             break;
                         case HW_BTN_RIGHT :
-                            stories_next();
+                            app_next();
                             break;
                         case HW_BTN_START :
                         case HW_BTN_SELECT :
-                            stories_pause();
+                            app_pause();
                             break;
                         case HW_BTN_A :
                         case HW_BTN_B :
-                            stories_ok();
+                            app_ok();
                             break;
                         case HW_BTN_Y :
                         case HW_BTN_X :
-                            stories_home();
+                            app_home();
                             break;
                         case HW_BTN_VOLUME_DOWN :
                             if(is_menu_pressed) {
