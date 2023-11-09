@@ -1,8 +1,7 @@
 ###########################################################
 
 TARGET=Telmi Story Teller
-VERSION=0.0.1
-RA_SUBVERSION=1.15.0.6
+VERSION=0.0.2
 
 ###########################################################
 
@@ -37,11 +36,6 @@ STATIC_BUILD        := $(ROOT_DIR)/static/build
 STATIC_DIST         := $(ROOT_DIR)/static/dist
 STATIC_CONFIGS      := $(ROOT_DIR)/static/configs
 CACHE               := $(ROOT_DIR)/cache
-# STATIC_PACKAGES     := $(ROOT_DIR)/static/packages
-# PACKAGES_DIR        := $(ROOT_DIR)/build/App/PackageManager/data
-# PACKAGES_EMU_DEST   := $(PACKAGES_DIR)/Emu
-# PACKAGES_APP_DEST   := $(PACKAGES_DIR)/App
-# PACKAGES_RAPP_DEST  := $(PACKAGES_DIR)/RApp
 TEMP_DIR            := $(ROOT_DIR)/cache/temp
 INCLUDE_DIR         := $(ROOT_DIR)/include
 ifeq (,$(GTEST_INCLUDE_DIR))
@@ -62,7 +56,6 @@ version: # used by workflow
 	@echo $(VERSION)
 print-version:
 	@echo Telmi-Story-Teller v$(VERSION)
-#	@echo RetroArch sub-v$(RA_SUBVERSION)
 
 $(CACHE)/.setup:
 	@$(ECHO) $(PRINT_RECIPE)
@@ -81,30 +74,10 @@ $(CACHE)/.setup:
 		$(SRC_DIR)/storyTeller \
 		$(SRC_DIR)/chargingState \
 		-depth -type d -name res -exec cp -r {}/. $(BUILD_DIR)/.tmp_update/res/ \;
-#		$(SRC_DIR)/gameSwitcher \
-#		$(SRC_DIR)/themeSwitcher \
-#		$(SRC_DIR)/tweaks \
-#		$(SRC_DIR)/randomGamePicker \
-#		$(SRC_DIR)/easter 
-#	@find \
-#		$(SRC_DIR)/packageManager \
-#		$(SRC_DIR)/themeSwitcher \
-#		-depth -type d -name script -exec cp -r {}/. $(BUILD_DIR)/.tmp_update/script/ \;
 	@find $(SRC_DIR)/installUI -depth -type d -name res -exec cp -r {}/. $(INSTALLER_DIR)/res/ \;
-# Download themes from theme repo
-#	@chmod a+x $(ROOT_DIR)/.github/get_themes.sh && $(ROOT_DIR)/.github/get_themes.sh
 # Copy static configs
 	@mkdir -p $(TEMP_DIR)/configs $(BUILD_DIR)/.tmp_update/config
 	@rsync -a --exclude='.gitkeep' $(STATIC_CONFIGS)/ $(TEMP_DIR)/configs
-# Copy static packages
-#	@mkdir -p $(PACKAGES_APP_DEST) $(PACKAGES_EMU_DEST) $(PACKAGES_RAPP_DEST)
-#	@rsync -a --exclude='.gitkeep' $(STATIC_PACKAGES)/App/ $(PACKAGES_APP_DEST)
-#	@rsync -a --exclude='.gitkeep' $(STATIC_PACKAGES)/Emu/ $(PACKAGES_EMU_DEST)
-#	@rsync -a --exclude='.gitkeep' $(STATIC_PACKAGES)/RApp/ $(PACKAGES_RAPP_DEST)
-#	@$(STATIC_PACKAGES)/common/apply.sh "$(PACKAGES_EMU_DEST)"
-#	@$(STATIC_PACKAGES)/common/apply.sh "$(PACKAGES_RAPP_DEST)"
-#	@$(STATIC_PACKAGES)/common/auto_advmenu_rc.sh "$(PACKAGES_EMU_DEST)" "$(TEMP_DIR)/configs/BIOS/.advance/advmenu.rc"
-#	@$(STATIC_PACKAGES)/common/auto_advmenu_rc.sh "$(PACKAGES_RAPP_DEST)" "$(TEMP_DIR)/configs/BIOS/.advance/advmenu.rc"
 # Set flag: finished setup
 	@touch $(CACHE)/.setup
 
@@ -151,46 +124,6 @@ core: $(CACHE)/.setup
 # Overrider miyoo libraries
 	@cp $(BIN_DIR)/libgamename.so $(BUILD_DIR)/miyoo/lib/
 
-#apps: $(CACHE)/.setup
-#	@$(ECHO) $(PRINT_RECIPE)
-#	@cd $(SRC_DIR)/playActivityUI && BUILD_DIR="$(PACKAGES_APP_DEST)/Activity Tracker/App/PlayActivity" make
-#	@find $(SRC_DIR)/playActivityUI -depth -type d -name res -exec cp -r {}/. "$(PACKAGES_APP_DEST)/Activity Tracker/App/PlayActivity/res/" \;
-#	@find $(SRC_DIR)/packageManager -depth -type d -name res -exec cp -r {}/. $(BUILD_DIR)/App/PackageManager/res/ \;
-#	@cd $(SRC_DIR)/clock && BUILD_DIR="$(BIN_DIR)" make
-#	@cd $(SRC_DIR)/randomGamePicker && BUILD_DIR="$(BIN_DIR)" make
-# Preinstalled apps
-#	@cp -a "$(PACKAGES_APP_DEST)/Activity Tracker/." $(BUILD_DIR)/
-#	@cp -a "$(PACKAGES_APP_DEST)/Quick Guide/." $(BUILD_DIR)/
-#	@cp -a "$(PACKAGES_APP_DEST)/RetroArch (Shortcut)/." $(BUILD_DIR)/
-#	@cp -a "$(PACKAGES_APP_DEST)/Tweaks/." $(BUILD_DIR)/
-#	@cp -a "$(PACKAGES_APP_DEST)/ThemeSwitcher/." $(BUILD_DIR)/
-
-#$(THIRD_PARTY_DIR)/RetroArch/retroarch_miyoo354:
-#	@$(ECHO) $(PRINT_RECIPE)
-# RetroArch
-#	@$(ECHO) $(COLOR_BLUE)"\n-- Build RetroArch"$(COLOR_NORMAL)
-#	@cd $(THIRD_PARTY_DIR)/RetroArch && make clean all
-#	@cd $(THIRD_PARTY_DIR)/RetroArch && make clean all ADD_NETWORKING=1 PACKAGE_NAME=retroarch_miyoo354
-
-#external: $(CACHE)/.setup $(THIRD_PARTY_DIR)/RetroArch/retroarch_miyoo354
-#	@$(ECHO) $(PRINT_RECIPE)
-## Add RetroArch
-#	@cp $(THIRD_PARTY_DIR)/RetroArch/retroarch $(BUILD_DIR)/RetroArch/
-#	@cp $(THIRD_PARTY_DIR)/RetroArch/retroarch_miyoo354 $(BUILD_DIR)/RetroArch/
-#	@echo $(RA_SUBVERSION) > $(BUILD_DIR)/RetroArch/onion_ra_version.txt
-#	@$(BUILD_DIR)/.tmp_update/script/build_ext_cache.sh $(BUILD_DIR)/RetroArch/.retroarch
-## SearchFilter
-#	@$(ECHO) $(COLOR_BLUE)"\n-- Build SearchFilter"$(COLOR_NORMAL)
-#	@cd $(THIRD_PARTY_DIR)/SearchFilter && make build && cp -a build/. $(BUILD_DIR)
-#	@cp -a $(BUILD_DIR)/App/Search/. "$(PACKAGES_APP_DEST)/Search (Find your games)/App/Search"
-#	@mv -f $(BUILD_DIR)/App/Filter/* "$(PACKAGES_APP_DEST)/List shortcuts (Filter+Refresh)/App/Filter"
-#	@rmdir $(BUILD_DIR)/App/Filter
-## Other
-#	@$(ECHO) $(COLOR_BLUE)"\n-- Build Terminal"$(COLOR_NORMAL)
-#	@cd $(THIRD_PARTY_DIR)/Terminal && make && cp ./st "$(BIN_DIR)"
-#	@$(ECHO) $(COLOR_BLUE)"\n-- Build DinguxCommander"$(COLOR_NORMAL)
-#	@cd $(THIRD_PARTY_DIR)/DinguxCommander && make && cp ./output/DinguxCommander "$(PACKAGES_APP_DEST)/File Explorer (DinguxCommander)/App/Commander_Italic"
-
 dist: build
 	@$(ECHO) $(PRINT_RECIPE)
 # Package configs
@@ -200,16 +133,8 @@ dist: build
 	@echo " DONE"
 	@rm -rf $(TEMP_DIR)/configs
 	@rmdir $(TEMP_DIR)
-# Package RetroArch separately
-#	@echo -n "Packaging RetroArch..."
-#	@cd $(BUILD_DIR) && 7z a -mtm=off retroarch.pak ./RetroArch -bsp1 -bso0
-#	@echo " DONE"
-#	@mkdir -p $(DIST_DIR)/RetroArch
-#	@mv $(BUILD_DIR)/retroarch.pak $(DIST_DIR)/RetroArch/
-#	@echo $(RA_SUBVERSION) > $(DIST_DIR)/RetroArch/ra_package_version.txt
 # Package Telmi core
 	@echo -n "Packaging Telmi..."
-#	@cd $(BUILD_DIR) && 7z a -mtm=off $(DIST_DIR)/miyoo/app/.tmp_update/onion.pak . -x!RetroArch -bsp1 -bso0
 	@cd $(BUILD_DIR) && 7z a -mtm=off $(DIST_DIR)/miyoo/app/.tmp_update/onion.pak . -bsp1 -bso0
 	@echo " DONE"
 	@$(ECHO) $(PRINT_DONE)
@@ -228,20 +153,12 @@ clean:
 
 deepclean: clean
 	@rm -rf $(CACHE)
-#	@rm -f $(THIRD_PARTY_DIR)/RetroArch/retroarch_miyoo354
-#	@cd $(THIRD_PARTY_DIR)/RetroArch && make clean
-#	@cd $(THIRD_PARTY_DIR)/SearchFilter && make clean
-#	@cd $(THIRD_PARTY_DIR)/Terminal && make clean
-#	@cd $(THIRD_PARTY_DIR)/DinguxCommander && make clean
 
 dev: clean
 	@$(MAKE_DEV)
 
 git-clean:
 	@git clean -xfd -e .vscode
-
-#git-submodules:
-#	@git submodule update --init --recursive
 
 pwd:
 	@echo $(ROOT_DIR)
