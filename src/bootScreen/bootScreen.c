@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "system/settings.h"
 #include "utils/file.h"
 #include "utils/flags.h"
 #include "utils/log.h"

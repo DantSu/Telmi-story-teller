@@ -20,12 +20,13 @@
 #include "system/display.h"
 #include "system/keymap_hw.h"
 #include "system/rumble.h"
-#include "system/settings.h"
 #include "system/system.h"
 #include "theme/config.h"
 #include "utils/file.h"
 #include "utils/log.h"
 #include "utils/msleep.h"
+
+#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
 
 #define RELEASED 0
 #define PRESSED 1
@@ -38,24 +39,6 @@ static bool suspended = false;
 static int input_fd;
 static struct input_event ev;
 static struct pollfd fds[1];
-
-void getImageDir(const char *theme_path, char *image_dir)
-{
-    char image0_path[STR_MAX * 2];
-    sprintf(image0_path, "%s/skin/extra/chargingState0.png", THEME_OVERRIDES);
-    if (exists(image0_path)) {
-        sprintf(image_dir, "%s/skin/extra", THEME_OVERRIDES);
-        return;
-    }
-
-    sprintf(image0_path, "%sskin/extra/chargingState0.png", theme_path);
-    if (exists(image0_path)) {
-        sprintf(image_dir, "%sskin/extra", theme_path);
-        return;
-    }
-
-    strcpy(image_dir, "res");
-}
 
 void suspend(bool enabled, SDL_Surface *video)
 {
@@ -87,12 +70,6 @@ int main(void)
 
     bool turn_off = false;
 
-    settings_load();
-    display_setBrightness(settings.brightness);
-
-    char image_dir[STR_MAX];
-    getImageDir(settings.theme, image_dir);
-
     getDeviceModel();
 
     SDL_Init(SDL_INIT_VIDEO);
@@ -100,8 +77,7 @@ int main(void)
     SDL_EnableKeyRepeat(300, 50);
 
     SDL_Surface *video = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE);
-    SDL_Surface *screen =
-        SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
+    SDL_Surface *screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
 
     int min_delay = 15;
     int frame_delay = 80;
@@ -112,19 +88,17 @@ int main(void)
 
     for (int i = 0; i < 24; i++) {
         char image_path[STR_MAX + 50];
-        snprintf(image_path, STR_MAX + 49, "%s/chargingState%d.png", image_dir,
-                 i);
+        snprintf(image_path, STR_MAX + 49, "%schargingState%d.png", SYSTEM_RESOURCES, i);
         if ((image = IMG_Load(image_path)))
             frames[frame_count++] = image;
     }
 
     char json_path[STR_MAX + 20];
-    snprintf(json_path, STR_MAX + 19, "%s/chargingState.json", image_dir);
+    snprintf(json_path, STR_MAX + 19, "%schargingState.json", SYSTEM_RESOURCES);
     if (is_file(json_path)) {
         int value;
         char json_value[STR_MAX];
-        if (file_parseKeyValue(json_path, "frame_delay", json_value, ':', 0) !=
-            NULL) {
+        if (file_parseKeyValue(json_path, "frame_delay", json_value, ':', 0) != NULL) {
             value = atoi(json_value);
             // accept both microseconds and milliseconds
             frame_delay = value >= 10000 ? value / 1000 : value;

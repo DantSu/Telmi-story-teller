@@ -79,9 +79,9 @@ $(CACHE)/.setup:
 	@find \
 		$(SRC_DIR)/bootScreen \
 		$(SRC_DIR)/storyTeller \
+		$(SRC_DIR)/chargingState \
 		-depth -type d -name res -exec cp -r {}/. $(BUILD_DIR)/.tmp_update/res/ \;
 #		$(SRC_DIR)/gameSwitcher \
-#		$(SRC_DIR)/chargingState \
 #		$(SRC_DIR)/themeSwitcher \
 #		$(SRC_DIR)/tweaks \
 #		$(SRC_DIR)/randomGamePicker \
