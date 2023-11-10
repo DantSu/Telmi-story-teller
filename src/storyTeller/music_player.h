@@ -5,6 +5,8 @@
 #include <dirent.h>
 #include "system/display.h"
 #include "utils/str.h"
+
+#include "./app_autosleep.h"
 #include "./sdl_helper.h"
 
 static char **musicList = NULL;
@@ -31,6 +33,7 @@ void musicplayer_load(void)
     
     video_displayBlackScreen();
     display_setScreen(false);
+    autosleep_lock();
     audio_play(MUSICPLAYER_RESOURCES, musicList[musicIndex]);
     Mix_HookMusicFinished(callback_musicplayer_autoplay);
 }
@@ -62,8 +65,10 @@ void musicplayer_pause(void)
 {
     if(Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() == 1) {
+            autosleep_lock();
             Mix_ResumeMusic();
         } else {
+            autosleep_unlock();
             Mix_PauseMusic();
         }
     }

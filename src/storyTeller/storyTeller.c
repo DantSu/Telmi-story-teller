@@ -10,6 +10,7 @@
 #include "system/settings_sync.h"
 #include "utils/log.h"
 
+#include "./app_autosleep.h"
 #include "./sdl_helper.h"
 #include "./app_selector.h"
 
@@ -44,6 +45,7 @@ int main(int argc, char *argv[])
     settings_setBrightness(3, true, false);
 
     app_init();
+    autosleep_init();
 
     // Prepare for Poll button input
     input_fd = open("/dev/input/event0", O_RDONLY);
@@ -54,10 +56,16 @@ int main(int argc, char *argv[])
     bool is_menu_pressed = false;
 
     while (1) {
+        if(autosleep_isSleepingTime()) {
+            goto exit_loop;
+        }
+
         if (poll(fds, 1, 0) > 0) {
             if (!keyinput_isValid()) {
                 continue;
             }
+            
+            autosleep_keepAwake();
 
             switch (ev.value) {
                 case PRESSED:
@@ -71,7 +79,6 @@ int main(int argc, char *argv[])
                     {
                         case HW_BTN_POWER :
                             goto exit_loop;
-                            break;
                         case HW_BTN_MENU :
                             is_menu_pressed = false;
                             break;

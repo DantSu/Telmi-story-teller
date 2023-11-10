@@ -6,6 +6,8 @@
 #include "system/display.h"
 #include "utils/str.h"
 #include "utils/json.h"
+
+#include "./app_autosleep.h"
 #include "./sdl_helper.h"
 
 static char **storiesList = NULL;
@@ -70,8 +72,13 @@ void stories_readStage(void)
         audio_play(story_path, soundFilename);
         if(cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "controlSettings"), "autoplay"))) {
             storyAutoplay = true;
+            autosleep_lock();
             Mix_HookMusicFinished(callback_stories_autoplay);
+        } else {
+            autosleep_unlock();
         }
+    } else {
+        autosleep_unlock();
     }
 }
 
@@ -232,8 +239,10 @@ void stories_pause(void)
 {
     if(Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() == 1) {
+            autosleep_lock();
             Mix_ResumeMusic();
         } else {
+            autosleep_unlock();
             Mix_PauseMusic();
         }
     }

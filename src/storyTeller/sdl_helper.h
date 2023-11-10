@@ -34,6 +34,9 @@ void video_audio_init(void)
 
 void video_audio_quit(void) 
 {
+    SDL_BlitSurface(screen, NULL, video, NULL);
+    SDL_Flip(video);
+
     TTF_Quit();
 
     Mix_FreeMusic(music);

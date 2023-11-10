@@ -28,6 +28,7 @@ void app_refreshScreen(void)
     }
     video_displayImage(SYSTEM_RESOURCES, appImages[appIndex]);
     display_setScreen(true);
+    autosleep_unlock();
 }
 
 void app_init(void)
