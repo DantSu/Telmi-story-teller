@@ -22,7 +22,7 @@ void video_audio_init(void)
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     TTF_Init();
-    if(Mix_OpenAudio(48000, 32784, 2, 4096) < 0) {
+    if(Mix_OpenAudio(44000, 32784, 2, 2048) < 0) {
         Mix_Volume(-1, MIX_MAX_VOLUME);
         Mix_VolumeMusic(MIX_MAX_VOLUME);
     }
