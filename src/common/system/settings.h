@@ -13,8 +13,7 @@
 #define MAIN_UI_SETTINGS "/mnt/SDCARD/system.json"
 #define CMD_TO_RUN_PATH "/mnt/SDCARD/.tmp_update/cmd_to_run.sh"
 #define RETROARCH_CONFIG "/mnt/SDCARD/RetroArch/.retroarch/retroarch.cfg"
-#define HISTORY_PATH \
-    "/mnt/SDCARD/Saves/CurrentProfile/lists/content_history.lpl"
+#define HISTORY_PATH "/mnt/SDCARD/Saves/CurrentProfile/lists/content_history.lpl"
 #define DEFAULT_THEME_PATH "/mnt/SDCARD/Themes/Silky by DiMo/"
 
 typedef struct settings_s {

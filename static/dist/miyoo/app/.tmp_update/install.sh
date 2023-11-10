@@ -6,9 +6,6 @@ sysdir=$(
 miyoodir=/mnt/SDCARD/miyoo
 
 CORE_PACKAGE_FILE="$sysdir/onion.pak"
-RA_PACKAGE_FILE="/mnt/SDCARD/RetroArch/retroarch.pak"
-RA_VERSION_FILE="/mnt/SDCARD/RetroArch/onion_ra_version.txt"
-RA_PACKAGE_VERSION_FILE="/mnt/SDCARD/RetroArch/ra_package_version.txt"
 
 export LD_LIBRARY_PATH="/lib:/config/lib:/customer/lib:$sysdir/lib"
 export PATH="$sysdir/bin:$PATH"
@@ -17,15 +14,12 @@ unset LD_PRELOAD
 MODEL_MM=283
 MODEL_MMP=354
 
-install_ra=1
-
 version() {
     echo "$@" | awk -F. '{ f=$1; if (substr(f,2,1) == "v") f = substr(f,3); printf("%d%03d%03d%03d\n", f,$2,$3,$4); }'
 }
 
 # globals
 total_core=0
-total_ra=0
 
 main() {
     # init_lcd
@@ -35,7 +29,6 @@ main() {
     fi
 
     check_device_model
-    check_install_ra
 
     # Start the battery monitor
     if [ $DEVICE_ID -eq MODEL_MM ]; then
@@ -58,59 +51,8 @@ main() {
 
     check_firmware
 
-    if [ ! -d /mnt/SDCARD/.tmp_update/onionVersion ]; then
-        run_installation 1 0
-        cleanup
-        return
-    fi
-
-    # Start the battery monitor
-    cd $sysdir
-    batmon 2>&1 > /dev/null &
-
-    detectKey 1
-    menu_pressed=$?
-
-    if [ $menu_pressed -eq 0 ]; then
-        prompt_update
-        cleanup
-        return
-    fi
-
-    run_installation 0 0
+    run_installation 1 0
     cleanup
-}
-
-prompt_update() {
-    # Prompt for update or fresh install
-    prompt -r -m "Welcome to the Telmi installer!\nPlease choose an action:" \
-        "Update (keep settings)" \
-        "Reinstall (reset settings)" \
-        "Update OS/RetroArch only"
-    retcode=$?
-
-    if [ $retcode -eq 0 ]; then
-        # Update (keep settings)
-        run_installation 0 0
-    elif [ $retcode -eq 1 ]; then
-        prompt -r -m "Warning: Reinstall will reset everything,\nremoving any custom emus or apps." \
-            "Yes, reset my system" \
-            "Cancel"
-        retcode=$?
-
-        if [ $retcode -eq 0 ]; then
-            # Reinstall (reset settings)
-            run_installation 1 0
-        else
-            prompt_update
-        fi
-    elif [ $retcode -eq 2 ]; then
-        # Update OS/RetroArch only
-        run_installation 0 1
-    else
-        # Cancel (can be reached if pressing POWER)
-        return
-    fi
 }
 
 cleanup() {
@@ -128,8 +70,6 @@ cleanup() {
 
     # Clean zips if still present
     rm -f $CORE_PACKAGE_FILE
-    rm -f $RA_PACKAGE_FILE
-    rm -f $RA_PACKAGE_VERSION_FILE
 
     # Remove update trigger script
     rm -f /mnt/SDCARD/miyoo/app/MainUI
@@ -146,36 +86,11 @@ check_device_model() {
     echo -n "$DEVICE_ID" > /tmp/deviceModel
 }
 
-check_install_ra() {
-    # An existing version of Onion's RetroArch exist
-    if [ -f $RA_VERSION_FILE ] && [ -f $RA_PACKAGE_VERSION_FILE ]; then
-        local current_ra_version=$(cat $RA_VERSION_FILE)
-        local package_ra_version=$(cat $RA_PACKAGE_VERSION_FILE)
-
-        # Skip installation if current version is up-to-date.
-        if [ $(version $current_ra_version) -ge $(version $package_ra_version) ]; then
-            install_ra=0
-            echo "RetroArch is up-to-date!"
-        fi
-    fi
-
-    if [ ! -f "$RA_PACKAGE_FILE" ]; then
-        install_ra=0
-    fi
-}
-
 get_install_stats() {
     total_core=$(zip_total "$CORE_PACKAGE_FILE")
-    total_ra=0
-
-    if [ -f $RA_PACKAGE_FILE ]; then
-        total_ra=$(zip_total "$RA_PACKAGE_FILE")
-    fi
 
     echo "STATS"
-    echo "Install RA check:" $install_ra
     echo "Telmi total:" $total_core
-    echo "RetroArch total:" $total_ra
 }
 
 remove_configs() {
@@ -243,10 +158,6 @@ run_installation() {
         backup_system
 
         remove_configs
-        if [ -f $RA_PACKAGE_FILE ]; then
-            maybe_remove_retroarch
-            install_ra=1
-        fi
 
         # Remove stock folders.
         cd /mnt/SDCARD
@@ -261,21 +172,8 @@ run_installation() {
         remove_old_search
     fi
 
-    if [ $install_ra -eq 1 ]; then
-        verify_file
-        install_core "1/2: $verb Telmi..."
-        install_retroarch "2/2: $verb RetroArch..."
-    else
-        verify_file
-        install_core "1/1: $verb Telmi..."
-        echo "Skipped installing RetroArch"
-        rm -f $RA_PACKAGE_FILE
-        rm -f $RA_PACKAGE_VERSION_FILE
-    fi
-
-    if [ $reset_configs -eq 0 ]; then
-        restore_ra_config
-    fi
+    verify_file
+    install_core "1/1: $verb Telmi..."
 
     install_configs $reset_configs
 
@@ -398,67 +296,6 @@ install_core() {
     rm -f $CORE_PACKAGE_FILE
 }
 
-install_retroarch() {
-    echo ":: Install RetroArch"
-    msg="$1"
-
-    # Check if RetroArch zip also exists
-    if [ ! -f "$RA_PACKAGE_FILE" ]; then
-        return
-    fi
-
-    # Backup old RA configuration
-    cd /mnt/SDCARD/RetroArch
-    mkdir -p /mnt/SDCARD/Backup
-    mv .retroarch/retroarch.cfg /mnt/SDCARD/Backup/
-
-    # Remove old RetroArch before unzipping
-    maybe_remove_retroarch
-
-    # Install RetroArch
-    cd /
-    unzip_progress "$RA_PACKAGE_FILE" "$msg" /mnt/SDCARD
-
-    # Cleanup
-    rm -f $RA_PACKAGE_FILE
-    rm -f $RA_PACKAGE_VERSION_FILE
-}
-
-maybe_remove_retroarch() {
-    if [ -f $RA_PACKAGE_FILE ]; then
-        cd /mnt/SDCARD/RetroArch
-
-        tempdir=/mnt/SDCARD/.temp
-        mkdir -p $tempdir
-
-        if [ -d .retroarch/cheats ]; then
-            mv .retroarch/cheats $tempdir/
-        fi
-        if [ -d .retroarch/overlay ]; then
-            mv .retroarch/overlay $tempdir/
-        fi
-        if [ -d .retroarch/filters ]; then
-            mv .retroarch/filters $tempdir/
-        fi
-        if [ -d .retroarch/thumbnails ]; then
-            mv .retroarch/thumbnails $tempdir/
-        fi
-
-        remove_everything_except $(basename $RA_PACKAGE_FILE)
-
-        mkdir -p .retroarch
-        mv $tempdir/* .retroarch/
-        rm -rf $tempdir
-    fi
-}
-
-restore_ra_config() {
-    echo ":: Restore RA config"
-    cfg_file=/mnt/SDCARD/Backup/retroarch.cfg
-    if [ -f $cfg_file ]; then
-        mv -f $cfg_file /mnt/SDCARD/RetroArch/.retroarch/
-    fi
-}
 
 install_configs() {
     reset_configs=$1
@@ -502,25 +339,6 @@ check_firmware() {
 
 backup_system() {
     echo ":: Backup system"
-    old_ra_dir=/mnt/SDCARD/RetroArch/.retroarch
-
-    # Move BIOS files from stock location
-    if [ -d $old_ra_dir/system ]; then
-        mkdir -p /mnt/SDCARD/BIOS
-        mv -f $old_ra_dir/system/* /mnt/SDCARD/BIOS/
-    fi
-
-    # Backup old saves
-    if [ -d $old_ra_dir/saves ]; then
-        mkdir -p /mnt/SDCARD/Backup/saves
-        mv -f $old_ra_dir/saves/* /mnt/SDCARD/Backup/saves/
-    fi
-
-    # Backup old states
-    if [ -d $old_ra_dir/states ]; then
-        mkdir -p /mnt/SDCARD/Backup/states
-        mv -f $old_ra_dir/states/* /mnt/SDCARD/Backup/states/
-    fi
 
     # Imgs
     if [ -d /mnt/SDCARD/Imgs ]; then

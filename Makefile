@@ -1,7 +1,7 @@
 ###########################################################
 
 TARGET=Telmi Story Teller
-VERSION=0.0.2
+VERSION=0.2.0
 
 ###########################################################
 
@@ -127,7 +127,6 @@ core: $(CACHE)/.setup
 dist: build
 	@$(ECHO) $(PRINT_RECIPE)
 # Package configs
-	@cp -R $(TEMP_DIR)/configs/Saves/CurrentProfile/ $(TEMP_DIR)/configs/Saves/GuestProfile
 	@echo -n "Packaging configs..."
 	@cd $(TEMP_DIR)/configs && 7z a -mtm=off $(BUILD_DIR)/.tmp_update/config/configs.pak . -bsp1 -bso0
 	@echo " DONE"
