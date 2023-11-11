@@ -13,12 +13,48 @@ You need to install Telmi v0.2.3.
 
 - [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/0.2.3/TelmiOS_v0.2.3.zip)
 
-### Install or upgrade
+### Format your SD card as FAT32 (not exFAT!)
 
-Follow the guide that you need :
+#### Windows
+If your SD card is larger than 32 GB, you need to use a third-party tool like [Rufus](https://rufus.ie/):
 
-- [Fresh install](https://onionui.github.io/docs/installation/fresh)
-- [Upgrading](https://onionui.github.io/docs/installation/update)
+1. In Rufus, select the device that corresponds with the SD card you want to format
+2. Set **Boot selection** to `Non bootable`
+3. **Partition scheme** should already be set to `MBR`
+4. Set **File system** to `Large FAT32`
+5. **Cluster size** at `32 kilobytes` should be fine (`16 kilobytes` might extend the life of your SD card)
+6. Click **START** to format the card, when it's done you can close the window
+
+#### MacOS
+
+On Mac, you can format your SD card with the built-in Disk Utilities:
+
+1. Open **Application** › **Utilities** › **Disk Utilities**
+2. From the sidebar, select the USB drive that corresponds with the SD card you want to format (Choose to format the root element [as on this picture](https://onionui.github.io/assets/files/format-usb-to-fat32-on-mac-6244645c5513220bacdeec4aaa541bc8.webp))
+3. Choose **Erase** from the toolbar
+4. Set **Format** › `MS-DOS (FAT)`
+5. Set **Scheme** (if it exists) › `Master Boot Record`
+6. Click **Erase** and wait for the process to finish
+
+#### Linux
+
+There are lots of ways to format an SD card on Linux. 3 methods are presented in [this blog post](https://www.golinuxcloud.com/steps-to-format-sd-card-in-linux/).
+
+Make sure you choose: `For use with all systems and devices (FAT)`
+
+#### Chrome OS
+
+Chrome already has a tool to format an SD card. Insert the card into your Chromebook, right-click it and click **Format Device**, make sure `FAT32` is selected under **Format** and click or tap **Erase & Format**. 
+
+### Unzip TelmiOS_v0.2.3.zip
+
+Put the content of `TelmiOS_v0.2.3.zip` at the root of the SD card.
+
+### Run the Miyoo
+
+Run the Miyoo and the installation will run automatically.
+
+Enjoy !!
 
 # Story teller
 
