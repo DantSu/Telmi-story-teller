@@ -73,7 +73,7 @@ storyteller_jpg2png() {
             if [ ! -f "$file" ]; then
                 continue
             fi
-            jpg2png "$file"
+            jpg2png "$file" 320 240
             rm -f "$file" 2> /dev/null
         done
     done

@@ -64,8 +64,7 @@ int main(int argc, char *argv[])
     MI_PHY jpgPa = 0, pngPa = 0;
     void *tmp, *jpgVa = NULL, *pngVa = NULL;
     uint8_t *src8;
-    uint32_t *src, *dst, pix, x, y, sw, sh, dw, dh, ss = 0, ds = 0, mw = 250,
-                                                    mh = 360;
+    uint32_t *src, *dst, pix, x, y, sw, sh, dw, dh, ss = 0, ds = 0, mw = 640, mh = 480;
     char filename[256], *ptr;
 
     // Read commandline and open jpg
