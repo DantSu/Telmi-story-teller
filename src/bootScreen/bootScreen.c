@@ -40,12 +40,12 @@ int main(int argc, char *argv[])
 
     if (argc > 1 && strcmp(argv[1], "End") == 0) {
         background = loadImage("Screen_Off");
-    }
-    else if (argc > 1 && strcmp(argv[1], "lowBat") == 0) {
+    } else if (argc > 1 && strcmp(argv[1], "lowBat") == 0) {
         background = loadImage("lowBat");
         show_version = false;
-    }
-    else {
+    } else if (argc > 1 && strcmp(argv[1], "convertingFiles") == 0) {
+        background = loadImage("convertingFiles");
+    } else {
         background = loadImage("bootScreen");
     }
 

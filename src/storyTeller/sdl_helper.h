@@ -37,7 +37,7 @@ void video_audio_init(void)
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     IMG_Init(IMG_INIT_PNG);
     TTF_Init();
-    if(Mix_OpenAudio(44000, 32784, 2, 2048) < 0) {
+    if(Mix_OpenAudio(44100, 32784, 2, 2048) < 0) {
         Mix_Volume(-1, MIX_MAX_VOLUME);
         Mix_VolumeMusic(MIX_MAX_VOLUME);
     }
@@ -62,25 +62,8 @@ void video_audio_quit(void)
     SDL_Quit();
 }
 
-void video_checkFilename(char *filename)
-{
-    int length = strlen(filename);
-    if(strcmp((char *)filename + length - 4, ".jpg") == 0 || strcmp((char *)filename + length - 4, ".JPG") == 0) {
-        filename[length - 3] = 'p';
-        filename[length - 2] = 'n';
-        filename[length - 1] = 'g';
-    } else if (strcmp((char *)filename + length - 5, ".jpeg") == 0 || strcmp((char *)filename + length - 5, ".JPEG") == 0) {
-        filename[length - 4] = 'p';
-        filename[length - 3] = 'n';
-        filename[length - 2] = 'g';
-        filename[length - 1] = '\0';
-    }
-}
-
 void video_displayImage(const char *dir, char *name)
 {
-    video_checkFilename(name);
-    
     char image_path[STR_MAX * 2];
     sprintf(image_path, "%s%s", dir, name);
     SDL_Surface *image = IMG_Load(image_path);

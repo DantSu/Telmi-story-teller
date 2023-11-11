@@ -45,7 +45,7 @@ main() {
     fi
 
     cd $sysdir
-    bootScreen "Boot"
+    bootScreen "convertingFiles"
 
     # Init
     rm /tmp/.offOrder 2> /dev/null
@@ -53,6 +53,7 @@ main() {
     
     storyteller_jpg2png
 
+    bootScreen "Boot"
     # start_networking
     sleep 1
     rm -rf /tmp/is_booting
@@ -69,13 +70,19 @@ storyteller_jpg2png() {
             continue
         fi
 
+        hasconvertedjpg=false
         for file in "$directory"/assets/*.jpg "$directory"/assets/*.jpeg "$directory"/assets/*.JPG "$directory"/assets/*.JPEG; do
             if [ ! -f "$file" ]; then
                 continue
             fi
-            jpg2png "$file" 320 240
+            jpg2png "$file" 480 360
             rm -f "$file" 2> /dev/null
+            hasconvertedjpg=true
         done
+        
+        if $hasconvertedjpg; then
+            sed -i 's/\.\(jpg\|jpeg\)"/\.png"/gI' "$directory"/story.json
+        fi
     done
 }
 

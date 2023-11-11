@@ -2,14 +2,16 @@
 
 # Telmi - An open source story teller and MP3 player for Miyoo Mini
 
-Telmi OS is an open source story teller and MP3 player for Miyoo Mini and Miyoo Mini Plus.
-The story teller is compatible with stories exported from STUdio (v1 format).
+TelmiOS is an open source story teller and lite MP3 player for Miyoo Mini and Miyoo Mini Plus.
+TelmiOS is for children 3~4 years old and older.
+
+The story teller is compatible with stories exported from [STUdio](https://github.com/marian-m12l/studio) (v1 format).
 
 ## Installation
 
 ### Download the installation files
 
-- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/0.2.3/TelmiOS_v0.2.3.zip)
+- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/0.2.4/TelmiOS_v0.2.4.zip)
 
 ### Format your SD card as FAT32 (not exFAT!)
 
@@ -44,9 +46,9 @@ Make sure you choose: `For use with all systems and devices (FAT)`
 
 Chrome already has a tool to format an SD card. Insert the card into your Chromebook, right-click it and click **Format Device**, make sure `FAT32` is selected under **Format** and click or tap **Erase & Format**. 
 
-### Unzip TelmiOS_v0.2.3.zip
+### Unzip TelmiOS_v0.2.4.zip
 
-Put the content of `TelmiOS_v0.2.3.zip` at the root of the SD card.
+Put the content of `TelmiOS_v0.2.4.zip` at the root of the SD card.
 
 ### Power on your Miyoo
 
@@ -56,7 +58,7 @@ Insert the SD card in your Miyoo. Press the power button and the installation wi
 
 # Story teller
 
-Export stories from STUdio (v1 format). Unzip stories in `/Stories` folder in micro SD card.
+Export stories from [STUdio](https://github.com/marian-m12l/studio) (v1 format). Unzip stories in `/Stories` folder in micro SD card.
 
 # Music
 
