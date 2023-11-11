@@ -9,8 +9,6 @@ The story teller is compatible with stories exported from STUdio (v1 format).
 
 ### Download the installation files
 
-You need to install Telmi v0.2.3.
-
 - [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/0.2.3/TelmiOS_v0.2.3.zip)
 
 ### Format your SD card as FAT32 (not exFAT!)
@@ -50,11 +48,11 @@ Chrome already has a tool to format an SD card. Insert the card into your Chrome
 
 Put the content of `TelmiOS_v0.2.3.zip` at the root of the SD card.
 
-### Run the Miyoo
+### Power on your Miyoo
 
-Run the Miyoo and the installation will run automatically.
+Insert the SD card in your Miyoo. Press the power button and the installation will run automatically.
 
-Enjoy !!
+**Enjoy !!**
 
 # Story teller
 
