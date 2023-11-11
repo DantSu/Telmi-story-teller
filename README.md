@@ -56,11 +56,11 @@ Insert the SD card in your Miyoo. Press the power button and the installation wi
 
 # Story teller
 
-Export stories from STUdio (v1 format). Unzip stories in `/Stories` folder at root of the micro SD card.
+Export stories from STUdio (v1 format). Unzip stories in `/Stories` folder in micro SD card.
 
 # Music
 
-Paste your MP3 song directly in `/Music` folder at root of the micro SD card.
+Paste your MP3 song directly in `/Music` folder in micro SD card.
 
 # Buttons roles
 
