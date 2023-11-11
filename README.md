@@ -9,9 +9,9 @@ The story teller is compatible with stories exported from STUdio (v1 format).
 
 ### Download the installation files
 
-You need to install Telmi v0.2.2.
+You need to install Telmi v0.2.3.
 
-- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/0.2.2/TelmiOS_v0.2.2.zip)
+- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/0.2.3/TelmiOS_v0.2.3.zip)
 
 ### Install or upgrade
 
