@@ -96,8 +96,6 @@ int main(int argc, char *argv[])
     sleep(4); // for debugging purposes
 #endif
 
-    sleep(1);
-
     SDL_FreeSurface(screen);
     SDL_FreeSurface(video);
     SDL_Quit();

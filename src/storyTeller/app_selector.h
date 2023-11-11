@@ -14,7 +14,7 @@
 
 
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
-static const char appImages[2][32] = {"selectStories.png", "selectMusic.png"};
+static char appImages[2][32] = {"selectStories.png", "selectMusic.png"};
 
 static int appIndex = 0;
 static bool appOpened = false;

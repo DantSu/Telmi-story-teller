@@ -47,27 +47,35 @@ main() {
     cd $sysdir
     bootScreen "Boot"
 
-    # Start the key monitor
-    # keymon &
-
     # Init
     rm /tmp/.offOrder 2> /dev/null
     HOME=/mnt/SDCARD/StoryTeller/
-
-    # Detect if MENU button is held
-    # detectKey 1
-    # menu_pressed=$?
-
-    # if [ $menu_pressed -eq 0 ]; then
-    #     rm -f "$sysdir/cmd_to_run.sh" 2> /dev/null
-    # fi
+    
+    storyteller_jpg2png
 
     # start_networking
+    sleep 1
     rm -rf /tmp/is_booting
 
     launch_storyteller
     while true; do
         check_off_order "End"
+    done
+}
+
+storyteller_jpg2png() {
+    for directory in /mnt/SDCARD/Stories/*; do
+        if [ ! -d "$directory" ]; then
+            continue
+        fi
+
+        for file in "$directory"/assets/*.jpg "$directory"/assets/*.jpeg "$directory"/assets/*.JPG "$directory"/assets/*.JPEG; do
+            if [ ! -f "$file" ]; then
+                continue
+            fi
+            jpg2png "$file"
+            rm -f "$file" 2> /dev/null
+        done
     done
 }
 

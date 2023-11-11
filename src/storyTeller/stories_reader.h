@@ -146,7 +146,7 @@ void stories_load(void)
     } else if (storyIndex >= storiesCount) {
         storyIndex = 0;
     }
-    
+
     char story_path[STR_MAX];
     sprintf(story_path, "%s%s/story.json", STORIES_RESOURCES, storiesList[storyIndex]);
 
@@ -154,7 +154,7 @@ void stories_load(void)
     if(storyJson == NULL) {
         return;
     }
-
+    
     stories_readStage();
 }
 

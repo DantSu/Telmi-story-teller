@@ -87,7 +87,7 @@ bool musicplayer_home(void)
 
 bool musicplayer_isMp3File(const char *fileName)
 {
-    return strcmp((char *)fileName + strlen(fileName) - 4, ".mp3") == 0;
+    return strcmp((char *)fileName + strlen(fileName) - 4, ".mp3") == 0 || strcmp((char *)fileName + strlen(fileName) - 4, ".MP3") == 0;
 }
 
 void musicplayer_init(void)
