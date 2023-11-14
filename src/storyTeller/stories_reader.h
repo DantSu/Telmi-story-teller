@@ -1,12 +1,15 @@
 #ifndef STORYTELLER_STORIES_HELPER__
 #define STORYTELLER_STORIES_HELPER__
 
+#include <stdio.h>
 #include <string.h>
 #include <dirent.h>
+#include "time.h"
 #include "system/display.h"
 #include "utils/str.h"
 #include "utils/json.h"
 
+#include "./app_file.h"
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
 
@@ -18,11 +21,53 @@ static int storyStageIndex = 0;
 static int storyActionIndex = -1;
 static int storyActionOptionIndex = 0;
 static int storyActionOptionsCount = 0;
+static double storyTime = 0;
+static long int storyStartTime = 0;
 static bool storyAutoplay = false;
 static void (*callback_stories_autoplay)(void);
 
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
 #define STORIES_RESOURCES "/mnt/SDCARD/Stories/"
+
+long int stories_timestamp(void) {
+    return (long int) time(0);
+}
+
+bool stories_saveSession(void)
+{
+    return file_save(
+        APP_SAVEFILE, 
+        "{\"app\":%d, \"storyIndex\":%d, \"storyStageIndex\":%d, \"storyActionIndex\":%d, \"storyActionOptionIndex\":%d, \"storyTime\":%lf}", 
+        APP_STORIES,
+        storyIndex, 
+        storyStageIndex, 
+        storyActionIndex,
+        storyActionOptionIndex,
+        storyAutoplay ? storyTime : 0
+    );
+}
+
+bool stories_loadSession(void)
+{
+    cJSON *savedState = json_load(APP_SAVEFILE);
+    int a;
+    if(savedState != NULL && json_getInt(savedState, "app", &a) && a == APP_STORIES) {
+        json_getInt(savedState, "storyIndex", &storyIndex);
+        json_getInt(savedState, "storyStageIndex", &storyStageIndex);
+        json_getInt(savedState, "storyActionIndex", &storyActionIndex);
+        json_getInt(savedState, "storyActionOptionIndex", &storyActionOptionIndex);
+        json_getDouble(savedState, "storyTime", &storyTime);
+        remove(APP_SAVEFILE);
+        return true;
+    }
+
+    storyStageIndex = 0;
+    storyActionIndex = -1;
+    storyActionOptionIndex = 0;
+    storyTime = 0;
+    return false;
+}
+
 
 cJSON *stories_getStage(void)
 {
@@ -69,7 +114,8 @@ void stories_readStage(void)
     }
 
     if(!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "audio")) && json_getString(stageNode, "audio", soundFilename)) {
-        audio_play(story_path, soundFilename);
+        audio_play(story_path, soundFilename, &storyTime);
+        storyStartTime = stories_timestamp();
         if(cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "controlSettings"), "autoplay"))) {
             storyAutoplay = true;
             autosleep_lock();
@@ -88,6 +134,8 @@ void stories_reset(void)
     storyAutoplay = false;
     storyStageIndex = 0;
     storyActionIndex = -1;
+    storyActionOptionIndex = 0;
+    storyTime = 0;
     stories_readStage();
 }
 
@@ -131,6 +179,7 @@ void stories_readAction(void)
 
     } while(strcmp(stageUUID, stageNodeUUID) != 0);
     
+    storyTime = 0;
     stories_readStage();
 }
 
@@ -140,6 +189,8 @@ void stories_load(void)
         video_displayImage(SYSTEM_RESOURCES, "noStory.png");
         return;
     }
+    
+    stories_loadSession();
 
     if(storyIndex < 0) {
         storyIndex = storiesCount - 1;
@@ -149,7 +200,6 @@ void stories_load(void)
 
     char story_path[STR_MAX];
     sprintf(story_path, "%s%s/story.json", STORIES_RESOURCES, storiesList[storyIndex]);
-
     storyJson = json_load(story_path);
     if(storyJson == NULL) {
         return;
@@ -196,25 +246,42 @@ void stories_transition(char* transition) {
     return stories_readAction();
 }
 
+void stories_rewind(double time)
+{
+    long int ts = stories_timestamp();
+    storyTime += (double)(ts - storyStartTime) + time;
+    storyStartTime = ts;
+    Mix_SetMusicPosition(storyTime);
+}
+
 void stories_next(void)
 {
-    if(storyActionIndex == -1) {
-        storyIndex += 1;
-        stories_load();
+    if(storyAutoplay) {
+        stories_rewind(10);
     } else {
-        storyActionOptionIndex += 1;
-        stories_readAction();
+        if(storyActionIndex == -1) {
+            storyIndex += 1;
+            stories_load();
+        } else {
+            storyActionOptionIndex += 1;
+            stories_readAction();
+        }
     }
+    
 }
 
 void stories_previous(void)
 {
-    if(storyActionIndex == -1) {
-        storyIndex -= 1;
-        stories_load();
+    if(storyAutoplay) {
+        stories_rewind(-10);
     } else {
-        storyActionOptionIndex -= 1;
-        stories_readAction();
+        if(storyActionIndex == -1) {
+            storyIndex -= 1;
+            stories_load();
+        } else {
+            storyActionOptionIndex -= 1;
+            stories_readAction();
+        }
     }
 }
 
@@ -241,9 +308,13 @@ void stories_pause(void)
         if (Mix_PausedMusic() == 1) {
             autosleep_lock();
             Mix_ResumeMusic();
+            storyStartTime = stories_timestamp();
         } else {
             autosleep_unlock();
             Mix_PauseMusic();
+            long int ts = stories_timestamp();
+            storyTime += (double)(ts - storyStartTime);
+            storyStartTime = ts;
         }
     }
 }
@@ -262,6 +333,16 @@ bool stories_home(void)
         stories_transition("homeTransition");
         return false;
     }
+}
+
+void stories_save(void)
+{
+    if(Mix_PlayingMusic() == 1) {
+        if (Mix_PausedMusic() != 1) {
+            stories_pause();
+        }
+    }
+    stories_saveSession();
 }
 
 void stories_init(void)

@@ -83,7 +83,8 @@ void video_displayBlackScreen(void)
 }
 
 
-void audio_play(const char *dir, const char *name) {
+void audio_play(const char *dir, const char *name, double *position)
+{
     if(music != NULL) {
         Mix_FreeMusic(music);
     }
@@ -91,7 +92,7 @@ void audio_play(const char *dir, const char *name) {
     sprintf(sound_path, "%s%s", dir, name);
     music = Mix_LoadMUS(sound_path);
     Mix_PlayMusic(music, 1);
+    Mix_SetMusicPosition(*position);
 }
-
 
 #endif // STORYTELLER_SDL_HELPER__

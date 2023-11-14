@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
     settings_setVolume(6, true);
     settings_setBrightness(3, true, false);
 
-    app_init();
     autosleep_init();
+    app_init();
 
     // Prepare for Poll button input
     input_fd = open("/dev/input/event0", O_RDONLY);
@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
 
     while (1) {
         if(autosleep_isSleepingTime()) {
+            app_save();
             goto exit_loop;
         }
 

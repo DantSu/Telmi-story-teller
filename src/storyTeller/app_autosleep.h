@@ -5,8 +5,8 @@
 
 #include "system/display.h"
 
-#define AUTOSLEEP_INACTIVE_TIME_SCREEN_ON 60
-#define AUTOSLEEP_INACTIVE_TIME_SCREEN_OFF 600
+#define AUTOSLEEP_INACTIVE_TIME_SCREEN_ON 30
+#define AUTOSLEEP_INACTIVE_TIME_SCREEN_OFF 180
 
 static bool autosleepLocked = false;
 static long int autosleepTime = 0;

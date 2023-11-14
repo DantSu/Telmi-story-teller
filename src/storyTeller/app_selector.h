@@ -1,19 +1,24 @@
 #ifndef STORYTELLER_APP_SELECTOR__
 #define STORYTELLER_APP_SELECTOR__
 
+#include <stdio.h>
 #include "system/display.h"
-
-#include "./sdl_helper.h"
-#include "./music_player.h"
-#include "./stories_reader.h"
 
 
 #define APP_COUNT 2
 #define APP_STORIES 0
 #define APP_MUSIC 1
 
-
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
+#define APP_SAVEFILE "/mnt/SDCARD/Saves/.storytellerState"
+
+
+#include "./sdl_helper.h"
+#include "./music_player.h"
+#include "./stories_reader.h"
+
+
+
 static char appImages[2][32] = {"selectStories.png", "selectMusic.png"};
 
 static int appIndex = 0;
@@ -29,11 +34,6 @@ void app_refreshScreen(void)
     video_displayImage(SYSTEM_RESOURCES, appImages[appIndex]);
     display_setScreen(true);
     autosleep_unlock();
-}
-
-void app_init(void)
-{
-    app_refreshScreen();
 }
 
 void app_previous(void)
@@ -142,6 +142,33 @@ void app_home(void)
             appOpened = false;
             app_refreshScreen();
         }
+    }
+}
+
+void app_save(void)
+{
+    if(appOpened) {
+        switch (appIndex)
+        {
+            case APP_STORIES:
+                stories_save();
+                break;
+            case APP_MUSIC:
+                musicplayer_save();
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void app_init(void)
+{
+    cJSON *savedState = json_load(APP_SAVEFILE);
+    if(json_getInt(savedState, "app", &appIndex)) {
+        app_ok();
+    } else {
+        app_refreshScreen();
     }
 }
 

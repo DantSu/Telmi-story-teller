@@ -34,7 +34,7 @@ void musicplayer_load(void)
     video_displayBlackScreen();
     display_setScreen(false);
     autosleep_lock();
-    audio_play(MUSICPLAYER_RESOURCES, musicList[musicIndex]);
+    audio_play(MUSICPLAYER_RESOURCES, musicList[musicIndex], 0);
     Mix_HookMusicFinished(callback_musicplayer_autoplay);
 }
 
@@ -83,6 +83,11 @@ bool musicplayer_home(void)
         }
     }
     return true;
+}
+
+void musicplayer_save(void)
+{
+    
 }
 
 bool musicplayer_isMp3File(const char *fileName)
