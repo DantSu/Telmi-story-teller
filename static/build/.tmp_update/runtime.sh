@@ -49,8 +49,9 @@ main() {
 
     # Init
     rm /tmp/.offOrder 2> /dev/null
-    HOME=/mnt/SDCARD/StoryTeller/
+    HOME=/mnt/SDCARD/Stories/
     
+    mkdir -m 777 -p /mnt/SDCARD/Saves
     storyteller_jpg2png
 
     bootScreen "Boot"

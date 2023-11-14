@@ -31,10 +31,12 @@ void musicplayer_load(void)
         musicIndex = 0;
     }
     
+    double position = 0;
+
     video_displayBlackScreen();
     display_setScreen(false);
     autosleep_lock();
-    audio_play(MUSICPLAYER_RESOURCES, musicList[musicIndex], 0);
+    audio_play(MUSICPLAYER_RESOURCES, musicList[musicIndex], &position);
     Mix_HookMusicFinished(callback_musicplayer_autoplay);
 }
 
