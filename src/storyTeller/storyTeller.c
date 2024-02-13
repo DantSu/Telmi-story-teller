@@ -13,6 +13,7 @@
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
 #include "./app_selector.h"
+#include "./app_parameters.h"
 
 
 // for ev.value
@@ -41,10 +42,11 @@ int main(int argc, char *argv[])
     video_audio_init();
     settings_init();
     display_init();
-    settings_setVolume(6, true);
-    settings_setBrightness(3, true, false);
+    parameters_init();
+    settings_setVolume(parameters_getAudioVolumeStartup(), true);
+    settings_setBrightness(parameters_getScreenBrightnessStartup(), true, false);
 
-    autosleep_init();
+    autosleep_init(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
     app_init();
 
     // Prepare for Poll button input
@@ -112,10 +114,10 @@ int main(int argc, char *argv[])
                             break;
                         case HW_BTN_VOLUME_UP :
                             if(is_menu_pressed) {
-                                settings_setBrightness(settings.brightness + 1, true, false);
+                                settings_setBrightness(parameters_getScreenBrightnessValidation(settings.brightness + 1), true, false);
                                 osd_showBrightnessBar(settings.brightness);
                             } else {
-                                settings_setVolume(settings.volume + 1, true);
+                                settings_setVolume(parameters_getAudioVolumeValidation(settings.volume + 1), true);
                                 osd_showVolumeBar(settings.volume, false);
                             }
                             break;

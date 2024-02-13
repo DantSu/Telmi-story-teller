@@ -45,45 +45,20 @@ main() {
     fi
 
     cd $sysdir
-    bootScreen "convertingFiles"
+    bootScreen "Boot"
 
     # Init
     rm /tmp/.offOrder 2> /dev/null
     HOME=/mnt/SDCARD/Stories/
     
     mkdir -m 777 -p /mnt/SDCARD/Saves
-    storyteller_jpg2png
 
-    bootScreen "Boot"
     # start_networking
-    sleep 1
     rm -rf /tmp/is_booting
 
     launch_storyteller
     while true; do
         check_off_order "End"
-    done
-}
-
-storyteller_jpg2png() {
-    for directory in /mnt/SDCARD/Stories/*; do
-        if [ ! -d "$directory" ]; then
-            continue
-        fi
-
-        hasconvertedjpg=false
-        for file in "$directory"/assets/*.jpg "$directory"/assets/*.jpeg "$directory"/assets/*.JPG "$directory"/assets/*.JPEG; do
-            if [ ! -f "$file" ]; then
-                continue
-            fi
-            jpg2png "$file" 480 360
-            rm -f "$file" 2> /dev/null
-            hasconvertedjpg=true
-        done
-        
-        if $hasconvertedjpg; then
-            sed -i 's/\.\(jpg\|jpeg\)"/\.png"/gI' "$directory"/story.json
-        fi
     done
 }
 

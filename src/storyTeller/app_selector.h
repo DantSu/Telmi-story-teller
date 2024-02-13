@@ -33,7 +33,7 @@ void app_refreshScreen(void)
     }
     video_displayImage(SYSTEM_RESOURCES, appImages[appIndex]);
     display_setScreen(true);
-    autosleep_unlock();
+    autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
 }
 
 void app_previous(void)

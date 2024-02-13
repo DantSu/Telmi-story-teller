@@ -1,0 +1,9 @@
+{
+  "audioVolumeStartup": 0.3,
+  "audioVolumeMax": 0.6,
+  "screenBrightnessStartup": 0.3,
+  "screenBrightnessMax": 0.6,
+  "screenOnInactivityTime": 120,
+  "screenOffInactivityTime": 300,
+  "musicInactivityTime": 3600
+}

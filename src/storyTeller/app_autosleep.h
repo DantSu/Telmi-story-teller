@@ -5,11 +5,12 @@
 
 #include "system/display.h"
 
-#define AUTOSLEEP_INACTIVE_TIME_SCREEN_ON 30
-#define AUTOSLEEP_INACTIVE_TIME_SCREEN_OFF 180
+#include "./app_parameters.h"
 
 static bool autosleepLocked = false;
 static long int autosleepTime = 0;
+static int autosleepTimeScreenOn = 0;
+static int autosleepTimeScreenOff = 0;
 
 long int autosleep_timestamp(void) {
     return (long int) time(0);
@@ -18,9 +19,9 @@ long int autosleep_timestamp(void) {
 void autosleep_keepAwake(void)
 {
     if(display_enabled) {
-        autosleepTime = autosleep_timestamp() + AUTOSLEEP_INACTIVE_TIME_SCREEN_ON;
+        autosleepTime = autosleep_timestamp() + autosleepTimeScreenOn;
     } else {
-        autosleepTime = autosleep_timestamp() + AUTOSLEEP_INACTIVE_TIME_SCREEN_OFF;
+        autosleepTime = autosleep_timestamp() + autosleepTimeScreenOff;
     }
 }
 
@@ -33,18 +34,20 @@ bool autosleep_isSleepingTime(void)
     return false;
 }
 
-void autosleep_lock() {
+void autosleep_lock(void) {
     autosleepLocked = true;
 }
 
-void autosleep_unlock() {
+void autosleep_unlock(int timeScreenOn, int timeScreenOff) {
+    autosleepTimeScreenOn = timeScreenOn;
+    autosleepTimeScreenOff = timeScreenOff;
     autosleep_keepAwake();
     autosleepLocked = false;
 }
 
-void autosleep_init(void)
+void autosleep_init(int timeScreenOn, int timeScreenOff)
 {
-    autosleep_keepAwake();
+    autosleep_unlock(timeScreenOn, timeScreenOff);
 }
 
 #endif // STORYTELLER_APP_AUTOSLEEP__

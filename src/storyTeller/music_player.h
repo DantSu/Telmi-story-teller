@@ -8,6 +8,7 @@
 
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
+#include "./app_parameters.h"
 
 static char **musicList = NULL;
 static int musicCount = 0;
@@ -16,6 +17,10 @@ static void (*callback_musicplayer_autoplay)(void);
 
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
 #define MUSICPLAYER_RESOURCES "/mnt/SDCARD/Music/"
+
+void musicplayer_autosleep_unlock(void) {
+    autosleep_unlock(parameters_getMusicInactivityTime(), parameters_getMusicInactivityTime());
+}
 
 
 void musicplayer_load(void)
@@ -35,7 +40,6 @@ void musicplayer_load(void)
 
     video_displayBlackScreen();
     display_setScreen(false);
-    autosleep_lock();
     audio_play(MUSICPLAYER_RESOURCES, musicList[musicIndex], &position);
     Mix_HookMusicFinished(callback_musicplayer_autoplay);
 }
@@ -59,7 +63,8 @@ void musicplayer_ok(void)
 
 void musicplayer_autoplay(void)
 {
-    musicplayer_next();
+    musicIndex += 1;
+    musicplayer_load();
 }
 
 
@@ -67,11 +72,11 @@ void musicplayer_pause(void)
 {
     if(Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() == 1) {
-            autosleep_lock();
             Mix_ResumeMusic();
+            musicplayer_autosleep_unlock();
         } else {
-            autosleep_unlock();
             Mix_PauseMusic();
+            autosleep_lock();
         }
     }
 }
@@ -94,11 +99,12 @@ void musicplayer_save(void)
 
 bool musicplayer_isMp3File(const char *fileName)
 {
-    return strcmp((char *)fileName + strlen(fileName) - 4, ".mp3") == 0 || strcmp((char *)fileName + strlen(fileName) - 4, ".MP3") == 0;
+    return strcmp((char *)fileName + strlen(fileName) - 4, ".mp3") == 0;
 }
 
 void musicplayer_init(void)
 {
+    musicplayer_autosleep_unlock();
     callback_musicplayer_autoplay = &musicplayer_autoplay;
 
     video_displayImage(SYSTEM_RESOURCES, "loadingMusic.png");
