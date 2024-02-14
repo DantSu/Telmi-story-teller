@@ -17,7 +17,7 @@
 #include "utils/str.h"
 
 #ifndef ONION_VERSION
-#define ONION_VERSION "4.x.x-dev-test"
+#define ONION_VERSION "1.0.0"
 #endif
 
 #define TIMEOUT_M 10

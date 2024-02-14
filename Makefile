@@ -1,7 +1,7 @@
 ###########################################################
 
-TARGET=Telmi Story Teller
-VERSION=0.3.1
+TARGET=TelmiOS
+VERSION=1.0.0
 
 ###########################################################
 
@@ -55,7 +55,7 @@ all: dist
 version: # used by workflow
 	@echo $(VERSION)
 print-version:
-	@echo Telmi-Story-Teller v$(VERSION)
+	@echo TelmiOS v$(VERSION)
 
 $(CACHE)/.setup:
 	@$(ECHO) $(PRINT_RECIPE)

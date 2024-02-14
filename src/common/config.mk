@@ -3,7 +3,7 @@ BUILD_DIR=$(shell pwd -P)
 endif
 
 ifeq (,$(VERSION))
-VERSION="4.x.x-dev-test"
+VERSION="1.0.0"
 endif
 
 PLATFORM ?= $(UNION_PLATFORM)

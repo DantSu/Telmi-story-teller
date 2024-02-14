@@ -1,3 +1,3 @@
 [autorun]
 icon  = .tmp_update/res/sdcard.ico
-label = Telmi-Story-Teller-v{VERSION}
+label = TelmiOS-v{VERSION}

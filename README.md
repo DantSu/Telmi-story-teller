@@ -11,7 +11,7 @@ The story teller is compatible with stories exported from [STUdio](https://githu
 
 ### Download the installation files
 
-- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/0.3.1/TelmiOS_v0.3.1.zip)
+- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/1.0.0/TelmiOS_v1.0.0.zip)
 
 ### Format your SD card as FAT32 (not exFAT!)
 
@@ -46,9 +46,9 @@ Make sure you choose: `For use with all systems and devices (FAT)`
 
 Chrome already has a tool to format an SD card. Insert the card into your Chromebook, right-click it and click **Format Device**, make sure `FAT32` is selected under **Format** and click or tap **Erase & Format**. 
 
-### Unzip TelmiOS_v0.3.1.zip
+### Unzip TelmiOS_v1.0.0.zip
 
-Put the content of `TelmiOS_v0.3.1.zip` at the root of the SD card.
+Put the content of `TelmiOS_v1.0.0.zip` at the root of the SD card.
 
 ### Power on your Miyoo
 
@@ -56,13 +56,11 @@ Insert the SD card in your Miyoo. Press the power button and the installation wi
 
 **Enjoy !!**
 
-# Story teller
+# Add stories and music on TelmiOS
 
-Export stories from [STUdio](https://github.com/marian-m12l/studio) (v1 format). Unzip stories in `/Stories` folder in micro SD card.
-
-# Music
-
-Paste your MP3 song directly in `/Music` folder in micro SD card.
+Download the latest version of [Telmi Sync](https://github.com/DantSu/Telmi-Sync/releases/) and install it (Supported OS : Windows, MacOS, Linux).
+Drag and drop your stories exported from [STUdio](https://github.com/DantSu/studio) on Telmi Sync to import it. Do the same with audio files. 
+Then plug SD card of TelmiOS on your computer, it will be reconized by TelmiSync. You can now transfer stories and music to TelmiOS.
 
 # Buttons roles
 
