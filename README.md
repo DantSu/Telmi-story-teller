@@ -80,3 +80,7 @@ Then plug SD card of TelmiOS on your computer, it will be reconized by TelmiSync
 # Demo
 
 <p align="center"><a href="https://www.youtube.com/watch?v=duS0nQS_BcI" taget="_blank"><img = src="https://dantsu.com/files/Telmi_youtube.png" alt="Telmi OS demonstration video" /></a></p>
+
+# Discord
+
+Tu parles français et tu veux discuter avec moi ? Rendez vous sur le discord de [Raconte moi une histoire](https://monurl.ca/lunii.creations) dans le channel `#telmi`.
