@@ -58,6 +58,8 @@ Insert the SD card in your Miyoo. Press the power button and the installation wi
 
 # Add stories and music on TelmiOS
 
+<p align="center"><img = src="https://dantsu.com/files/Telmi_MiyooPC.jpg" alt="Telmi OS - Telmi Sync" /></p>
+
 Download the latest version of [Telmi Sync](https://github.com/DantSu/Telmi-Sync/releases/) and install it (Supported OS : Windows, MacOS, Linux).
 Drag and drop your stories exported from [STUdio](https://github.com/DantSu/studio) on Telmi Sync to import it. Do the same with audio files. 
 Then plug SD card of TelmiOS on your computer, it will be reconized by TelmiSync. You can now transfer stories and music to TelmiOS.
