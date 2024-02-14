@@ -5,7 +5,7 @@
 TelmiOS is an open source story teller and lite MP3 player for Miyoo Mini and Miyoo Mini Plus.
 TelmiOS is for children 3~4 years old and older.
 
-The story teller is compatible with stories exported from [STUdio](https://github.com/marian-m12l/studio) (v1 format).
+The story teller is compatible with stories exported from [STUdio](https://github.com/DantSu/studio).
 
 ## Installation
 
