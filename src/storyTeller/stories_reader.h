@@ -13,6 +13,8 @@
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
 #include "./app_parameters.h"
+#include "./array_helper.h"
+#include "./time_helper.h"
 
 #define STR_DIRNAME 64
 
@@ -36,10 +38,6 @@ static void (*callback_stories_reset)(void);
 
 void stories_autosleep_unlock(void) {
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
-}
-
-long int stories_timestamp(void) {
-    return (long int) time(0);
 }
 
 void stories_saveSession(void)
@@ -125,7 +123,7 @@ void stories_readStage(void)
 
     if(!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "audio")) && json_getString(stageNode, "audio", soundFilename)) {
         audio_play(story_audio_path, soundFilename, &storyTime);
-        storyStartTime = stories_timestamp();
+        storyStartTime = get_time();
         if(cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "autoplay"))) {
             storyAutoplay = true;
             storyOkAction = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "ok"));
@@ -225,7 +223,7 @@ void stories_title(void)
     audio_play(story_path, "title.mp3", &storyTime);
     display_setScreen(true);
     stories_autosleep_unlock();
-    storyStartTime = stories_timestamp();
+    storyStartTime = get_time();
 }
 
 void stories_transition(char* transition) {
@@ -255,7 +253,7 @@ void stories_transition(char* transition) {
 
 void stories_rewind(double time)
 {
-    long int ts = stories_timestamp();
+    long int ts = get_time();
     storyTime += (double)(ts - storyStartTime) + time;
     storyStartTime = ts;
     Mix_SetMusicPosition(storyTime);
@@ -319,11 +317,11 @@ void stories_pause(void)
         if (Mix_PausedMusic() == 1) {
             autosleep_lock();
             Mix_ResumeMusic();
-            storyStartTime = stories_timestamp();
+            storyStartTime = get_time();
         } else {
             stories_autosleep_unlock();
             Mix_PauseMusic();
-            long int ts = stories_timestamp();
+            long int ts = get_time();
             storyTime += (double)(ts - storyStartTime);
             storyStartTime = ts;
         }
@@ -365,6 +363,10 @@ void stories_reset(void)
     storyActionKey[0] = '\0';
     storyActionOptionIndex = 0;
     storyTime = 0;
+    if(storyJson != NULL) {
+        cJSON_free(storyJson);
+        storyJson = NULL;
+    }
     stories_title();
 }
 
@@ -403,6 +405,11 @@ void stories_init(void)
         }
     }
     closedir(d);
+
+    if(storiesCount > 0) {
+        sort(filesList, storiesCount);
+    }
+
     storiesList = filesList;
     stories_title();
 }

@@ -36,6 +36,19 @@ void app_refreshScreen(void)
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
 }
 
+void app_screenUpdate(void) {
+    if(appOpened) {
+        switch (appIndex)
+        {
+            case APP_MUSIC:
+                musicplayer_screenUpdate();
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 void app_previous(void)
 {
     if(appOpened) {
@@ -73,6 +86,34 @@ void app_next(void)
     } else {
         appIndex += 1;
         app_refreshScreen();
+    }
+}
+
+void app_up(void)
+{
+    if(appOpened) {
+        switch (appIndex)
+        {
+            case APP_MUSIC:
+                musicplayer_up();
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void app_down(void)
+{
+    if(appOpened) {
+        switch (appIndex)
+        {
+            case APP_MUSIC:
+                musicplayer_down();
+                break;
+            default:
+                break;
+        }
     }
 }
 

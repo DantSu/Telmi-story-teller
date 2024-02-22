@@ -63,12 +63,12 @@ int main(int argc, char *argv[])
             goto exit_loop;
         }
 
+        app_screenUpdate();
+
         if (poll(fds, 1, 0) > 0) {
             if (!keyinput_isValid()) {
                 continue;
             }
-            
-            autosleep_keepAwake();
 
             switch (ev.value) {
                 case PRESSED:
@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
                     break;
                 
                 case RELEASED:
+                    autosleep_keepAwake();
                     switch (ev.code)
                     {
                         case HW_BTN_POWER :
@@ -90,6 +91,12 @@ int main(int argc, char *argv[])
                             break;
                         case HW_BTN_RIGHT :
                             app_next();
+                            break;
+                        case HW_BTN_UP :
+                            app_up();
+                            break;
+                        case HW_BTN_DOWN :
+                            app_down();
                             break;
                         case HW_BTN_START :
                         case HW_BTN_SELECT :

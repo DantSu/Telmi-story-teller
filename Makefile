@@ -9,7 +9,7 @@ ifneq ($(VERSION_OVERRIDE),)
 VERSION = $(VERSION_OVERRIDE)
 endif
  
-RELEASE_NAME := $(TARGET)-v$(VERSION)
+RELEASE_NAME := $(TARGET)_v$(VERSION)
 
 ifdef OS
 	current_dir := $(shell cd)
@@ -133,15 +133,16 @@ dist: build
 	@rm -rf $(TEMP_DIR)/configs
 	@rmdir $(TEMP_DIR)
 # Package Telmi core
-	@echo -n "Packaging Telmi..."
+	@echo -n "Packaging TelmiOS..."
 	@cd $(BUILD_DIR) && 7z a -mtm=off $(DIST_DIR)/miyoo/app/.tmp_update/onion.pak . -bsp1 -bso0
 	@echo " DONE"
 	@$(ECHO) $(PRINT_DONE)
 
 release: dist
 	@$(ECHO) $(PRINT_RECIPE)
-	@rm -f $(RELEASE_DIR)/$(RELEASE_NAME).zip
-	@cd $(DIST_DIR) && 7z a -mtc=off $(RELEASE_DIR)/$(RELEASE_NAME).zip . -bsp1 -bso0
+	@rm -f "$(RELEASE_DIR)/$(RELEASE_NAME).zip" "$(RELEASE_DIR)/$(RELEASE_NAME)-update.zip"
+	@cd "$(DIST_DIR)" && 7z a -mtc=off "$(RELEASE_DIR)/$(RELEASE_NAME).zip" . -bsp1 -bso0
+	@cd "$(BUILD_DIR)" && 7z a -mtc=off -spf -tzip "$(RELEASE_DIR)/$(RELEASE_NAME)-update.zip" "autorun.inf" ".tmp_update/bin/bootScreen" ".tmp_update/bin/chargingState" ".tmp_update/bin/storyTeller" ".tmp_update/res" ".tmp_update/runtime.sh" -bsp1 -bso0
 	@$(ECHO) $(PRINT_DONE)
 
 clean:
