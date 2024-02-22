@@ -49,6 +49,19 @@ void app_screenUpdate(void) {
     }
 }
 
+void app_menu(void) {
+    if(appOpened) {
+        switch (appIndex)
+        {
+            case APP_MUSIC:
+                musicplayer_menu();
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 void app_previous(void)
 {
     if(appOpened) {

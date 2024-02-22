@@ -10,6 +10,7 @@
 #include "system/settings_sync.h"
 #include "utils/log.h"
 
+#include "./time_helper.h"
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
 #include "./app_selector.h"
@@ -49,13 +50,14 @@ int main(int argc, char *argv[])
     autosleep_init(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
     app_init();
 
-    // Prepare for Poll button input
     input_fd = open("/dev/input/event0", O_RDONLY);
     memset(&fds, 0, sizeof(fds));
     fds[0].fd = input_fd;
     fds[0].events = POLLIN;
 
-    bool is_menu_pressed = false;
+    bool isMenuPressed = false;
+    bool isVolumePressed = false;
+    long startPowerPressed = 0;
 
     while (1) {
         if(autosleep_isSleepingTime()) {
@@ -72,8 +74,14 @@ int main(int argc, char *argv[])
 
             switch (ev.value) {
                 case PRESSED:
-                    if(ev.code == HW_BTN_MENU) {
-                        is_menu_pressed = true;
+                    switch (ev.code)
+                    {
+                        case HW_BTN_MENU :
+                            isMenuPressed = true;
+                            break;
+                        case HW_BTN_POWER :
+                            startPowerPressed = get_time();
+                            break;
                     }
                     break;
                 
@@ -82,9 +90,16 @@ int main(int argc, char *argv[])
                     switch (ev.code)
                     {
                         case HW_BTN_POWER :
-                            goto exit_loop;
+                            if((get_time() - startPowerPressed) > 0) {
+                                goto exit_loop;
+                            }
+                            break;
                         case HW_BTN_MENU :
-                            is_menu_pressed = false;
+                            if(!isVolumePressed) {
+                                app_menu();
+                            }
+                            isMenuPressed = false;
+                            isVolumePressed = false;
                             break;
                         case HW_BTN_LEFT :
                             app_previous();
@@ -111,18 +126,20 @@ int main(int argc, char *argv[])
                             app_home();
                             break;
                         case HW_BTN_VOLUME_DOWN :
-                            if(is_menu_pressed) {
+                            if(isMenuPressed) {
                                 settings_setBrightness(settings.brightness - 1, true, false);
                                 osd_showBrightnessBar(settings.brightness);
+                                isVolumePressed = true;
                             } else {
                                 settings_setVolume(settings.volume - 1, true);
                                 osd_showVolumeBar(settings.volume, false);
                             }
                             break;
                         case HW_BTN_VOLUME_UP :
-                            if(is_menu_pressed) {
+                            if(isMenuPressed) {
                                 settings_setBrightness(parameters_getScreenBrightnessValidation(settings.brightness + 1), true, false);
                                 osd_showBrightnessBar(settings.brightness);
+                                isVolumePressed = true;
                             } else {
                                 settings_setVolume(parameters_getAudioVolumeValidation(settings.volume + 1), true);
                                 osd_showVolumeBar(settings.volume, false);
