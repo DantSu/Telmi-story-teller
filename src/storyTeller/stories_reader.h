@@ -122,7 +122,7 @@ void stories_readStage(void)
     storyOkAction = true;
 
     if(!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "audio")) && json_getString(stageNode, "audio", soundFilename)) {
-        audio_play(story_audio_path, soundFilename, &storyTime);
+        audio_play(story_audio_path, soundFilename, storyTime);
         storyStartTime = get_time();
         if(cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "autoplay"))) {
             storyAutoplay = true;
@@ -220,7 +220,7 @@ void stories_title(void)
     
     storyTime = 0;
     video_displayImage(story_path, "title.png");
-    audio_play(story_path, "title.mp3", &storyTime);
+    audio_play(story_path, "title.mp3", storyTime);
     display_setScreen(true);
     stories_autosleep_unlock();
     storyStartTime = get_time();
@@ -256,7 +256,7 @@ void stories_rewind(double time)
     long int ts = get_time();
     storyTime += (double)(ts - storyStartTime) + time;
     storyStartTime = ts;
-    Mix_SetMusicPosition(storyTime);
+    audio_setPosition(storyTime);
 }
 
 void stories_next(void)

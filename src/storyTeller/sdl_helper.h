@@ -60,7 +60,10 @@ void video_audio_quit(void)
 
     TTF_Quit();
 
-    Mix_FreeMusic(music);
+    if(music != NULL) {
+        Mix_FreeMusic(music);
+        music = NULL;
+    }
     Mix_CloseAudio();
 
     SDL_FreeSurface(screen);
@@ -103,8 +106,10 @@ void video_screenAddImage(const char *dir, char *name, int x, int y, int width)
 
     if(width != image->w) {
         SDL_Surface *imageScaled = rotozoomSurface(image, 0.0, (double)width / (double)image->w, 0);
-        SDL_BlitSurface(imageScaled, NULL, screen, &(SDL_Rect){x, y});
-        SDL_FreeSurface(imageScaled);
+        if(imageScaled != NULL) {
+            SDL_BlitSurface(imageScaled, NULL, screen, &(SDL_Rect){x, y});
+            SDL_FreeSurface(imageScaled);
+        }
     } else {
         SDL_BlitSurface(image, NULL, screen, &(SDL_Rect){x, y});
     }
@@ -137,6 +142,14 @@ void audio_free_music(void) {
         Mix_HookMusicFinished(NULL);
         Mix_HaltMusic();
         Mix_FreeMusic(music);
+        music = NULL;
+    }
+}
+
+void audio_setPosition(double position) {
+    if(music != NULL && Mix_PlayingMusic() == 1) {
+        Mix_RewindMusic();
+        Mix_SetMusicPosition(position);
     }
 }
 
@@ -144,15 +157,17 @@ int audio_getDuration(void) {
     return musicDuration;
 }
 
-void audio_play(const char *dir, const char *name, double *position)
+void audio_play(const char *dir, const char *name, double position)
 {
     audio_free_music();
     char sound_path[STR_MAX * 2];
     sprintf(sound_path, "%s%s", dir, name);
     musicDuration = (int)(((double)(file_getSize(sound_path) - 16300L) / 24000.0) + 0.5);
     music = Mix_LoadMUS(sound_path);
-    Mix_PlayMusic(music, 1);
-    Mix_SetMusicPosition(*position);
+    if(music != NULL) {
+        Mix_PlayMusic(music, 1);
+        Mix_SetMusicPosition(position);
+    }
 }
 
 #endif // STORYTELLER_SDL_HELPER__

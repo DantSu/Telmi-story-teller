@@ -198,7 +198,7 @@ void musicplayer_screenUpdate(void) {
         }
         if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
             int mPos = musicPlayerTrackPosition;
-            if(Mix_PausedMusic() != 1) {
+            if(Mix_PlayingMusic() == 1 && Mix_PausedMusic() != 1) {
                 mPos += ts - musicPlayerTrackStartTime;
             }
             musicplayer_interfaceplayer_drawInterface(mPos);
@@ -235,7 +235,7 @@ void musicplayer_load(void)
     }
 
     musicPlayerTrackStartTime = get_time();
-    audio_play(MUSICPLAYER_RESOURCES, musicPlayerTracksList[musicPlayerTrackIndex], (double*)&musicPlayerTrackPosition);
+    audio_play(MUSICPLAYER_RESOURCES, musicPlayerTracksList[musicPlayerTrackIndex], (double)musicPlayerTrackPosition);
     Mix_HookMusicFinished(callback_musicplayer_autoplay);
 
     if(display_enabled && musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
@@ -283,7 +283,7 @@ void musicplayer_rewind(int time)
     } else if (musicPlayerTrackPosition >= musicDuration) {
         musicPlayerTrackPosition = musicDuration - 1;
     }
-    Mix_SetMusicPosition((double)musicPlayerTrackPosition);
+    audio_setPosition((double)musicPlayerTrackPosition);
     musicplayer_interfaceplayer_drawInterface(musicPlayerTrackPosition);
 }
 
@@ -333,7 +333,7 @@ void musicplayer_pause(void)
         if (Mix_PausedMusic() == 1) {
             Mix_ResumeMusic();
             musicPlayerTrackStartTime = get_time();
-            Mix_SetMusicPosition((double)musicPlayerTrackPosition);
+            audio_setPosition((double)musicPlayerTrackPosition);
             musicplayer_autosleep_lock();
         } else {
             Mix_PauseMusic();
@@ -346,12 +346,16 @@ void musicplayer_pause(void)
 bool musicplayer_home(void)
 {
     if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+        if (Mix_PlayingMusic() == 1 && Mix_PausedMusic() != 1) {
+            musicPlayerTrackPosition += get_time() - musicPlayerTrackStartTime;
+        }
         audio_free_music();
         return true;
+    } else {
+        musicplayer_screenActivate();
+        musicplayer_setMode(MUSICPLAYER_MODE_PLAYER);
+        return false;
     }
-    musicplayer_screenActivate();
-    musicplayer_setMode(MUSICPLAYER_MODE_PLAYER);
-    return false;
 }
 
 void musicplayer_menu(void)
