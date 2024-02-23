@@ -142,7 +142,7 @@ release: dist
 	@$(ECHO) $(PRINT_RECIPE)
 	@rm -f "$(RELEASE_DIR)/$(RELEASE_NAME).zip" "$(RELEASE_DIR)/$(RELEASE_NAME)-update.zip"
 	@cd "$(DIST_DIR)" && 7z a -mtc=off "$(RELEASE_DIR)/$(RELEASE_NAME).zip" . -bsp1 -bso0
-	@cd "$(BUILD_DIR)" && 7z a -mtc=off -spf -tzip "$(RELEASE_DIR)/$(RELEASE_NAME)-update.zip" "autorun.inf" ".tmp_update/bin/bootScreen" ".tmp_update/bin/chargingState" ".tmp_update/bin/storyTeller" ".tmp_update/res" ".tmp_update/runtime.sh" -bsp1 -bso0
+	@cd "$(BUILD_DIR)" && 7z a -mtc=off -spf -tzip "$(RELEASE_DIR)/$(RELEASE_NAME)-update.zip" "autorun.inf" ".tmp_update/bin/bootScreen" ".tmp_update/bin/chargingState" ".tmp_update/bin/storyTeller" ".tmp_update/onionVersion/version.txt" ".tmp_update/res" ".tmp_update/runtime.sh" -bsp1 -bso0
 	@$(ECHO) $(PRINT_DONE)
 
 clean:
