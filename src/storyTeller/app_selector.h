@@ -53,6 +53,9 @@ void app_menu(void) {
     if(appOpened) {
         switch (appIndex)
         {
+            case APP_STORIES:
+                stories_menu();
+                break;
             case APP_MUSIC:
                 musicplayer_menu();
                 break;
@@ -107,6 +110,9 @@ void app_up(void)
     if(appOpened) {
         switch (appIndex)
         {
+            case APP_STORIES:
+                stories_up();
+                break;
             case APP_MUSIC:
                 musicplayer_up();
                 break;
@@ -121,6 +127,9 @@ void app_down(void)
     if(appOpened) {
         switch (appIndex)
         {
+            case APP_STORIES:
+                stories_down();
+                break;
             case APP_MUSIC:
                 musicplayer_down();
                 break;

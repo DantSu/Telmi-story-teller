@@ -16,12 +16,19 @@
 #include "./array_helper.h"
 #include "./time_helper.h"
 
-#define STR_DIRNAME 64
+#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
+#define STORIES_RESOURCES "/mnt/SDCARD/Stories/"
 
+#define STORIES_DISPLAY_MODE_SINGLE 0
+#define STORIES_DISPLAY_MODE_TILES 1
+
+#define STR_DIRNAME 128
+
+static int storiesDiplayMode = STORIES_DISPLAY_MODE_SINGLE;
 static char **storiesList = NULL;
-static cJSON *storyJson = NULL;
 static int storiesCount = 0;
 static int storyIndex = 0;
+static cJSON *storyJson = NULL;
 static char storyStageKey[STR_MAX] = {'\0'};
 static char storyActionKey[STR_MAX] = {'\0'};
 static int storyActionOptionIndex = 0;
@@ -32,9 +39,6 @@ static bool storyAutoplay = false;
 static bool storyOkAction = true;
 static void (*callback_stories_autoplay)(void);
 static void (*callback_stories_reset)(void);
-
-#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
-#define STORIES_RESOURCES "/mnt/SDCARD/Stories/"
 
 void stories_autosleep_unlock(void) {
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
@@ -198,6 +202,51 @@ void stories_load(void)
     stories_readAction();
 }
 
+void stories_title_single(void) {
+    char story_path[STR_MAX];
+    sprintf(story_path, "%s%s/", STORIES_RESOURCES, storiesList[storyIndex]);
+    video_displayImage(story_path, "title.png");
+}
+
+void stories_title_tile(int base, int pos) {
+    int sIndex = base + pos;
+
+    if(sIndex >= storiesCount) {
+        return;
+    }
+
+    int x = 33 + (pos % 3) * 201;
+    int y = 28 + (pos / 3) * 148;
+
+    if(storyIndex == sIndex) {
+        video_drawRectangle(x - 5, y - 5, 181, 138, 255, 186, 0);
+    }
+    char story_path[STR_MAX];
+    sprintf(story_path, "%s%s/", STORIES_RESOURCES, storiesList[sIndex]);
+    video_drawRectangle(x, y, 171, 128, 0, 0, 0);
+    video_screenAddImage(story_path, "title.png", x, y, 171);
+}
+
+void stories_title_tiles(void) {
+    int page = storyIndex / 9;
+    int baseIndex = page * 9;
+    char writePage[STR_MAX];
+    sprintf(writePage, "%i / %i", storyIndex + 1, storiesCount);
+
+    video_screenAddImage(SYSTEM_RESOURCES, "storiesTiles.png", 0, 0, 640);
+    stories_title_tile(baseIndex, 0);
+    stories_title_tile(baseIndex, 1);
+    stories_title_tile(baseIndex, 2);
+    stories_title_tile(baseIndex, 3);
+    stories_title_tile(baseIndex, 4);
+    stories_title_tile(baseIndex, 5);
+    stories_title_tile(baseIndex, 6);
+    stories_title_tile(baseIndex, 7);
+    stories_title_tile(baseIndex, 8);
+    video_screenWriteFont(writePage, fontRegular16, colorWhite60, 606, 456, SDL_ALIGN_RIGHT);
+    video_applyToVideo();
+}
+
 void stories_title(void)
 {
     if(storiesCount == 0) {
@@ -214,16 +263,21 @@ void stories_title(void)
     } else if (storyIndex >= storiesCount) {
         storyIndex = 0;
     }
-    
-    char story_path[STR_MAX];
-    sprintf(story_path, "%s%s/", STORIES_RESOURCES, storiesList[storyIndex]);
-    
-    storyTime = 0;
-    video_displayImage(story_path, "title.png");
-    audio_play(story_path, "title.mp3", storyTime);
+
     display_setScreen(true);
     stories_autosleep_unlock();
     storyStartTime = get_time();
+    storyTime = 0;
+
+    char story_path[STR_MAX];
+    sprintf(story_path, "%s%s/", STORIES_RESOURCES, storiesList[storyIndex]);
+    audio_play(story_path, "title.mp3", storyTime);
+
+    if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
+        stories_title_single();
+    } else {
+        stories_title_tiles();
+    }
 }
 
 void stories_transition(char* transition) {
@@ -251,6 +305,37 @@ void stories_transition(char* transition) {
     stories_readAction();
 }
 
+
+void stories_setMode(int dm) {
+    storiesDiplayMode = dm;
+    if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
+        stories_title_single();
+    } else {
+        stories_title_tiles();
+    }
+}
+
+void stories_changeTitle(int direction) {
+    if(!storyAutoplay && storyActionKey[0] == '\0') {
+        storyIndex += direction;
+        stories_title();
+    }
+}
+
+void stories_up(void)
+{
+    if(storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
+        stories_changeTitle(-3);
+    }
+}
+
+void stories_down(void)
+{
+    if(storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
+        stories_changeTitle(3);
+    }
+}
+
 void stories_rewind(double time)
 {
     long int ts = get_time();
@@ -265,14 +350,12 @@ void stories_next(void)
         stories_rewind(10);
     } else {
         if(storyActionKey[0] == '\0') {
-            storyIndex += 1;
-            stories_title();
+            stories_changeTitle(1);
         } else {
             storyActionOptionIndex += 1;
             stories_readAction();
         }
     }
-    
 }
 
 void stories_previous(void)
@@ -281,12 +364,20 @@ void stories_previous(void)
         stories_rewind(-10);
     } else {
         if(storyActionKey[0] == '\0') {
-            storyIndex -= 1;
-            stories_title();
+            stories_changeTitle(-1);
         } else {
             storyActionOptionIndex -= 1;
             stories_readAction();
         }
+    }
+}
+
+void stories_menu(void)
+{
+    if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
+        stories_setMode(STORIES_DISPLAY_MODE_TILES);
+    } else {
+        stories_setMode(STORIES_DISPLAY_MODE_SINGLE);
     }
 }
 

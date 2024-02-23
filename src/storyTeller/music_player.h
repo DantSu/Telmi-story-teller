@@ -139,15 +139,9 @@ void musicplayer_interfacealbum_drawAlbum(int baseIndex, int pos) {
 
 void musicplayer_interfacealbum_draw() {
     if(musicPlayerAlbumIndex >= musicPlayerAlbumsCount) {
-        musicPlayerAlbumIndex -= musicPlayerAlbumsCount;
-        if(musicPlayerAlbumIndex >= musicPlayerAlbumsCount) {
-            musicPlayerAlbumIndex = 0;
-        }
+        musicPlayerAlbumIndex = 0;
     } else if(musicPlayerAlbumIndex < 0) {
-        musicPlayerAlbumIndex += musicPlayerAlbumsCount;
-        if(musicPlayerAlbumIndex < 0) {
-            musicPlayerAlbumIndex = musicPlayerAlbumsCount - 1;
-        }
+        musicPlayerAlbumIndex = musicPlayerAlbumsCount - 1;
     }
 
     int page = musicPlayerAlbumIndex / 9;
