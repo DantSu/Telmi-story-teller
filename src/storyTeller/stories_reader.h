@@ -374,10 +374,12 @@ void stories_previous(void)
 
 void stories_menu(void)
 {
-    if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
-        stories_setMode(STORIES_DISPLAY_MODE_TILES);
-    } else {
-        stories_setMode(STORIES_DISPLAY_MODE_SINGLE);
+    if(storyActionKey[0] == '\0') {
+        if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
+            stories_setMode(STORIES_DISPLAY_MODE_TILES);
+        } else {
+            stories_setMode(STORIES_DISPLAY_MODE_SINGLE);
+        }
     }
 }
 
