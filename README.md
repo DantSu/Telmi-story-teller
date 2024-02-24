@@ -11,7 +11,7 @@ The story teller is compatible with stories exported from [STUdio](https://githu
 
 ### Download the installation files
 
-- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/1.0.0/TelmiOS_v1.0.0.zip)
+- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/1.0.2/TelmiOS_v1.0.2.zip)
 
 ### Format your SD card as FAT32 (not exFAT!)
 
@@ -46,9 +46,9 @@ Make sure you choose: `For use with all systems and devices (FAT)`
 
 Chrome already has a tool to format an SD card. Insert the card into your Chromebook, right-click it and click **Format Device**, make sure `FAT32` is selected under **Format** and click or tap **Erase & Format**. 
 
-### Unzip TelmiOS_v1.0.0.zip
+### Unzip TelmiOS_v1.0.2.zip
 
-Put the content of `TelmiOS_v1.0.0.zip` at the root of the SD card.
+Put the content of `TelmiOS_v1.0.2.zip` at the root of the SD card.
 
 ### Power on your Miyoo
 
@@ -79,7 +79,7 @@ Then plug SD card of TelmiOS on your computer, it will be reconized by TelmiSync
 
 # Demo
 
-<p align="center"><a href="https://www.youtube.com/watch?v=duS0nQS_BcI" taget="_blank"><img = src="https://dantsu.com/files/Telmi_youtube.png" alt="Telmi OS demonstration video" /></a></p>
+<p align="center"><a href="https://www.youtube.com/watch?v=UBqSSkXr42o" taget="_blank"><img = src="https://dantsu.com/files/Telmi_youtube.png" alt="Telmi OS demonstration video" /></a></p>
 
 # Discord
 
