@@ -52,6 +52,10 @@ void musicplayer_interfaceplayer_drawSideMusic(int index, int top) {
     } else if (mIndex >= musicPlayerTracksCount) {
         mIndex = mIndex - musicPlayerTracksCount;
     }
+
+    if(mIndex < 0 || mIndex >= musicPlayerTracksCount) {
+        return;
+    }
     
     char fileImageName[STR_MAX], writeTitle[STR_MAX], writeArtist[STR_MAX],
     imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_";
@@ -244,6 +248,10 @@ void musicplayer_changeAlbum(int direction) {
 
 void musicplayer_up(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return;
+    }
+
     musicplayer_screenActivate();
     if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicPlayerTrackPosition = 0;
@@ -256,6 +264,10 @@ void musicplayer_up(void)
 
 void musicplayer_down(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return;
+    }
+
     musicplayer_screenActivate();
     if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicPlayerTrackPosition = 0;
@@ -283,6 +295,10 @@ void musicplayer_rewind(int time)
 
 void musicplayer_next(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return;
+    }
+
     musicplayer_screenActivate();
     if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_rewind(10);
@@ -293,6 +309,10 @@ void musicplayer_next(void)
 
 void musicplayer_previous(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return;
+    }
+
     musicplayer_screenActivate();
     if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_rewind(-10);
@@ -303,6 +323,10 @@ void musicplayer_previous(void)
 
 void musicplayer_ok(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return;
+    }
+
     musicplayer_screenActivate();
     if(musicPlayerMode == MUSICPLAYER_MODE_ALBUM) {
         musicPlayerMode = MUSICPLAYER_MODE_PLAYER;
@@ -314,6 +338,10 @@ void musicplayer_ok(void)
 
 void musicplayer_autoplay(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return;
+    }
+
     musicPlayerTrackPosition = 0;
     musicPlayerTrackIndex += 1;
     musicplayer_load();
@@ -322,6 +350,10 @@ void musicplayer_autoplay(void)
 
 void musicplayer_pause(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return;
+    }
+
     musicplayer_screenActivate();
     if(Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() == 1) {
@@ -339,6 +371,10 @@ void musicplayer_pause(void)
 
 bool musicplayer_home(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return true;
+    }
+
     if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         if (Mix_PlayingMusic() == 1 && Mix_PausedMusic() != 1) {
             musicPlayerTrackPosition += get_time() - musicPlayerTrackStartTime;
@@ -354,6 +390,10 @@ bool musicplayer_home(void)
 
 void musicplayer_menu(void)
 {
+    if(musicPlayerTracksCount == 0) {
+        return;
+    }
+
     musicplayer_screenActivate();
     if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_setMode(MUSICPLAYER_MODE_ALBUM);
@@ -411,46 +451,44 @@ void musicplayer_init(void)
             musicPlayerTracksCount++;
         }
     }
-    rewinddir(d);
-
-    
-    char **filesList = (char**)malloc(musicPlayerTracksCount * sizeof(char*));
-    int i = 0;
-
-    while ((dir = readdir(d)) != NULL) {
-        if (dir->d_type == DT_REG && musicplayer_isMp3File(dir->d_name)) {
-            filesList[i] = malloc(STR_MAX);
-            strcpy(filesList[i], dir->d_name);
-            i++;
-        }
-    }
-    closedir(d);
 
     if (musicPlayerTracksCount > 0) {
-        sort(filesList, musicPlayerTracksCount); 
-    }
+        musicPlayerTracksList = (char**)malloc(musicPlayerTracksCount * sizeof(char*));
+        int i = 0;
 
-    char lastAlbum[STR_MAX] = {'\0'};
-    musicPlayerAlbumsCount = 0;
-    for (i = 0; i < musicPlayerTracksCount; i++)
-    {
-        if (musicplayer_isNewAlbum(filesList[i], lastAlbum)) {
-            musicPlayerAlbumsCount++;
+        rewinddir(d);
+        while ((dir = readdir(d)) != NULL) {
+            if (dir->d_type == DT_REG && musicplayer_isMp3File(dir->d_name)) {
+                musicPlayerTracksList[i] = malloc(STR_MAX);
+                strcpy(musicPlayerTracksList[i], dir->d_name);
+                i++;
+            }
+        }
+
+        sort(musicPlayerTracksList, musicPlayerTracksCount); 
+
+        char lastAlbum[STR_MAX] = {'\0'};
+        musicPlayerAlbumsCount = 0;
+        for (i = 0; i < musicPlayerTracksCount; i++)
+        {
+            if (musicplayer_isNewAlbum(musicPlayerTracksList[i], lastAlbum)) {
+                musicPlayerAlbumsCount++;
+            }
+        }
+
+        musicPlayerAlbumsIndex = (int*)malloc(sizeof(int) * musicPlayerAlbumsCount);
+        lastAlbum[0] = '\0';
+        int j = 0;
+        for (i = 0; i < musicPlayerTracksCount; i++)
+        {
+            if (musicplayer_isNewAlbum(musicPlayerTracksList[i], lastAlbum)) {
+                musicPlayerAlbumsIndex[j] = i;
+                j++;
+            }
         }
     }
-
-    musicPlayerAlbumsIndex = malloc(sizeof(int) * musicPlayerAlbumsCount);
-    lastAlbum[0] = '\0';
-    int j = 0;
-    for (i = 0; i < musicPlayerTracksCount; i++)
-    {
-        if (musicplayer_isNewAlbum(filesList[i], lastAlbum)) {
-            musicPlayerAlbumsIndex[j] = i;
-            j++;
-        }
-    }
-
-    musicPlayerTracksList = filesList;
+    
+    closedir(d);
     musicplayer_load();
 }
 

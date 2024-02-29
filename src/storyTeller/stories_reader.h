@@ -324,6 +324,10 @@ void stories_changeTitle(int direction) {
 
 void stories_up(void)
 {
+    if(storiesCount == 0) {
+        return;
+    }
+
     if(storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
         stories_changeTitle(-3);
     }
@@ -331,6 +335,10 @@ void stories_up(void)
 
 void stories_down(void)
 {
+    if(storiesCount == 0) {
+        return;
+    }
+
     if(storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
         stories_changeTitle(3);
     }
@@ -346,6 +354,10 @@ void stories_rewind(double time)
 
 void stories_next(void)
 {
+    if(storiesCount == 0) {
+        return;
+    }
+
     if(storyAutoplay) {
         stories_rewind(10);
     } else {
@@ -360,6 +372,10 @@ void stories_next(void)
 
 void stories_previous(void)
 {
+    if(storiesCount == 0) {
+        return;
+    }
+
     if(storyAutoplay) {
         stories_rewind(-10);
     } else {
@@ -374,6 +390,10 @@ void stories_previous(void)
 
 void stories_menu(void)
 {
+    if(storiesCount == 0) {
+        return;
+    }
+
     if(storyActionKey[0] == '\0') {
         if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
             stories_setMode(STORIES_DISPLAY_MODE_TILES);
@@ -385,7 +405,7 @@ void stories_menu(void)
 
 void stories_ok(void)
 {
-    if(!storyOkAction) {
+    if(storiesCount == 0 || !storyOkAction) {
         return;
     }
     
@@ -406,6 +426,10 @@ void stories_autoplay(void)
 
 void stories_pause(void)
 {
+    if(storiesCount == 0) {
+        return;
+    }
+
     if(Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() == 1) {
             autosleep_lock();
@@ -423,6 +447,10 @@ void stories_pause(void)
 
 bool stories_home(void)
 {
+    if(storiesCount == 0) {
+        return true;
+    }
+
     if(storyActionKey[0] == '\0') {
         Mix_HookMusicFinished(NULL);
         if(Mix_PlayingMusic() == 1) {
