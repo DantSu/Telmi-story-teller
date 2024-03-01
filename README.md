@@ -66,16 +66,9 @@ Then plug SD card of Telmi OS on your computer, it will be reconized by TelmiSyn
 
 # Buttons roles
 
-- **Power** : Power on and power off
-- **LEFT** : Previous action or previous Song
-- **RIGHT** : Next action or next Song
-- **A or B** : Validate
-- **X or Y** : Back
-- **Select or Start** : Pause
-- **Volume UP** : Increase volume
-- **Volume DOWN** : Decrease volume
-- **Home + Volume UP** : Increase brightness
-- **Home + Volume DOWN** : Decrease brightness
+<p align="center"><img = src="https://dantsu.com/files/Telmi_selectingStory.jpg" alt="Telmi OS - buttons roles selecting story" /><img = src="https://dantsu.com/files/Telmi_readingStory.jpg" alt="Telmi OS - buttons roles reading story" /></p>
+
+<p align="center"><img = src="https://dantsu.com/files/Telmi_playingMusic.jpg" alt="Telmi OS - buttons roles playing music" /><img = src="https://dantsu.com/files/Telmi_selectingAlbum.jpg" alt="Telmi OS - buttons roles selecting music album" /></p>
 
 # Demo
 
