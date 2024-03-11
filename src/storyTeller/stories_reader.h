@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
-#include "time.h"
 #include "system/display.h"
 #include "utils/str.h"
 #include "utils/json.h"

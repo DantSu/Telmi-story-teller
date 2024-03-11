@@ -4,13 +4,15 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
+#include <stdio.h>
 #include <string.h>
 #include <dirent.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "system/display.h"
 #include "utils/str.h"
+#include "utils/json.h"
 
+#include "./app_file.h"
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
 #include "./app_parameters.h"
@@ -35,6 +37,29 @@ static int musicPlayerAlbumIndex = 0;
 static long int musicPlayerScreenUpdate = 0;
 static long int musicPlayerLastActivity = 0;
 static void (*callback_musicplayer_autoplay)(void);
+
+
+void musicplayer_saveSession(void)
+{
+    file_save(
+        APP_SAVEFILE, 
+        "{\"app\":%d, \"musicIndex\":%d, \"musicPosition\":%d}", 
+        APP_MUSIC,
+        musicPlayerTrackIndex, 
+        musicPlayerTrackPosition
+    );
+}
+
+void musicplayer_loadSession(void)
+{
+    cJSON *savedState = json_load(APP_SAVEFILE);
+    int a;
+    if(savedState != NULL && json_getInt(savedState, "app", &a) && a == APP_MUSIC) {
+        json_getInt(savedState, "musicIndex", &musicPlayerTrackIndex);
+        json_getInt(savedState, "musicPosition", &musicPlayerTrackPosition);
+        remove(APP_SAVEFILE);
+    }
+}
 
 void musicplayer_autosleep_unlock(void) {
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
@@ -225,6 +250,8 @@ void musicplayer_load(void)
         video_displayImage(SYSTEM_RESOURCES, "noMusic.png");
         return;
     }
+    
+    musicplayer_loadSession();
 
     if(musicPlayerTrackIndex < 0) {
         musicPlayerTrackIndex = musicPlayerTracksCount - 1;
@@ -404,7 +431,13 @@ void musicplayer_menu(void)
 
 void musicplayer_save(void)
 {
-    
+    if(Mix_PlayingMusic() == 1) {
+        if (Mix_PausedMusic() != 1) {
+            musicplayer_pause();
+        }
+    }
+
+    musicplayer_saveSession();
 }
 
 bool musicplayer_isMp3File(const char *fileName)

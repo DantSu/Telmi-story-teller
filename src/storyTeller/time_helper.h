@@ -1,6 +1,7 @@
 #ifndef STORYTELLER_TIME_HELPER__
 #define STORYTELLER_TIME_HELPER__
 
+#include <time.h>
 
 
 static long int get_time(void)

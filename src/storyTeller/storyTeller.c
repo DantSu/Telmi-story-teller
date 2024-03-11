@@ -63,7 +63,6 @@ int main(int argc, char *argv[])
 
     while (1) {
         if(autosleep_isSleepingTime()) {
-            app_save();
             goto exit_loop;
         }
 
@@ -173,6 +172,7 @@ int main(int argc, char *argv[])
     }
     
     exit_loop:
+    app_save();
     display_setScreen(true);
     video_audio_quit();
     system_shutdown();
