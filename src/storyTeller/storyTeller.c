@@ -8,9 +8,11 @@
 #include "system/keymap_hw.h"
 #include "system/settings.h"
 #include "system/settings_sync.h"
+#include "system/display.h"
 #include "utils/log.h"
 
 #include "./time_helper.h"
+#include "./app_lock.h"
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
 #include "./app_selector.h"
@@ -56,7 +58,7 @@ int main(int argc, char *argv[])
     fds[0].events = POLLIN;
 
     bool isMenuPressed = false;
-    bool isVolumePressed = false;
+    bool menuPreventDefault = false;
     long startPowerPressed = 0;
 
     while (1) {
@@ -65,6 +67,7 @@ int main(int argc, char *argv[])
             goto exit_loop;
         }
 
+        applock_checkLock();
         app_screenUpdate();
 
         if (poll(fds, 1, 0) > 0) {
@@ -78,6 +81,10 @@ int main(int argc, char *argv[])
                     {
                         case HW_BTN_MENU :
                             isMenuPressed = true;
+                            applock_startTimer();
+                            if(applock_isLocked()) {
+                                menuPreventDefault = true;
+                            }
                             break;
                         case HW_BTN_POWER :
                             startPowerPressed = get_time();
@@ -86,6 +93,12 @@ int main(int argc, char *argv[])
                     break;
                 
                 case RELEASED:
+                    if(applock_isLocked()) {
+                        if(ev.code == HW_BTN_MENU) {
+                            applock_stopTimer();
+                        }
+                        break;
+                    }
                     autosleep_keepAwake();
                     switch (ev.code)
                     {
@@ -95,11 +108,12 @@ int main(int argc, char *argv[])
                             }
                             break;
                         case HW_BTN_MENU :
-                            if(!isVolumePressed) {
+                            if(!menuPreventDefault) {
                                 app_menu();
                             }
                             isMenuPressed = false;
-                            isVolumePressed = false;
+                            menuPreventDefault = false;
+                            applock_stopTimer();
                             break;
                         case HW_BTN_LEFT :
                             app_previous();
@@ -129,7 +143,8 @@ int main(int argc, char *argv[])
                             if(isMenuPressed) {
                                 settings_setBrightness(settings.brightness - 1, true, false);
                                 osd_showBrightnessBar(settings.brightness);
-                                isVolumePressed = true;
+                                applock_stopTimer();
+                                menuPreventDefault = true;
                             } else {
                                 settings_setVolume(settings.volume - 1, true);
                                 osd_showVolumeBar(settings.volume, false);
@@ -139,7 +154,8 @@ int main(int argc, char *argv[])
                             if(isMenuPressed) {
                                 settings_setBrightness(parameters_getScreenBrightnessValidation(settings.brightness + 1), true, false);
                                 osd_showBrightnessBar(settings.brightness);
-                                isVolumePressed = true;
+                                applock_stopTimer();
+                                menuPreventDefault = true;
                             } else {
                                 settings_setVolume(parameters_getAudioVolumeValidation(settings.volume + 1), true);
                                 osd_showVolumeBar(settings.volume, false);
@@ -157,6 +173,7 @@ int main(int argc, char *argv[])
     }
     
     exit_loop:
+    display_setScreen(true);
     video_audio_quit();
     system_shutdown();
     return EXIT_SUCCESS;

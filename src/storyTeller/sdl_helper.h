@@ -11,7 +11,11 @@
 
 #include "utils/str.h"
 #include "./file_helper.h"
+#include "./app_lock.h"
 
+#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
+
+#define FALLBACK_FONT_REGULAR "/mnt/SDCARD/.tmp_update/res/Exo2-Regular.ttf"
 #define FALLBACK_FONT_REGULAR "/mnt/SDCARD/.tmp_update/res/Exo2-Regular.ttf"
 #define FALLBACK_FONT_BOLD "/mnt/SDCARD/.tmp_update/res/Exo2-Bold.ttf"
 
@@ -71,21 +75,6 @@ void video_audio_quit(void)
     SDL_Quit();
 }
 
-void video_displayImage(const char *dir, char *name)
-{
-    char image_path[STR_MAX * 2];
-    sprintf(image_path, "%s%s", dir, name);
-    SDL_Surface *image = IMG_Load(image_path);
-
-    SDL_FillRect(screen, NULL, 0);
-    if(image != NULL) {
-        SDL_BlitSurface(image, NULL, screen, &(SDL_Rect){(screen->w - image->w) / 2, (screen->h - image->h) / 2});
-        SDL_FreeSurface(image);
-    }
-    SDL_BlitSurface(screen, NULL, video, NULL);
-    SDL_Flip(video);
-}
-
 void video_screenBlack (void) {
     SDL_FillRect(screen, NULL, 0);
 }
@@ -128,7 +117,28 @@ void video_screenWriteFont(const char *text, TTF_Font *font, SDL_Color color, in
 void video_applyToVideo(void)
 {
     SDL_BlitSurface(screen, NULL, video, NULL);
+    if(applock_isLocked()) {
+        char image_path[STR_MAX * 2];
+        sprintf(image_path, "%s%s", SYSTEM_RESOURCES, "storytellerLock.png");
+        SDL_Surface *image = IMG_Load(image_path);
+        SDL_BlitSurface(image, NULL, video, NULL);
+    }
     SDL_Flip(video);
+}
+
+void video_displayImage(const char *dir, char *name)
+{
+    char image_path[STR_MAX * 2];
+    sprintf(image_path, "%s%s", dir, name);
+    SDL_Surface *image = IMG_Load(image_path);
+
+    SDL_FillRect(screen, NULL, 0);
+    if(image != NULL) {
+        SDL_BlitSurface(image, NULL, screen, &(SDL_Rect){(screen->w - image->w) / 2, (screen->h - image->h) / 2});
+        SDL_FreeSurface(image);
+    }
+
+    video_applyToVideo();
 }
 
 void video_displayBlackScreen(void)
