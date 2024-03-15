@@ -68,11 +68,13 @@ Then plug SD card of Telmi OS on your computer, it will be reconized by TelmiSyn
 
 <p align="center"><img = src="https://dantsu.com/files/Telmi_selectingStory.png" alt="Telmi OS - buttons roles selecting story" /><img = src="https://dantsu.com/files/Telmi_readingStory.png" alt="Telmi OS - buttons roles reading story" /><img = src="https://dantsu.com/files/Telmi_playingMusic.png" alt="Telmi OS - buttons roles playing music" /><img = src="https://dantsu.com/files/Telmi_selectingAlbum.png" alt="Telmi OS - buttons roles selecting music album" /></p>
 
-# Demo
+# Youtube vidéos
+
+## Démo of Telmi OS
 
 <p align="center"><a href="https://www.youtube.com/watch?v=UBqSSkXr42o" taget="_blank"><img = src="https://dantsu.com/files/Telmi_youtube.png" alt="Telmi OS demonstration video" /></a></p>
 
-# Vidéo d'installation et de prise en main de Telmi par @PhOeNiXv8.3
+## Vidéo d'installation et de prise en main de Telmi par @PhOeNiXv8.3 en Français
 
 <p align="center"><a href="https://www.youtube.com/watch?v=r7VK73ASUGo" taget="_blank"><img = src="https://dantsu.com/files/Telmi_YoutubePhoenix.png" alt="Vidéo d'installation et d'utilisation de Telmi OS et Telmi Sync" /></a></p>
 
