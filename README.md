@@ -68,7 +68,7 @@ Then plug SD card of Telmi OS on your computer, it will be reconized by TelmiSyn
 
 <p align="center"><img src="https://dantsu.com/files/Telmi_selectingStory.png" alt="Telmi OS - buttons roles selecting story" /><img src="https://dantsu.com/files/Telmi_readingStory.png" alt="Telmi OS - buttons roles reading story" /><img src="https://dantsu.com/files/Telmi_playingMusic.png" alt="Telmi OS - buttons roles playing music" /><img src="https://dantsu.com/files/Telmi_selectingAlbum.png" alt="Telmi OS - buttons roles selecting music album" /></p>
 
-# Youtube vidéos
+# Youtube videos
 
 ### Short demo of Telmi OS
 
