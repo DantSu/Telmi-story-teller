@@ -1,4 +1,4 @@
-<p align="center"><img = src="https://dantsu.com/files/Telmi_1280.png" alt="Telmi OS splash screen" /></p>
+<p align="center"><img src="https://dantsu.com/files/Telmi_1280.png" alt="Telmi OS splash screen" /></p>
 
 # Telmi - An open source story teller and MP3 player for Miyoo Mini
 
@@ -58,7 +58,7 @@ Insert the SD card in your Miyoo. Press the power button and the installation wi
 
 # Add stories and music on Telmi OS
 
-<p align="center"><img = src="https://dantsu.com/files/Telmi_MiyooPC.jpg" alt="Telmi OS - Telmi Sync" /></p>
+<p align="center"><img src="https://dantsu.com/files/Telmi_MiyooPC.jpg" alt="Telmi OS - Telmi Sync" /></p>
 
 Download the latest version of [Telmi Sync](https://github.com/DantSu/Telmi-Sync/releases/) and install it (Supported OS : Windows, MacOS, Linux).
 Drag and drop your stories exported from [STUdio](https://github.com/DantSu/studio) on Telmi Sync to import it. Do the same with audio files. 
@@ -66,17 +66,17 @@ Then plug SD card of Telmi OS on your computer, it will be reconized by TelmiSyn
 
 # Buttons roles
 
-<p align="center"><img = src="https://dantsu.com/files/Telmi_selectingStory.png" alt="Telmi OS - buttons roles selecting story" /><img = src="https://dantsu.com/files/Telmi_readingStory.png" alt="Telmi OS - buttons roles reading story" /><img = src="https://dantsu.com/files/Telmi_playingMusic.png" alt="Telmi OS - buttons roles playing music" /><img = src="https://dantsu.com/files/Telmi_selectingAlbum.png" alt="Telmi OS - buttons roles selecting music album" /></p>
+<p align="center"><img src="https://dantsu.com/files/Telmi_selectingStory.png" alt="Telmi OS - buttons roles selecting story" /><img src="https://dantsu.com/files/Telmi_readingStory.png" alt="Telmi OS - buttons roles reading story" /><img src="https://dantsu.com/files/Telmi_playingMusic.png" alt="Telmi OS - buttons roles playing music" /><img src="https://dantsu.com/files/Telmi_selectingAlbum.png" alt="Telmi OS - buttons roles selecting music album" /></p>
 
 # Youtube vidéos
 
 ## Démo of Telmi OS
 
-<p align="center"><a href="https://www.youtube.com/watch?v=UBqSSkXr42o" taget="_blank"><img = src="https://dantsu.com/files/Telmi_youtube.png" alt="Telmi OS demonstration video" /></a></p>
+<p align="center"><a href="https://www.youtube.com/watch?v=UBqSSkXr42o" taget="_blank"><img src="https://dantsu.com/files/Telmi_youtube.png" alt="Telmi OS demonstration video" /></a></p>
 
 ## Vidéo d'installation et de prise en main de Telmi par @PhOeNiXv8.3 en Français
 
-<p align="center"><a href="https://www.youtube.com/watch?v=r7VK73ASUGo" taget="_blank"><img = src="https://dantsu.com/files/Telmi_YoutubePhoenix.png" alt="Vidéo d'installation et d'utilisation de Telmi OS et Telmi Sync" /></a></p>
+<p align="center"><a href="https://www.youtube.com/watch?v=r7VK73ASUGo" taget="_blank"><img src="https://dantsu.com/files/Telmi_YoutubePhoenix.png" alt="Vidéo d'installation et d'utilisation de Telmi OS et Telmi Sync" width="340" /></a></p>
 
 # Discord
 
