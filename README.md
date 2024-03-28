@@ -78,6 +78,10 @@ Then plug SD card of Telmi OS on your computer, it will be reconized by TelmiSyn
 
 <p align="center"><a href="https://www.youtube.com/watch?v=r7VK73ASUGo" taget="_blank"><img src="https://dantsu.com/files/Telmi_YoutubePhoenix.png" alt="Vidéo d'installation et d'utilisation de Telmi OS et Telmi Sync" width="340" /></a></p>
 
+### Vidéo de présentation de Telmi par @iinul en français
+
+<p align="center"><a href="https://www.youtube.com/watch?v=d3BphI4oSE0" taget="_blank"><img src="https://dantsu.com/files/Telmi_YoutubeIinul.png" alt="Vidéo de présentation de Telmi par @iinul en français" width="340" /></a></p>
+
 # Discord
 
 Tu parles français et tu veux discuter avec moi ? Rendez vous sur le discord de [Raconte moi une histoire](https://monurl.ca/lunii.creations) dans le channel `#telmi`.
