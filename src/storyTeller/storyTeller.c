@@ -42,6 +42,7 @@ bool keyinput_isValid(void)
 
 int main(int argc, char *argv[])
 {
+    srand(time(NULL));
     video_audio_init();
     settings_init();
     display_init();

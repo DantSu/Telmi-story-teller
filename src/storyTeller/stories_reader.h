@@ -2,6 +2,7 @@
 #define STORYTELLER_STORIES_HELPER__
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include "system/display.h"
@@ -167,6 +168,21 @@ void stories_readAction(void)
     stories_readStage();
 }
 
+void stories_loadAction(void)
+{
+    cJSON *nodeAction = stories_getAction();
+    if(nodeAction == NULL) {
+        return callback_stories_reset();
+    }
+
+    storyActionOptionsCount = cJSON_GetArraySize(nodeAction);
+    if(storyActionOptionIndex < 0) {
+        storyActionOptionIndex = rand() % storyActionOptionsCount;
+    }
+
+    stories_readAction();
+}
+
 void stories_load(void)
 {
     if(storiesCount == 0) {
@@ -192,13 +208,7 @@ void stories_load(void)
         storyTime = 0;
     }
 
-    cJSON *nodeAction = stories_getAction();
-    if(nodeAction == NULL) {
-        return;
-    }
-
-    storyActionOptionsCount = cJSON_GetArraySize(nodeAction);
-    stories_readAction();
+    stories_loadAction();
 }
 
 void stories_title_single(void) {
@@ -300,8 +310,8 @@ void stories_transition(char* transition) {
 
     json_getString(transitionNode, "action", storyActionKey);
     json_getInt(transitionNode, "index", &storyActionOptionIndex);
-    storyActionOptionsCount = cJSON_GetArraySize(stories_getAction());
-    stories_readAction();
+
+    stories_loadAction();
 }
 
 
