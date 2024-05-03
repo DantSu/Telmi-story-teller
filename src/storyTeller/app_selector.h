@@ -1,9 +1,8 @@
 #ifndef STORYTELLER_APP_SELECTOR__
 #define STORYTELLER_APP_SELECTOR__
 
-#include <stdio.h>
 #include "system/display.h"
-
+#include <stdio.h>
 
 #define APP_COUNT 2
 #define APP_STORIES 0
@@ -12,21 +11,17 @@
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
 #define APP_SAVEFILE "/mnt/SDCARD/Saves/.storytellerState"
 
-
 #include "./sdl_helper.h"
 #include "./music_player.h"
 #include "./stories_reader.h"
-
-
 
 static char appImages[2][32] = {"selectStories.png", "selectMusic.png"};
 
 static int appIndex = 0;
 static bool appOpened = false;
 
-void app_refreshScreen(void)
-{
-    if(appIndex >= APP_COUNT) {
+void app_refreshScreen(void) {
+    if (appIndex >= APP_COUNT) {
         appIndex = 0;
     } else if (appIndex < 0) {
         appIndex = APP_COUNT - 1;
@@ -37,9 +32,8 @@ void app_refreshScreen(void)
 }
 
 void app_screenUpdate(void) {
-    if(appOpened) {
-        switch (appIndex)
-        {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_MUSIC:
                 musicplayer_screenUpdate();
                 break;
@@ -49,10 +43,26 @@ void app_screenUpdate(void) {
     }
 }
 
+void app_lockChanged(void) {
+    if (appOpened) {
+        switch (appIndex) {
+            case APP_STORIES:
+                stories_lockChanged();
+                break;
+            case APP_MUSIC:
+                musicplayer_lockChanged();
+                break;
+            default:
+                break;
+        }
+    } else {
+        app_refreshScreen();
+    }
+}
+
 void app_menu(void) {
-    if(appOpened) {
-        switch (appIndex)
-        {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_menu();
                 break;
@@ -65,11 +75,9 @@ void app_menu(void) {
     }
 }
 
-void app_previous(void)
-{
-    if(appOpened) {
-        switch (appIndex)
-        {
+void app_previous(void) {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_previous();
                 break;
@@ -85,11 +93,9 @@ void app_previous(void)
     }
 }
 
-void app_next(void)
-{
-    if(appOpened) {
-        switch (appIndex)
-        {
+void app_next(void) {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_next();
                 break;
@@ -105,11 +111,9 @@ void app_next(void)
     }
 }
 
-void app_up(void)
-{
-    if(appOpened) {
-        switch (appIndex)
-        {
+void app_up(void) {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_up();
                 break;
@@ -122,11 +126,9 @@ void app_up(void)
     }
 }
 
-void app_down(void)
-{
-    if(appOpened) {
-        switch (appIndex)
-        {
+void app_down(void) {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_down();
                 break;
@@ -139,11 +141,9 @@ void app_down(void)
     }
 }
 
-void app_pause(void)
-{
-    if(appOpened) {
-        switch (appIndex)
-        {
+void app_pause(void) {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_pause();
                 break;
@@ -156,11 +156,9 @@ void app_pause(void)
     }
 }
 
-void app_ok(void)
-{
-    if(appOpened) {
-        switch (appIndex)
-        {
+void app_ok(void) {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_ok();
                 break;
@@ -172,8 +170,7 @@ void app_ok(void)
         }
     } else {
         appOpened = true;
-        switch (appIndex)
-        {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_init();
                 break;
@@ -186,12 +183,10 @@ void app_ok(void)
     }
 }
 
-void app_home(void)
-{
-    if(appOpened) {
+void app_home(void) {
+    if (appOpened) {
         bool appHome = true;
-        switch (appIndex)
-        {
+        switch (appIndex) {
             case APP_STORIES:
                 appHome = stories_home();
                 break;
@@ -201,18 +196,16 @@ void app_home(void)
             default:
                 break;
         }
-        if(appHome) {
+        if (appHome) {
             appOpened = false;
             app_refreshScreen();
         }
     }
 }
 
-void app_save(void)
-{
-    if(appOpened) {
-        switch (appIndex)
-        {
+void app_save(void) {
+    if (appOpened) {
+        switch (appIndex) {
             case APP_STORIES:
                 stories_save();
                 break;
@@ -225,15 +218,13 @@ void app_save(void)
     }
 }
 
-void app_init(void)
-{
+void app_init(void) {
     cJSON *savedState = json_load(APP_SAVEFILE);
-    if(json_getInt(savedState, "app", &appIndex)) {
+    if (json_getInt(savedState, "app", &appIndex)) {
         app_ok();
     } else {
         app_refreshScreen();
     }
 }
-
 
 #endif // STORYTELLER_APP_SELECTOR__

@@ -11,8 +11,9 @@
 
 #include "./app_file.h"
 #include "./app_autosleep.h"
-#include "./sdl_helper.h"
+#include "./app_lock.h"
 #include "./app_parameters.h"
+#include "./sdl_helper.h"
 #include "./array_helper.h"
 #include "./time_helper.h"
 
@@ -35,34 +36,35 @@ static int storyActionOptionIndex = 0;
 static int storyActionOptionsCount = 0;
 static double storyTime = 0;
 static long int storyStartTime = 0;
+static bool storyScreenEnabled = true;
 static bool storyAutoplay = false;
 static bool storyOkAction = true;
+
 static void (*callback_stories_autoplay)(void);
+
 static void (*callback_stories_reset)(void);
 
 void stories_autosleep_unlock(void) {
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
 }
 
-void stories_saveSession(void)
-{
+void stories_saveSession(void) {
     file_save(
-        APP_SAVEFILE, 
-        "{\"app\":%d, \"storyIndex\":%d, \"storyActionKey\":\"%s\", \"storyActionOptionIndex\":%d, \"storyTime\":%lf}", 
-        APP_STORIES,
-        storyIndex, 
-        storyActionKey,
-        storyActionOptionIndex,
-        storyAutoplay ? storyTime : 0
+            APP_SAVEFILE,
+            "{\"app\":%d, \"storyIndex\":%d, \"storyActionKey\":\"%s\", \"storyActionOptionIndex\":%d, \"storyTime\":%lf}",
+            APP_STORIES,
+            storyIndex,
+            storyActionKey,
+            storyActionOptionIndex,
+            storyAutoplay ? storyTime : 0
     );
 }
 
-bool stories_loadSession(void)
-{
+bool stories_loadSession(void) {
     storyStageKey[0] = '\0';
     cJSON *savedState = json_load(APP_SAVEFILE);
     int a;
-    if(savedState != NULL && json_getInt(savedState, "app", &a) && a == APP_STORIES) {
+    if (savedState != NULL && json_getInt(savedState, "app", &a) && a == APP_STORIES) {
         json_getInt(savedState, "storyIndex", &storyIndex);
         json_getString(savedState, "storyActionKey", storyActionKey);
         json_getInt(savedState, "storyActionOptionIndex", &storyActionOptionIndex);
@@ -77,58 +79,59 @@ bool stories_loadSession(void)
 }
 
 
-cJSON *stories_getStage(void)
-{
+cJSON *stories_getStage(void) {
     cJSON *stageNodes = cJSON_GetObjectItem(storyJson, "stages");
 
-    if(stageNodes == NULL) {
+    if (stageNodes == NULL) {
         return NULL;
     }
 
     return cJSON_GetObjectItem(stageNodes, storyStageKey);
 }
 
-cJSON *stories_getAction(void)
-{
-    if(storyActionKey[0] == '\0') {
+cJSON *stories_getAction(void) {
+    if (storyActionKey[0] == '\0') {
         return NULL;
     }
 
     cJSON *actionNodes = cJSON_GetObjectItem(storyJson, "actions");
 
-    if(actionNodes == NULL) {
+    if (actionNodes == NULL) {
         return NULL;
     }
 
     return cJSON_GetObjectItem(actionNodes, storyActionKey);
 }
 
-void stories_readStage(void)
-{
+void stories_readStage(void) {
     cJSON *stageNode = stories_getStage();
-    if(stageNode == NULL) {
+    if (stageNode == NULL) {
         return;
     }
-    
+
     char story_audio_path[STR_MAX], story_image_path[STR_MAX], imageFilename[STR_MAX], soundFilename[STR_MAX];
     sprintf(story_audio_path, "%s%s/audios/", STORIES_RESOURCES, storiesList[storyIndex]);
     sprintf(story_image_path, "%s%s/images/", STORIES_RESOURCES, storiesList[storyIndex]);
-    
-    if(!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "image")) && json_getString(stageNode, "image", imageFilename)) {
-        video_displayImage(story_image_path, imageFilename);
+
+    if (!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "image")) && json_getString(stageNode, "image", imageFilename)) {
         display_setScreen(true);
+        storyScreenEnabled = true;
+        video_displayImage(story_image_path, imageFilename);
     } else {
         video_displayBlackScreen();
-        display_setScreen(false);
+        storyScreenEnabled = false;
+        if(!applock_isLockRecentlyChanged() && !applock_isUnlocking()) {
+            display_setScreen(false);
+        }
     }
 
     storyAutoplay = false;
     storyOkAction = true;
 
-    if(!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "audio")) && json_getString(stageNode, "audio", soundFilename)) {
+    if (!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "audio")) && json_getString(stageNode, "audio", soundFilename)) {
         audio_play(story_audio_path, soundFilename, storyTime);
         storyStartTime = get_time();
-        if(cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "autoplay"))) {
+        if (cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "autoplay"))) {
             storyAutoplay = true;
             storyOkAction = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "ok"));
             autosleep_lock();
@@ -141,26 +144,25 @@ void stories_readStage(void)
     }
 }
 
-void stories_readAction(void)
-{
-    if(storiesCount == 0) {
+void stories_readAction(void) {
+    if (storiesCount == 0) {
         return;
     }
-    
-    if(storyActionOptionIndex < 0) {
+
+    if (storyActionOptionIndex < 0) {
         storyActionOptionIndex = storyActionOptionsCount - 1;
     } else if (storyActionOptionIndex >= storyActionOptionsCount) {
         storyActionOptionIndex = 0;
     }
 
     cJSON *nodeAction = stories_getAction();
-    if(nodeAction == NULL) {
+    if (nodeAction == NULL) {
         return;
     }
 
     cJSON *option = cJSON_GetArrayItem(nodeAction, storyActionOptionIndex);
-    
-    if(option == NULL) {
+
+    if (option == NULL) {
         return;
     }
 
@@ -168,38 +170,36 @@ void stories_readAction(void)
     stories_readStage();
 }
 
-void stories_loadAction(void)
-{
+void stories_loadAction(void) {
     cJSON *nodeAction = stories_getAction();
-    if(nodeAction == NULL) {
+    if (nodeAction == NULL) {
         return callback_stories_reset();
     }
 
     storyActionOptionsCount = cJSON_GetArraySize(nodeAction);
-    if(storyActionOptionIndex < 0) {
+    if (storyActionOptionIndex < 0) {
         storyActionOptionIndex = rand() % storyActionOptionsCount;
     }
 
     stories_readAction();
 }
 
-void stories_load(void)
-{
-    if(storiesCount == 0) {
+void stories_load(void) {
+    if (storiesCount == 0) {
         return;
     }
 
     char story_path[STR_MAX];
     sprintf(story_path, "%s%s/nodes.json", STORIES_RESOURCES, storiesList[storyIndex]);
     storyJson = json_load(story_path);
-    if(storyJson == NULL) {
+    if (storyJson == NULL) {
         return;
     }
 
-    if(storyActionKey[0] == '\0') {
+    if (storyActionKey[0] == '\0') {
         cJSON *startTransition = cJSON_GetObjectItem(storyJson, "startAction");
 
-        if(startTransition == NULL) {
+        if (startTransition == NULL) {
             return callback_stories_reset();
         }
 
@@ -220,14 +220,14 @@ void stories_title_single(void) {
 void stories_title_tile(int base, int pos) {
     int sIndex = base + pos;
 
-    if(sIndex >= storiesCount) {
+    if (sIndex >= storiesCount) {
         return;
     }
 
     int x = 33 + (pos % 3) * 201;
     int y = 28 + (pos / 3) * 148;
 
-    if(storyIndex == sIndex) {
+    if (storyIndex == sIndex) {
         video_drawRectangle(x - 5, y - 5, 181, 138, 255, 186, 0);
     }
     char story_path[STR_MAX];
@@ -256,24 +256,22 @@ void stories_title_tiles(void) {
     video_applyToVideo();
 }
 
-void stories_title(void)
-{
-    if(storiesCount == 0) {
+void stories_title(void) {
+    if (storiesCount == 0) {
         video_displayImage(SYSTEM_RESOURCES, "noStory.png");
         return;
     }
 
-    if(stories_loadSession()) {
+    if (stories_loadSession()) {
         return stories_load();
     }
 
-    if(storyIndex < 0) {
+    if (storyIndex < 0) {
         storyIndex = storiesCount - 1;
     } else if (storyIndex >= storiesCount) {
         storyIndex = 0;
     }
 
-    display_setScreen(true);
     stories_autosleep_unlock();
     storyStartTime = get_time();
     storyTime = 0;
@@ -282,26 +280,27 @@ void stories_title(void)
     sprintf(story_path, "%s%s/", STORIES_RESOURCES, storiesList[storyIndex]);
     audio_play(story_path, "title.mp3", storyTime);
 
-    if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
+    storyScreenEnabled = true;
+    display_setScreen(storyScreenEnabled);
+    if (storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
         stories_title_single();
     } else {
         stories_title_tiles();
     }
 }
 
-void stories_transition(char* transition) {
-    
-    if(storiesCount == 0) {
+void stories_transition(char *transition) {
+    if (storiesCount == 0) {
         return;
     }
 
     cJSON *stageNode = stories_getStage();
-    if(stageNode == NULL) {
+    if (stageNode == NULL) {
         return callback_stories_reset();
     }
-    
+
     cJSON *transitionNode = cJSON_GetObjectItem(stageNode, transition);
-    if(transitionNode == NULL || cJSON_IsNull(transitionNode)) {
+    if (transitionNode == NULL || cJSON_IsNull(transitionNode)) {
         return callback_stories_reset();
     }
 
@@ -317,7 +316,7 @@ void stories_transition(char* transition) {
 
 void stories_setMode(int dm) {
     storiesDiplayMode = dm;
-    if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
+    if (storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
         stories_title_single();
     } else {
         stories_title_tiles();
@@ -325,52 +324,48 @@ void stories_setMode(int dm) {
 }
 
 void stories_changeTitle(int direction) {
-    if(!storyAutoplay && storyActionKey[0] == '\0') {
+    if (!storyAutoplay && storyActionKey[0] == '\0') {
         storyIndex += direction;
         stories_title();
     }
 }
 
-void stories_up(void)
-{
-    if(storiesCount == 0) {
+void stories_up(void) {
+    if (storiesCount == 0) {
         return;
     }
 
-    if(storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
+    if (storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
         stories_changeTitle(-3);
     }
 }
 
-void stories_down(void)
-{
-    if(storiesCount == 0) {
+void stories_down(void) {
+    if (storiesCount == 0) {
         return;
     }
 
-    if(storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
+    if (storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
         stories_changeTitle(3);
     }
 }
 
-void stories_rewind(double time)
-{
+void stories_rewind(double time) {
     long int ts = get_time();
-    storyTime += (double)(ts - storyStartTime) + time;
+    storyTime += (double) (ts - storyStartTime) + time;
     storyStartTime = ts;
     audio_setPosition(storyTime);
 }
 
-void stories_next(void)
-{
-    if(storiesCount == 0) {
+void stories_next(void) {
+    if (storiesCount == 0) {
         return;
     }
 
-    if(storyAutoplay) {
+    if (storyAutoplay) {
         stories_rewind(10);
     } else {
-        if(storyActionKey[0] == '\0') {
+        if (storyActionKey[0] == '\0') {
             stories_changeTitle(1);
         } else {
             storyActionOptionIndex += 1;
@@ -379,16 +374,15 @@ void stories_next(void)
     }
 }
 
-void stories_previous(void)
-{
-    if(storiesCount == 0) {
+void stories_previous(void) {
+    if (storiesCount == 0) {
         return;
     }
 
-    if(storyAutoplay) {
+    if (storyAutoplay) {
         stories_rewind(-10);
     } else {
-        if(storyActionKey[0] == '\0') {
+        if (storyActionKey[0] == '\0') {
             stories_changeTitle(-1);
         } else {
             storyActionOptionIndex -= 1;
@@ -397,14 +391,22 @@ void stories_previous(void)
     }
 }
 
-void stories_menu(void)
-{
-    if(storiesCount == 0) {
+void stories_lockChanged(void) {
+    if(applock_isLockRecentlyChanged() || applock_isUnlocking()) {
+        display_setScreen(true);
+    } else {
+        display_setScreen(storyScreenEnabled);
+    }
+    video_applyToVideo();
+}
+
+void stories_menu(void) {
+    if (storiesCount == 0) {
         return;
     }
 
-    if(storyActionKey[0] == '\0') {
-        if(storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
+    if (storyActionKey[0] == '\0') {
+        if (storiesDiplayMode == STORIES_DISPLAY_MODE_SINGLE) {
             stories_setMode(STORIES_DISPLAY_MODE_TILES);
         } else {
             stories_setMode(STORIES_DISPLAY_MODE_SINGLE);
@@ -412,13 +414,12 @@ void stories_menu(void)
     }
 }
 
-void stories_ok(void)
-{
-    if(storiesCount == 0 || !storyOkAction) {
+void stories_ok(void) {
+    if (storiesCount == 0 || !storyOkAction) {
         return;
     }
-    
-    if(storyActionKey[0] == '\0') {
+
+    if (storyActionKey[0] == '\0') {
         stories_load();
     } else {
         stories_transition("ok");
@@ -426,20 +427,18 @@ void stories_ok(void)
 }
 
 
-void stories_autoplay(void)
-{
+void stories_autoplay(void) {
     storyOkAction = true;
     stories_ok();
 }
 
 
-void stories_pause(void)
-{
-    if(storiesCount == 0) {
+void stories_pause(void) {
+    if (storiesCount == 0) {
         return;
     }
 
-    if(Mix_PlayingMusic() == 1) {
+    if (Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() == 1) {
             autosleep_lock();
             Mix_ResumeMusic();
@@ -448,21 +447,20 @@ void stories_pause(void)
             stories_autosleep_unlock();
             Mix_PauseMusic();
             long int ts = get_time();
-            storyTime += (double)(ts - storyStartTime);
+            storyTime += (double) (ts - storyStartTime);
             storyStartTime = ts;
         }
     }
 }
 
-bool stories_home(void)
-{
-    if(storiesCount == 0) {
+bool stories_home(void) {
+    if (storiesCount == 0) {
         return true;
     }
 
-    if(storyActionKey[0] == '\0') {
+    if (storyActionKey[0] == '\0') {
         Mix_HookMusicFinished(NULL);
-        if(Mix_PlayingMusic() == 1) {
+        if (Mix_PlayingMusic() == 1) {
             if (Mix_PausedMusic() != 1) {
                 Mix_PauseMusic();
             }
@@ -474,9 +472,8 @@ bool stories_home(void)
     }
 }
 
-void stories_save(void)
-{
-    if(Mix_PlayingMusic() == 1) {
+void stories_save(void) {
+    if (Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() != 1) {
             stories_pause();
         }
@@ -484,8 +481,7 @@ void stories_save(void)
     stories_saveSession();
 }
 
-void stories_reset(void) 
-{
+void stories_reset(void) {
     Mix_HookMusicFinished(NULL);
     storyAutoplay = false;
     storyOkAction = true;
@@ -493,16 +489,15 @@ void stories_reset(void)
     storyActionKey[0] = '\0';
     storyActionOptionIndex = 0;
     storyTime = 0;
-    if(storyJson != NULL) {
+    if (storyJson != NULL) {
         cJSON_free(storyJson);
         storyJson = NULL;
     }
     stories_title();
 }
 
-void stories_init(void)
-{
-    if(storiesList != NULL) {
+void stories_init(void) {
+    if (storiesList != NULL) {
         return stories_title();
     }
 
@@ -511,12 +506,12 @@ void stories_init(void)
 
     video_displayImage(SYSTEM_RESOURCES, "loadingStories.png");
 
-    int i=0;
+    int i = 0;
     DIR *d;
     struct dirent *dir;
     d = opendir(STORIES_RESOURCES);
 
-    while((dir = readdir(d)) != NULL) {
+    while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_DIR && strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
             i++;
         }
@@ -524,23 +519,30 @@ void stories_init(void)
     rewinddir(d);
 
     storiesCount = i;
-    char **filesList = (char**)malloc(i * sizeof(char*));
-    i=0;
+    char **filesList = (char **) malloc(i * sizeof(char *));
+    i = 0;
 
-    while((dir = readdir(d)) != NULL) {
+    while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_DIR && strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
-            filesList[i] = (char*) malloc(STR_DIRNAME);
+            filesList[i] = (char *) malloc(STR_DIRNAME);
             strcpy(filesList[i], dir->d_name);
             i++;
         }
     }
     closedir(d);
 
-    if(storiesCount > 0) {
+    if (storiesCount > 0) {
         sort(filesList, storiesCount);
     }
 
     storiesList = filesList;
+
+    if(parameters_getStoryDisplayNine()) {
+        storiesDiplayMode = STORIES_DISPLAY_MODE_TILES;
+    } else {
+        storiesDiplayMode = STORIES_DISPLAY_MODE_SINGLE;
+    }
+
     stories_title();
 }
 

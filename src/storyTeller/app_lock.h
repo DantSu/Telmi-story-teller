@@ -2,93 +2,82 @@
 #define STORYTELLER_APP_LOCK__
 
 #include "./time_helper.h"
-#include "system/display.h"
 
-static bool applockIsLocked = false;
+static bool appLockIsLocked = false;
+static bool appLockIsRecentlyUnlocked = false;
+static long appLockTimer = 0;
+static long appLockChangedTimer = 0;
 
-bool applock_isLocked(void)
-{
-    return applockIsLocked;
+bool applock_isLocked(void) {
+    return appLockIsLocked;
 }
 
-#include "./sdl_helper.h"
-
-
-static long applockTimer = 0;
-static long applockTimerScreenOn = 0;
-
-void applock_startScreenTimer(void)
-{
-    applockTimerScreenOn = get_time();
-    display_setScreen(true);
+bool applock_isRecentlyUnlocked(void) {
+    return appLockIsRecentlyUnlocked;
 }
 
-void applock_stopScreenTimer(void)
-{
-    applockTimerScreenOn = 0;
+bool applock_isLockRecentlyChanged(void) {
+    return appLockChangedTimer > 0;
 }
 
-void applock_endScreenTimer(void)
-{
-    applock_stopScreenTimer();
-    display_setScreen(false);
+bool applock_isUnlocking(void) {
+    return appLockTimer > 0 && appLockIsLocked;
 }
 
-void applock_startTimer(void)
-{
-    applockTimer = get_time();
-    if(applockIsLocked && !display_enabled) {
-        applock_startScreenTimer();
+#include "./app_selector.h"
+
+void applock_startTimer(void) {
+    appLockTimer = get_time();
+    if(appLockIsLocked) {
+        app_lockChanged();
     }
 }
 
-void applock_stopTimer(void)
-{
-    applockTimer = 0;
+void applock_stopTimer(void) {
+    appLockTimer = 0;
+    if(appLockIsLocked) {
+        app_lockChanged();
+    }
 }
 
-void applock_lock(void)
-{
+void applock_lock(void) {
     applock_stopTimer();
-    applockIsLocked = true;
-    video_applyToVideo();
+    appLockIsLocked = true;
+    appLockChangedTimer = get_time();
+    app_lockChanged();
 }
 
-void applock_unlock(void)
-{
+void applock_stopLockChangedTimer(void) {
+    appLockChangedTimer = 0;
+    appLockIsRecentlyUnlocked = false;
+}
+
+void applock_unlock(void) {
+    appLockIsLocked = false;
     applock_stopTimer();
-    applockIsLocked = false;
-    video_applyToVideo();
+    appLockIsRecentlyUnlocked = true;
+    appLockChangedTimer = get_time();
+    app_lockChanged();
 }
 
-void applock_checkLock(void)
-{
+void applock_checkLock(void) {
     long time = get_time(), laps;
 
-    if(applockTimerScreenOn > 0) {
-        laps = time - applockTimerScreenOn;
-        if(laps > 3) {
-            applock_endScreenTimer();
+    if (appLockChangedTimer > 0) {
+        laps = time - appLockChangedTimer;
+        if (laps > 2) {
+            applock_stopLockChangedTimer();
+            app_lockChanged();
         }
     }
 
-    if(applockTimer == 0) {
-        return;
-    }
-
-    if(applockIsLocked && !display_enabled && applockTimerScreenOn == 0) {
-        applock_startScreenTimer();
-    }
-
-    laps = time - applockTimer;
-
-    if(laps > 2) {
-        if(applockIsLocked) {
-            applock_unlock();
-        } else {
-            applock_lock();
-            if(!display_enabled) {
-                applock_startScreenTimer();
+    if (appLockTimer > 0) {
+        laps = time - appLockTimer;
+        if (laps > 1) {
+            if (appLockIsLocked) {
+                applock_unlock();
+            } else {
+                applock_lock();
             }
         }
     }

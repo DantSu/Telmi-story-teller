@@ -80,17 +80,6 @@ int main(int argc, char *argv[])
         else {
             ticks = -1;
         }
-
-#ifdef PLATFORM_MIYOOMINI
-        if (is_suspended || current_percentage == 500)
-            batteryWarning_hide();
-        else if (current_percentage < warn_at &&
-                 !config_flag_get(".noBatteryWarning"))
-            batteryWarning_show();
-        else
-            batteryWarning_hide();
-#endif
-
         ticks++;
         sleep(1);
     }

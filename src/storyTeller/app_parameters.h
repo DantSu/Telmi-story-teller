@@ -1,6 +1,8 @@
 #ifndef STORYTELLER_APP_PARAMETERS__
 #define STORYTELLER_APP_PARAMETERS__
 
+#include "utils/json.h"
+
 static double parametersAudioVolumeStartup = 0.3;
 static double parametersAudioVolumeMax = 0.6;
 static double parametersScreenBrightnessStartup = 0.3;
@@ -8,6 +10,7 @@ static double parametersScreenBrightnessMax = 0.6;
 static int parametersScreenOnInactivityTime = 120;
 static int parametersScreenOffInactivityTime = 300;
 static int parametersMusicInactivityTime = 3600;
+static bool parametersStoryDisplayTiles = false;
 
 #define APP_PARAMETERS_PATH "/mnt/SDCARD/Saves/.parameters"
 
@@ -48,6 +51,10 @@ int parameters_getMusicInactivityTime() {
     return parametersMusicInactivityTime;
 }
 
+bool parameters_getStoryDisplayNine() {
+    return parametersStoryDisplayTiles;
+}
+
 void parameters_init(void)
 {
     cJSON *parameters = json_load(APP_PARAMETERS_PATH);
@@ -59,6 +66,9 @@ void parameters_init(void)
         json_getInt(parameters, "screenOnInactivityTime", &parametersScreenOnInactivityTime);
         json_getInt(parameters, "screenOffInactivityTime", &parametersScreenOffInactivityTime);
         json_getInt(parameters, "musicInactivityTime", &parametersMusicInactivityTime);
+        if(!cJSON_IsNull(cJSON_GetObjectItem(parameters, "storyDisplayTiles"))) {
+            json_getBool(parameters, "storyDisplayTiles", &parametersStoryDisplayTiles);
+        }
     }
 }
 

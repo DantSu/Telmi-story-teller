@@ -12,6 +12,7 @@
 #include "utils/str.h"
 #include "utils/json.h"
 
+#include "./app_lock.h"
 #include "./app_file.h"
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
@@ -36,25 +37,24 @@ static int musicPlayerAlbumsCount = 0;
 static int musicPlayerAlbumIndex = 0;
 static long int musicPlayerScreenUpdate = 0;
 static long int musicPlayerLastActivity = 0;
+
 static void (*callback_musicplayer_autoplay)(void);
 
 
-void musicplayer_saveSession(void)
-{
+void musicplayer_saveSession(void) {
     file_save(
-        APP_SAVEFILE, 
-        "{\"app\":%d, \"musicIndex\":%d, \"musicPosition\":%d}", 
-        APP_MUSIC,
-        musicPlayerTrackIndex, 
-        musicPlayerTrackPosition
+            APP_SAVEFILE,
+            "{\"app\":%d, \"musicIndex\":%d, \"musicPosition\":%d}",
+            APP_MUSIC,
+            musicPlayerTrackIndex,
+            musicPlayerTrackPosition
     );
 }
 
-void musicplayer_loadSession(void)
-{
+void musicplayer_loadSession(void) {
     cJSON *savedState = json_load(APP_SAVEFILE);
     int a;
-    if(savedState != NULL && json_getInt(savedState, "app", &a) && a == APP_MUSIC) {
+    if (savedState != NULL && json_getInt(savedState, "app", &a) && a == APP_MUSIC) {
         json_getInt(savedState, "musicIndex", &musicPlayerTrackIndex);
         json_getInt(savedState, "musicPosition", &musicPlayerTrackPosition);
         remove(APP_SAVEFILE);
@@ -72,19 +72,19 @@ void musicplayer_autosleep_lock(void) {
 void musicplayer_interfaceplayer_drawSideMusic(int index, int top) {
     int mIndex = musicPlayerTrackIndex + index;
 
-    if(mIndex < 0) {
+    if (mIndex < 0) {
         mIndex = musicPlayerTracksCount + mIndex;
     } else if (mIndex >= musicPlayerTracksCount) {
         mIndex = mIndex - musicPlayerTracksCount;
     }
 
-    if(mIndex < 0 || mIndex >= musicPlayerTracksCount) {
+    if (mIndex < 0 || mIndex >= musicPlayerTracksCount) {
         return;
     }
-    
+
     char fileImageName[STR_MAX], writeTitle[STR_MAX], writeArtist[STR_MAX],
-    imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_";
-    
+            imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_";
+
     int length = strlen(musicPlayerTracksList[mIndex]) - 4;
     strncpy(imageName, musicPlayerTracksList[mIndex], length);
     imageName[length] = '\0';
@@ -106,8 +106,8 @@ void musicplayer_interfaceplayer_drawSideMusic(int index, int top) {
 
 void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
     char fileImageName[STR_MAX], writeTitle[STR_MAX], writeArtist[STR_MAX], writeDuration[STR_MAX], writeTime[STR_MAX],
-    imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_";
-    
+            imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_";
+
     int length = strlen(musicPlayerTracksList[musicPlayerTrackIndex]) - 4;
     strncpy(imageName, musicPlayerTracksList[musicPlayerTrackIndex], length);
     imageName[length] = '\0';
@@ -128,7 +128,8 @@ void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
     sprintf(fileImageName, "%s.png", imageName);
 
     video_screenBlack();
-    video_drawRectangle(185, 258, (int)((double)displayMusicPosition * 422.0 / (double)musicDuration), 12, 255, 186, 0);
+    video_drawRectangle(185, 258, (int) ((double) displayMusicPosition * 422.0 / (double) musicDuration), 12, 255, 186,
+                        0);
     video_screenAddImage(SYSTEM_RESOURCES, "musicPlayer.png", 0, 0, 640);
     video_screenAddImage(MUSICPLAYER_RESOURCES, fileImageName, 24, 176, 128);
     video_screenWriteFont(writeTitle, fontBold24, colorWhite, 185, 190, SDL_ALIGN_LEFT);
@@ -146,7 +147,7 @@ void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
 void musicplayer_interfacealbum_drawAlbum(int baseIndex, int pos) {
     int albumIndex = baseIndex + pos;
 
-    if(albumIndex >= musicPlayerAlbumsCount) {
+    if (albumIndex >= musicPlayerAlbumsCount) {
         return;
     }
 
@@ -160,16 +161,16 @@ void musicplayer_interfacealbum_drawAlbum(int baseIndex, int pos) {
     int x = 51 + (pos % 3) * 205;
     int y = 28 + (pos / 3) * 148;
 
-    if(musicPlayerAlbumIndex == albumIndex) {
+    if (musicPlayerAlbumIndex == albumIndex) {
         video_drawRectangle(x - 5, y - 5, 138, 138, 255, 186, 0);
     }
     video_screenAddImage(MUSICPLAYER_RESOURCES, fileImageName, x, y, 128);
 }
 
 void musicplayer_interfacealbum_draw() {
-    if(musicPlayerAlbumIndex >= musicPlayerAlbumsCount) {
+    if (musicPlayerAlbumIndex >= musicPlayerAlbumsCount) {
         musicPlayerAlbumIndex = 0;
-    } else if(musicPlayerAlbumIndex < 0) {
+    } else if (musicPlayerAlbumIndex < 0) {
         musicPlayerAlbumIndex = musicPlayerAlbumsCount - 1;
     }
 
@@ -194,9 +195,8 @@ void musicplayer_interfacealbum_draw() {
 
 int musicplayer_getCurrentAlbumIndex(void) {
     int index = musicPlayerAlbumsCount - 1;
-    for (int i = 1; i < musicPlayerAlbumsCount; i++)
-    {
-        if(musicPlayerTrackIndex < musicPlayerAlbumsIndex[i]) {
+    for (int i = 1; i < musicPlayerAlbumsCount; i++) {
+        if (musicPlayerTrackIndex < musicPlayerAlbumsIndex[i]) {
             index = i - 1;
             break;
         }
@@ -205,23 +205,25 @@ int musicplayer_getCurrentAlbumIndex(void) {
 }
 
 void musicplayer_screenUpdate(void) {
-    if(!display_enabled || musicPlayerTracksList == NULL) {
+    if (!display_enabled || musicPlayerTracksList == NULL) {
         return;
     }
 
     long int ts = get_time();
 
-    if(musicPlayerScreenUpdate != ts) {
+    if (musicPlayerScreenUpdate != ts) {
+        bool lockChanged = applock_isLockRecentlyChanged() || applock_isUnlocking();
         int inactivityTime = ts - musicPlayerLastActivity;
 
-        if(inactivityTime > 10) {
+        if (inactivityTime > 10 && !lockChanged) {
             video_displayBlackScreen();
             display_setScreen(false);
             return;
         }
-        if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+
+        if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
             int mPos = musicPlayerTrackPosition;
-            if(Mix_PlayingMusic() == 1 && Mix_PausedMusic() != 1) {
+            if (Mix_PlayingMusic() == 1 && Mix_PausedMusic() != 1) {
                 mPos += ts - musicPlayerTrackStartTime;
             }
             musicplayer_interfaceplayer_drawInterface(mPos);
@@ -236,7 +238,7 @@ void musicplayer_screenActivate(void) {
 
 void musicplayer_setMode(int mode) {
     musicPlayerMode = mode;
-    if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_screenUpdate();
     } else {
         musicPlayerAlbumIndex = musicplayer_getCurrentAlbumIndex();
@@ -244,26 +246,25 @@ void musicplayer_setMode(int mode) {
     }
 }
 
-void musicplayer_load(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_load(void) {
+    if (musicPlayerTracksCount == 0) {
         video_displayImage(SYSTEM_RESOURCES, "noMusic.png");
         return;
     }
-    
+
     musicplayer_loadSession();
 
-    if(musicPlayerTrackIndex < 0) {
+    if (musicPlayerTrackIndex < 0) {
         musicPlayerTrackIndex = musicPlayerTracksCount - 1;
     } else if (musicPlayerTrackIndex >= musicPlayerTracksCount) {
         musicPlayerTrackIndex = 0;
     }
 
     musicPlayerTrackStartTime = get_time();
-    audio_play(MUSICPLAYER_RESOURCES, musicPlayerTracksList[musicPlayerTrackIndex], (double)musicPlayerTrackPosition);
+    audio_play(MUSICPLAYER_RESOURCES, musicPlayerTracksList[musicPlayerTrackIndex], (double) musicPlayerTrackPosition);
     Mix_HookMusicFinished(callback_musicplayer_autoplay);
 
-    if(display_enabled && musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+    if (display_enabled && musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_interfaceplayer_drawInterface(musicPlayerTrackPosition);
     }
 }
@@ -273,14 +274,12 @@ void musicplayer_changeAlbum(int direction) {
     musicplayer_interfacealbum_draw();
 }
 
-void musicplayer_up(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_up(void) {
+    if (musicPlayerTracksCount == 0) {
         return;
     }
-
     musicplayer_screenActivate();
-    if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicPlayerTrackPosition = 0;
         musicPlayerTrackIndex--;
         musicplayer_load();
@@ -289,14 +288,12 @@ void musicplayer_up(void)
     }
 }
 
-void musicplayer_down(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_down(void) {
+    if (musicPlayerTracksCount == 0) {
         return;
     }
-
     musicplayer_screenActivate();
-    if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicPlayerTrackPosition = 0;
         musicPlayerTrackIndex++;
         musicplayer_load();
@@ -305,8 +302,7 @@ void musicplayer_down(void)
     }
 }
 
-void musicplayer_rewind(int time)
-{
+void musicplayer_rewind(int time) {
     int musicDuration = audio_getDuration();
     long int ts = get_time();
     musicPlayerTrackPosition += ts - musicPlayerTrackStartTime + time;
@@ -316,46 +312,40 @@ void musicplayer_rewind(int time)
     } else if (musicPlayerTrackPosition >= musicDuration) {
         musicPlayerTrackPosition = musicDuration - 1;
     }
-    audio_setPosition((double)musicPlayerTrackPosition);
+    audio_setPosition((double) musicPlayerTrackPosition);
     musicplayer_interfaceplayer_drawInterface(musicPlayerTrackPosition);
 }
 
-void musicplayer_next(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_next(void) {
+    if (musicPlayerTracksCount == 0) {
         return;
     }
-
     musicplayer_screenActivate();
-    if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_rewind(10);
     } else {
         musicplayer_changeAlbum(1);
     }
 }
 
-void musicplayer_previous(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_previous(void) {
+    if (musicPlayerTracksCount == 0) {
         return;
     }
-
     musicplayer_screenActivate();
-    if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_rewind(-10);
     } else {
         musicplayer_changeAlbum(-1);
     }
 }
 
-void musicplayer_ok(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_ok(void) {
+    if (musicPlayerTracksCount == 0) {
         return;
     }
-
     musicplayer_screenActivate();
-    if(musicPlayerMode == MUSICPLAYER_MODE_ALBUM) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_ALBUM) {
         musicPlayerMode = MUSICPLAYER_MODE_PLAYER;
         musicPlayerTrackPosition = 0;
         musicPlayerTrackIndex = musicPlayerAlbumsIndex[musicPlayerAlbumIndex];
@@ -363,30 +353,26 @@ void musicplayer_ok(void)
     }
 }
 
-void musicplayer_autoplay(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_autoplay(void) {
+    if (musicPlayerTracksCount == 0) {
         return;
     }
-
     musicPlayerTrackPosition = 0;
     musicPlayerTrackIndex += 1;
     musicplayer_load();
 }
 
 
-void musicplayer_pause(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_pause(void) {
+    if (musicPlayerTracksCount == 0) {
         return;
     }
-
     musicplayer_screenActivate();
-    if(Mix_PlayingMusic() == 1) {
+    if (Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() == 1) {
             Mix_ResumeMusic();
             musicPlayerTrackStartTime = get_time();
-            audio_setPosition((double)musicPlayerTrackPosition);
+            audio_setPosition((double) musicPlayerTrackPosition);
             musicplayer_autosleep_lock();
         } else {
             Mix_PauseMusic();
@@ -396,13 +382,11 @@ void musicplayer_pause(void)
     }
 }
 
-bool musicplayer_home(void)
-{
-    if(musicPlayerTracksCount == 0) {
+bool musicplayer_home(void) {
+    if (musicPlayerTracksCount == 0) {
         return true;
     }
-
-    if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         if (Mix_PlayingMusic() == 1 && Mix_PausedMusic() != 1) {
             musicPlayerTrackPosition += get_time() - musicPlayerTrackStartTime;
         }
@@ -415,23 +399,29 @@ bool musicplayer_home(void)
     }
 }
 
-void musicplayer_menu(void)
-{
-    if(musicPlayerTracksCount == 0) {
+void musicplayer_lockChanged(void) {
+    bool lockChanged = applock_isLockRecentlyChanged() || applock_isUnlocking();
+    if(lockChanged && !display_enabled) {
+        display_setScreen(true);
+    }
+    musicplayer_setMode(musicPlayerMode);
+}
+
+void musicplayer_menu(void) {
+    if (musicPlayerTracksCount == 0) {
         return;
     }
 
     musicplayer_screenActivate();
-    if(musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_setMode(MUSICPLAYER_MODE_ALBUM);
-    } else  {
+    } else {
         musicplayer_setMode(MUSICPLAYER_MODE_PLAYER);
     }
 }
 
-void musicplayer_save(void)
-{
-    if(Mix_PlayingMusic() == 1) {
+void musicplayer_save(void) {
+    if (Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() != 1) {
             musicplayer_pause();
         }
@@ -440,12 +430,11 @@ void musicplayer_save(void)
     musicplayer_saveSession();
 }
 
-bool musicplayer_isMp3File(const char *fileName)
-{
-    return strcmp((char *)fileName + strlen(fileName) - 4, ".mp3") == 0;
+bool musicplayer_isMp3File(const char *fileName) {
+    return strcmp((char *) fileName + strlen(fileName) - 4, ".mp3") == 0;
 }
 
-bool musicplayer_isNewAlbum(const char* fileName, char* lastAlbum) {
+bool musicplayer_isNewAlbum(const char *fileName, char *lastAlbum) {
     char *pointer = strchr(fileName, '_');
     pointer = strchr(pointer + 1, '_');
 
@@ -453,7 +442,7 @@ bool musicplayer_isNewAlbum(const char* fileName, char* lastAlbum) {
     strncpy(albumName, fileName, pointer - fileName);
     albumName[pointer - fileName] = '\0';
 
-    if(strcmp(albumName, lastAlbum) == 0) {
+    if (strcmp(albumName, lastAlbum) == 0) {
         return false;
     }
 
@@ -461,8 +450,7 @@ bool musicplayer_isNewAlbum(const char* fileName, char* lastAlbum) {
     return true;
 }
 
-void musicplayer_init(void)
-{
+void musicplayer_init(void) {
     musicplayer_autosleep_lock();
     musicplayer_screenActivate();
 
@@ -478,15 +466,15 @@ void musicplayer_init(void)
     DIR *d;
     struct dirent *dir;
     d = opendir(MUSICPLAYER_RESOURCES);
-    
-    while((dir = readdir(d)) != NULL) {
+
+    while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG && musicplayer_isMp3File(dir->d_name)) {
             musicPlayerTracksCount++;
         }
     }
 
     if (musicPlayerTracksCount > 0) {
-        musicPlayerTracksList = (char**)malloc(musicPlayerTracksCount * sizeof(char*));
+        musicPlayerTracksList = (char **) malloc(musicPlayerTracksCount * sizeof(char *));
         int i = 0;
 
         rewinddir(d);
@@ -498,29 +486,27 @@ void musicplayer_init(void)
             }
         }
 
-        sort(musicPlayerTracksList, musicPlayerTracksCount); 
+        sort(musicPlayerTracksList, musicPlayerTracksCount);
 
         char lastAlbum[STR_MAX] = {'\0'};
         musicPlayerAlbumsCount = 0;
-        for (i = 0; i < musicPlayerTracksCount; i++)
-        {
+        for (i = 0; i < musicPlayerTracksCount; i++) {
             if (musicplayer_isNewAlbum(musicPlayerTracksList[i], lastAlbum)) {
                 musicPlayerAlbumsCount++;
             }
         }
 
-        musicPlayerAlbumsIndex = (int*)malloc(sizeof(int) * musicPlayerAlbumsCount);
+        musicPlayerAlbumsIndex = (int *) malloc(sizeof(int) * musicPlayerAlbumsCount);
         lastAlbum[0] = '\0';
         int j = 0;
-        for (i = 0; i < musicPlayerTracksCount; i++)
-        {
+        for (i = 0; i < musicPlayerTracksCount; i++) {
             if (musicplayer_isNewAlbum(musicPlayerTracksList[i], lastAlbum)) {
                 musicPlayerAlbumsIndex[j] = i;
                 j++;
             }
         }
     }
-    
+
     closedir(d);
     musicplayer_load();
 }
