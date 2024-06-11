@@ -17,7 +17,6 @@
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
 
 #define FALLBACK_FONT_REGULAR "/mnt/SDCARD/.tmp_update/res/Exo2-Regular.ttf"
-#define FALLBACK_FONT_REGULAR "/mnt/SDCARD/.tmp_update/res/Exo2-Regular.ttf"
 #define FALLBACK_FONT_BOLD "/mnt/SDCARD/.tmp_update/res/Exo2-Bold.ttf"
 
 #define SDL_ALIGN_LEFT 0
@@ -36,6 +35,7 @@ static TTF_Font *fontRegular16;
 
 static SDL_Color colorWhite = {255, 255, 255};
 static SDL_Color colorWhite60 = {189, 186, 193};
+static SDL_Color colorPurple = {37, 16, 58};
 static SDL_Color colorOrange = {255, 181, 0};
 static SDL_Color colorRed = {238, 45, 0};
 
@@ -189,16 +189,20 @@ int audio_getDuration(void) {
     return musicDuration;
 }
 
-void audio_play(const char *dir, const char *name, double position) {
+void audio_play_path(char *sound_path, double position) {
     audio_free_music();
-    char sound_path[STR_MAX * 2];
-    sprintf(sound_path, "%s%s", dir, name);
     musicDuration = (int) (((double) (file_getSize(sound_path) - 16300L) / 24000.0) + 0.5);
     music = Mix_LoadMUS(sound_path);
     if (music != NULL) {
         Mix_PlayMusic(music, 1);
         Mix_SetMusicPosition(position);
     }
+}
+
+void audio_play(const char *dir, const char *name, double position) {
+    char sound_path[STR_MAX * 2];
+    sprintf(sound_path, "%s%s", dir, name);
+    audio_play_path(sound_path, position);
 }
 
 #endif // STORYTELLER_SDL_HELPER__
