@@ -1,3 +1,5 @@
+![Total Download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/total.svg) [![v1.2.0 download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/1.2.0/total.svg)](https://github.com/DantSu/Telmi-story-teller/releases/tag/1.2.0)
+
 <p align="center"><img src="https://dantsu.com/files/Telmi_1280.png" alt="Telmi OS splash screen" /></p>
 
 # Telmi - An open source story teller and MP3 player for Miyoo Mini
