@@ -26,6 +26,11 @@
 #define MUSICPLAYER_MODE_PLAYER 0
 #define MUSICPLAYER_MODE_ALBUM 1
 
+#define MUSICPLAYER_REPEAT_ALL 0
+#define MUSICPLAYER_REPEAT_SHUFFLE 1
+#define MUSICPLAYER_REPEAT_ALBUM 2
+#define MUSICPLAYER_REPEAT_TITLE 3
+
 static int musicPlayerMode = MUSICPLAYER_MODE_PLAYER;
 static char **musicPlayerTracksList = NULL;
 static int musicPlayerTracksCount = 0;
@@ -35,6 +40,7 @@ static int musicPlayerTrackPosition = 0;
 static int *musicPlayerAlbumsIndex = NULL;
 static int musicPlayerAlbumsCount = 0;
 static int musicPlayerAlbumIndex = 0;
+static int musicPlayerRepeatMode = MUSICPLAYER_REPEAT_ALL;
 static long int musicPlayerScreenUpdate = 0;
 static long int musicPlayerLastActivity = 0;
 
@@ -106,7 +112,7 @@ void musicplayer_interfaceplayer_drawSideMusic(int index, int top) {
 
 void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
     char fileImageName[STR_MAX], writeTitle[STR_MAX], writeArtist[STR_MAX], writeDuration[STR_MAX], writeTime[STR_MAX],
-            imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_";
+            imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_", imageRepeatMode[STR_MAX];
 
     int length = strlen(musicPlayerTracksList[musicPlayerTrackIndex]) - 4;
     strncpy(imageName, musicPlayerTracksList[musicPlayerTrackIndex], length);
@@ -126,6 +132,7 @@ void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
     sprintf(writeDuration, "%i:%02i", musicDuration / 60, musicDuration % 60);
     sprintf(writeTime, "%i:%02i", displayMusicPosition / 60, displayMusicPosition % 60);
     sprintf(fileImageName, "%s.png", imageName);
+    sprintf(imageRepeatMode, "musicPlayerRepeatMode%i.png", musicPlayerRepeatMode);
 
     video_screenBlack();
     video_drawRectangle(185, 258, (int) ((double) displayMusicPosition * 422.0 / (double) musicDuration), 12, 255, 186,
@@ -136,6 +143,7 @@ void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
     video_screenWriteFont(writeArtist, fontRegular20, colorWhite, 185, 222, SDL_ALIGN_LEFT);
     video_screenWriteFont(writeTime, fontRegular18, colorWhite, 185, 275, SDL_ALIGN_LEFT);
     video_screenWriteFont(writeDuration, fontRegular18, colorWhite, 605, 275, SDL_ALIGN_RIGHT);
+    video_screenAddImage(SYSTEM_RESOURCES, imageRepeatMode, 332, 274, 128);
     musicplayer_interfaceplayer_drawSideMusic(-2, 0);
     musicplayer_interfaceplayer_drawSideMusic(-1, 83);
     musicplayer_interfaceplayer_drawSideMusic(1, 314);
@@ -204,6 +212,14 @@ int musicplayer_getCurrentAlbumIndex(void) {
     return index;
 }
 
+int musicplayer_getTrackPosition(void) {
+    int mPos = musicPlayerTrackPosition;
+    if (Mix_PlayingMusic() == 1 && Mix_PausedMusic() != 1) {
+        mPos += get_time() - musicPlayerTrackStartTime;
+    }
+    return mPos;
+}
+
 void musicplayer_screenUpdate(void) {
     if (!display_enabled || musicPlayerTracksList == NULL) {
         return;
@@ -222,11 +238,7 @@ void musicplayer_screenUpdate(void) {
         }
 
         if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
-            int mPos = musicPlayerTrackPosition;
-            if (Mix_PlayingMusic() == 1 && Mix_PausedMusic() != 1) {
-                mPos += ts - musicPlayerTrackStartTime;
-            }
-            musicplayer_interfaceplayer_drawInterface(mPos);
+            musicplayer_interfaceplayer_drawInterface(musicplayer_getTrackPosition());
         }
     }
 }
@@ -274,15 +286,55 @@ void musicplayer_changeAlbum(int direction) {
     musicplayer_interfacealbum_draw();
 }
 
+void musicplayer_changeSong(int direction) {
+    if (musicPlayerTracksCount == 0) {
+        return;
+    }
+    musicPlayerTrackPosition = 0;
+    if (musicPlayerRepeatMode == MUSICPLAYER_REPEAT_ALL) {
+        musicPlayerTrackIndex += direction;
+    } else if (musicPlayerRepeatMode == MUSICPLAYER_REPEAT_SHUFFLE) {
+        musicPlayerTrackIndex = rand() % musicPlayerTracksCount;
+    } else if (musicPlayerRepeatMode == MUSICPLAYER_REPEAT_ALBUM) {
+        int oldAlbumIndex = musicplayer_getCurrentAlbumIndex();
+        musicPlayerTrackIndex += direction;
+        if (musicPlayerTrackIndex < 0) {
+            if(musicPlayerAlbumsCount > 1) {
+                musicPlayerTrackIndex = musicPlayerAlbumsIndex[1] - 1;
+            } else {
+                musicPlayerTrackIndex = musicPlayerTracksCount - 1;
+            }
+        } else if (musicPlayerTrackIndex >= musicPlayerTracksCount) {
+            musicPlayerTrackIndex = musicPlayerAlbumsIndex[musicPlayerAlbumsCount - 1];
+        } else {
+            int newAlbumIndex = musicplayer_getCurrentAlbumIndex();
+            if (oldAlbumIndex > newAlbumIndex) {
+                int nextAlbumIndex = oldAlbumIndex + 1;
+                if(nextAlbumIndex >= musicPlayerAlbumsCount) {
+                    musicPlayerTrackIndex = musicPlayerTracksCount - 1;
+                } else {
+                    musicPlayerTrackIndex = musicPlayerAlbumsIndex[nextAlbumIndex] - 1;
+                }
+            } else if (oldAlbumIndex < newAlbumIndex) {
+                musicPlayerTrackIndex = musicPlayerAlbumsIndex[oldAlbumIndex];
+            }
+        }
+    }
+
+    musicplayer_load();
+}
+
+void musicplayer_nextSong(void) {
+    musicplayer_changeSong(1);
+}
+
 void musicplayer_up(void) {
     if (musicPlayerTracksCount == 0) {
         return;
     }
     musicplayer_screenActivate();
     if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
-        musicPlayerTrackPosition = 0;
-        musicPlayerTrackIndex--;
-        musicplayer_load();
+        musicplayer_changeSong(-1);
     } else {
         musicplayer_changeAlbum(-3);
     }
@@ -294,9 +346,7 @@ void musicplayer_down(void) {
     }
     musicplayer_screenActivate();
     if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
-        musicPlayerTrackPosition = 0;
-        musicPlayerTrackIndex++;
-        musicplayer_load();
+        musicplayer_nextSong();
     } else {
         musicplayer_changeAlbum(3);
     }
@@ -345,21 +395,20 @@ void musicplayer_ok(void) {
         return;
     }
     musicplayer_screenActivate();
-    if (musicPlayerMode == MUSICPLAYER_MODE_ALBUM) {
+    if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
+        musicPlayerRepeatMode++;
+        if (musicPlayerRepeatMode > MUSICPLAYER_REPEAT_TITLE) {
+            musicPlayerRepeatMode = MUSICPLAYER_REPEAT_ALL;
+        } else if (musicPlayerRepeatMode < MUSICPLAYER_REPEAT_ALL) {
+            musicPlayerRepeatMode = MUSICPLAYER_REPEAT_TITLE;
+        }
+        musicplayer_interfaceplayer_drawInterface(musicplayer_getTrackPosition());
+    } else {
         musicPlayerMode = MUSICPLAYER_MODE_PLAYER;
         musicPlayerTrackPosition = 0;
         musicPlayerTrackIndex = musicPlayerAlbumsIndex[musicPlayerAlbumIndex];
         musicplayer_load();
     }
-}
-
-void musicplayer_autoplay(void) {
-    if (musicPlayerTracksCount == 0) {
-        return;
-    }
-    musicPlayerTrackPosition = 0;
-    musicPlayerTrackIndex += 1;
-    musicplayer_load();
 }
 
 
@@ -401,7 +450,7 @@ bool musicplayer_home(void) {
 
 void musicplayer_lockChanged(void) {
     bool lockChanged = applock_isLockRecentlyChanged() || applock_isUnlocking();
-    if(lockChanged && !display_enabled) {
+    if (lockChanged && !display_enabled) {
         display_setScreen(true);
     }
     musicplayer_setMode(musicPlayerMode);
@@ -458,7 +507,7 @@ void musicplayer_init(void) {
         return musicplayer_load();
     }
 
-    callback_musicplayer_autoplay = &musicplayer_autoplay;
+    callback_musicplayer_autoplay = &musicplayer_nextSong;
 
     video_displayImage(SYSTEM_RESOURCES, "loadingMusic.png");
 
