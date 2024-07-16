@@ -48,10 +48,15 @@ static char storiesNightModePlaylist[MAX_STORIES_NIGHT_MODE][STR_MAX * 2] = {{'\
                                                                              {'\0'},
                                                                              {'\0'}};
 static char storiesNightModeCurrentAudio[STR_MAX * 2] = {'\0'};
+
 static char **storiesList = NULL;
 static int storiesCount = 0;
 static int storyIndex = 0;
+
 static cJSON *storyJson = NULL;
+static bool hasInventory = false;
+static int storyInventoryCountLength = -1;
+static int *storyInventoryCount = NULL;
 static char storyStageKey[STR_MAX] = {'\0'};
 static char storyActionKey[STR_MAX] = {'\0'};
 static int storyActionOptionIndex = 0;
@@ -100,14 +105,27 @@ void stories_saveSession(void) {
             );
         }
     } else {
+        char jsonInventory[STR_MAX * 2] = "";
+        if (hasInventory) {
+            for (int i = 0; i < storyInventoryCountLength; ++i) {
+                if (i == 0) {
+                    sprintf(jsonInventory, "%d", storyInventoryCount[i]);
+                } else {
+                    char tmpJsonInventory[8];
+                    sprintf(tmpJsonInventory, ",%d", storyInventoryCount[i]);
+                    strcat(jsonInventory, tmpJsonInventory);
+                }
+            }
+        }
         file_save(
                 APP_SAVEFILE,
-                "{\"app\":%d, \"storyIndex\":%d, \"storyActionKey\":\"%s\", \"storyActionOptionIndex\":%d, \"storyTime\":%lf}",
+                "{\"app\":%d, \"storyIndex\":%d, \"storyActionKey\":\"%s\", \"storyActionOptionIndex\":%d, \"storyTime\":%lf, \"inventory\":[%s]}",
                 APP_STORIES,
                 storyIndex,
                 storyActionKey,
                 storyActionOptionIndex,
-                storyAutoplay ? storyTime : 0
+                storyAutoplay ? storyTime : 0,
+                jsonInventory
         );
     }
 }
@@ -142,6 +160,18 @@ bool stories_loadSession(void) {
             json_getInt(savedState, "storyIndex", &storyIndex);
             json_getString(savedState, "storyActionKey", storyActionKey);
             json_getInt(savedState, "storyActionOptionIndex", &storyActionOptionIndex);
+
+            cJSON *inventoryState = cJSON_GetObjectItem(savedState, "inventory");
+            if (inventoryState != NULL && cJSON_IsArray(inventoryState) && cJSON_GetArraySize(inventoryState) > 0) {
+                storyInventoryCountLength = cJSON_GetArraySize(inventoryState);
+                storyInventoryCount = malloc(storyInventoryCountLength * sizeof(int));
+                for (int i = 0; i < storyInventoryCountLength; ++i) {
+                    storyInventoryCount[i] = cJSON_GetNumberValue(cJSON_GetArrayItem(inventoryState, i));
+                }
+            } else {
+                storyInventoryCount = NULL;
+                storyInventoryCountLength = -1;
+            }
         }
         json_getDouble(savedState, "storyTime", &storyTime);
         remove(APP_SAVEFILE);
@@ -230,6 +260,182 @@ void stories_nightMode_next(void) {
     }
 }
 
+void stories_inventory_screenDraw(void) {
+    int itemsDisplayCount = 0;
+
+    cJSON *inventory = cJSON_GetObjectItem(storyJson, "inventory");
+
+    for (int i = 0; i < storyInventoryCountLength; ++i) {
+        if (storyInventoryCount[i] > 0 &&
+            ((int) cJSON_GetNumberValue(cJSON_GetObjectItem(cJSON_GetArrayItem(inventory, i), "display"))) < 2) {
+            ++itemsDisplayCount;
+        }
+    }
+
+    if (itemsDisplayCount == 0) {
+        return;
+    }
+
+    video_screenAddImage(SYSTEM_RESOURCES, "storytellerInventoryBg.png", 0, 384, 640);
+
+    if (itemsDisplayCount > 8) {
+        itemsDisplayCount = 8;
+    }
+
+    int itemWidth = 80;
+    int width = itemsDisplayCount * itemWidth;
+    int x = 320 + width / 2;
+    int y = 400;
+    char storyPath[STR_MAX];
+    sprintf(storyPath, "%s%s/images/", STORIES_RESOURCES, storiesList[storyIndex]);
+
+    for (int i = 0; i < storyInventoryCountLength; ++i) {
+        if (storyInventoryCount[i] <= 0) {
+            continue;
+        }
+
+        cJSON *item = cJSON_GetArrayItem(inventory, i);
+        int display = (int) cJSON_GetNumberValue(cJSON_GetObjectItem(item, "display"));
+        if (display == 2) {
+            continue;
+        }
+
+        int xItem = x - itemsDisplayCount * itemWidth;
+        video_screenAddImage(storyPath, cJSON_GetStringValue(cJSON_GetObjectItem(item, "image")), xItem, y, itemWidth);
+
+        switch (display) {
+            case 0: {
+                if (storyInventoryCount[i] > 1) {
+                    char strCountItem[STR_MAX];
+                    sprintf(strCountItem, "%d", storyInventoryCount[i]);
+                    video_screenWriteFont(strCountItem,
+                                          fontBold18,
+                                          colorWhite,
+                                          xItem + itemWidth - 2,
+                                          y + itemWidth - 20,
+                                          SDL_ALIGN_RIGHT);
+                }
+                break;
+            }
+            case 1: {
+                int maxNumber = (int) cJSON_GetNumberValue(cJSON_GetObjectItem(item, "maxNumber"));
+                video_drawRectangle(xItem + 2, y + 73, 72, 3, 75, 75, 75);
+                video_drawRectangle(xItem + 2,
+                                    y + 73,
+                                    storyInventoryCount[i] * 72 / maxNumber,
+                                    3,
+                                    230,
+                                    230,
+                                    230);
+                video_screenAddImage(
+                        SYSTEM_RESOURCES,
+                        "storytellerInventoryBar.png",
+                        xItem + 2,
+                        y + 71,
+                        76);
+                break;
+            }
+        }
+
+        --itemsDisplayCount;
+        if (itemsDisplayCount == 0) {
+            break;
+        }
+    }
+}
+
+int stories_inventory_updateGetValue(int type, int number, int itemNumber, int maxNumber) {
+    switch (type) {
+        case 0: {
+            itemNumber += number;
+            break;
+        }
+        case 1: {
+            itemNumber -= number;
+            break;
+        }
+        case 2: {
+            itemNumber = number;
+            break;
+        }
+    }
+    if(itemNumber > maxNumber) {
+        return maxNumber;
+    }
+    if(itemNumber < 0) {
+        return 0;
+    }
+    return itemNumber;
+}
+
+void stories_inventory_update(cJSON *node) {
+    cJSON *inventory = cJSON_GetObjectItem(storyJson, "inventory");
+    cJSON *updateItems = cJSON_GetObjectItem(node, "items");
+    if (updateItems != NULL && cJSON_IsArray(updateItems) && cJSON_GetArraySize(updateItems) > 0) {
+        int updateItemsSize = cJSON_GetArraySize(updateItems);
+        for (int i = 0; i < updateItemsSize; ++i) {
+            cJSON *updateItem = cJSON_GetArrayItem(updateItems, i);
+            int index = 0;
+            int number = 0;
+            int type = 0;
+            json_getInt(updateItem, "item", &index);
+            json_getInt(updateItem, "number", &number);
+            json_getInt(updateItem, "type", &type);
+
+            storyInventoryCount[index] = stories_inventory_updateGetValue(
+                    type,
+                    number,
+                    storyInventoryCount[index],
+                    (int) cJSON_GetNumberValue(cJSON_GetObjectItem(cJSON_GetArrayItem(inventory, index), "maxNumber"))
+            );
+        }
+    }
+}
+
+bool stories_inventory_test(int comparator, int conditionNumber, int itemNumber) {
+    switch (comparator) {
+        case 0: {
+            return itemNumber < conditionNumber;
+        }
+        case 1: {
+            return itemNumber <= conditionNumber;
+        }
+        case 2: {
+            return itemNumber == conditionNumber;
+        }
+        case 3: {
+            return itemNumber > conditionNumber;
+        }
+        case 4: {
+            return itemNumber >= conditionNumber;
+        }
+    }
+    return false;
+}
+
+bool stories_inventory_testNode(cJSON *node) {
+    cJSON *conditions = cJSON_GetObjectItem(node, "conditions");
+
+    if (conditions == NULL || !cJSON_IsArray(conditions) || cJSON_GetArraySize(conditions) == 0) {
+        return true;
+    }
+
+    int conditionsSize = cJSON_GetArraySize(conditions);
+    bool result = true;
+    for (int i = 0; i < conditionsSize; ++i) {
+        cJSON *condition = cJSON_GetArrayItem(conditions, i);
+        int index = 0;
+        int number = 0;
+        int comparator = 0;
+        json_getInt(condition, "item", &index);
+        json_getInt(condition, "number", &number);
+        json_getInt(condition, "comparator", &comparator);
+        result = result && stories_inventory_test(comparator, number, storyInventoryCount[index]);
+    }
+    return result;
+}
+
+
 cJSON *stories_getStage(void) {
     cJSON *stageNodes = cJSON_GetObjectItem(storyJson, "stages");
 
@@ -260,6 +466,10 @@ void stories_readStage(void) {
         return;
     }
 
+    if (hasInventory) {
+        stories_inventory_update(stageNode);
+    }
+
     char story_audio_path[STR_MAX], story_image_path[STR_MAX], imageFilename[STR_MAX], soundFilename[STR_MAX];
     sprintf(story_audio_path, "%s%s/audios/", STORIES_RESOURCES, storiesList[storyIndex]);
     sprintf(story_image_path, "%s%s/images/", STORIES_RESOURCES, storiesList[storyIndex]);
@@ -269,7 +479,10 @@ void stories_readStage(void) {
         storyScreenEnabled = true;
         video_screenBlack();
         video_screenAddImage(story_image_path, imageFilename, 0, 0, 640);
-        if(storiesNightModeEnabled) {
+        if (hasInventory) {
+            stories_inventory_screenDraw();
+        }
+        if (storiesNightModeEnabled) {
             stories_nightMode_screenDisplayCount();
         }
         video_applyToVideo();
@@ -280,14 +493,13 @@ void stories_readStage(void) {
             display_setScreen(false);
         }
     }
-    storyAutoplay = false;
+    storyAutoplay = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "autoplay"));
     storyOkAction = true;
 
     if (!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "audio")) && json_getString(stageNode, "audio", soundFilename)) {
         audio_play(story_audio_path, soundFilename, storyTime);
         storyStartTime = get_time();
-        if (cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "autoplay"))) {
-            storyAutoplay = true;
+        if (storyAutoplay) {
             storyOkAction = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "ok"));
             autosleep_lock();
             Mix_HookMusicFinished(callback_stories_autoplay);
@@ -296,6 +508,10 @@ void stories_readStage(void) {
         }
     } else {
         stories_autosleep_unlock();
+        if (storyAutoplay) {
+            callback_stories_autoplay();
+            return;
+        }
     }
 
     if (storiesNightModeEnabled && storyAutoplay && !storyOkAction && !storyScreenEnabled) {
@@ -315,34 +531,54 @@ void stories_readAction(void) {
         return;
     }
 
-    if (storyActionOptionIndex < 0) {
-        storyActionOptionIndex = storyActionOptionsCount - 1;
-    } else if (storyActionOptionIndex >= storyActionOptionsCount) {
-        storyActionOptionIndex = 0;
-    }
-
     cJSON *nodeAction = stories_getAction();
     if (nodeAction == NULL) {
         return;
     }
 
-    cJSON *option = cJSON_GetArrayItem(nodeAction, storyActionOptionIndex);
+    int initialOptionIndex = -1;
 
-    if (option == NULL) {
-        return;
+    while (true) {
+        if (storyActionOptionIndex < 0) {
+            storyActionOptionIndex = storyActionOptionsCount - 1;
+        } else if (storyActionOptionIndex >= storyActionOptionsCount) {
+            storyActionOptionIndex = 0;
+        }
+
+        if (initialOptionIndex == storyActionOptionIndex) {
+            return callback_stories_reset();
+        }
+
+        if (initialOptionIndex == -1) {
+            initialOptionIndex = storyActionOptionIndex;
+        }
+
+        cJSON *option = cJSON_GetArrayItem(nodeAction, storyActionOptionIndex);
+
+        if (option == NULL || (hasInventory && !stories_inventory_testNode(option))) {
+            ++storyActionOptionIndex;
+            continue;
+        }
+
+        json_getString(option, "stage", storyStageKey);
+        stories_readStage();
+        break;
     }
-
-    json_getString(option, "stage", storyStageKey);
-    stories_readStage();
 }
 
 void stories_loadAction(void) {
     cJSON *nodeAction = stories_getAction();
-    if (nodeAction == NULL) {
+
+    if (nodeAction == NULL || !cJSON_IsArray(nodeAction)) {
         return callback_stories_reset();
     }
 
     storyActionOptionsCount = cJSON_GetArraySize(nodeAction);
+
+    if (storyActionOptionsCount == 0) {
+        return callback_stories_reset();
+    }
+
     if (storyActionOptionIndex < 0) {
         storyActionOptionIndex = rand() % storyActionOptionsCount;
     }
@@ -360,6 +596,26 @@ void stories_load(void) {
     storyJson = json_load(story_path);
     if (storyJson == NULL) {
         return;
+    }
+
+    cJSON *inventory = cJSON_GetObjectItem(storyJson, "inventory");
+    hasInventory = inventory != NULL && cJSON_IsArray(inventory) && cJSON_GetArraySize(inventory) > 0;
+    if (hasInventory) {
+        int inventorySize = cJSON_GetArraySize(inventory);
+        if (storyInventoryCount != NULL && storyInventoryCountLength != inventorySize) {
+            free(storyInventoryCount);
+            storyInventoryCount = NULL;
+            storyInventoryCountLength = -1;
+        }
+        if (storyInventoryCount == NULL) {
+            storyInventoryCountLength = inventorySize;
+            storyInventoryCount = malloc(storyInventoryCountLength * sizeof(int));
+            for (int i = 0; i < storyInventoryCountLength; ++i) {
+                storyInventoryCount[i] = cJSON_GetNumberValue(
+                        cJSON_GetObjectItem(cJSON_GetArrayItem(inventory, i), "initialNumber")
+                );
+            }
+        }
     }
 
     if (storyActionKey[0] == '\0') {
@@ -418,7 +674,7 @@ void stories_title_tiles(void) {
     stories_title_tile(baseIndex, 6);
     stories_title_tile(baseIndex, 7);
     stories_title_tile(baseIndex, 8);
-    if(storiesNightModeEnabled) {
+    if (storiesNightModeEnabled) {
         stories_nightMode_screenDisplayCount();
     }
     video_screenWriteFont(writePage, fontRegular16, colorWhite60, 606, 456, SDL_ALIGN_RIGHT);
@@ -432,9 +688,9 @@ void stories_title(void) {
     }
 
     if (stories_loadSession()) {
-        if(storiesNightModeEnabled) {
+        if (storiesNightModeEnabled) {
             return stories_nightMode_resume();
-        } else if(storyActionKey[0] != '\0') {
+        } else if (storyActionKey[0] != '\0') {
             return stories_load();
         }
     }
@@ -677,6 +933,12 @@ void stories_reset(void) {
     storyActionKey[0] = '\0';
     storyActionOptionIndex = 0;
     storyTime = 0;
+    if (hasInventory) {
+        hasInventory = false;
+        free(storyInventoryCount);
+        storyInventoryCount = NULL;
+        storyInventoryCountLength = -1;
+    }
     if (storyJson != NULL) {
         cJSON_free(storyJson);
         storyJson = NULL;

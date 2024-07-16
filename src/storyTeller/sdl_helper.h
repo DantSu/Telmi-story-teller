@@ -29,6 +29,7 @@ static Mix_Music *music;
 static int musicDuration;
 static TTF_Font *fontBold24;
 static TTF_Font *fontBold20;
+static TTF_Font *fontBold18;
 static TTF_Font *fontRegular20;
 static TTF_Font *fontRegular18;
 static TTF_Font *fontRegular16;
@@ -52,6 +53,7 @@ void video_audio_init(void) {
     screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
     fontBold24 = TTF_OpenFont(FALLBACK_FONT_BOLD, 24);
     fontBold20 = TTF_OpenFont(FALLBACK_FONT_BOLD, 20);
+    fontBold18 = TTF_OpenFont(FALLBACK_FONT_BOLD, 18);
     fontRegular20 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 20);
     fontRegular18 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 18);
     fontRegular16 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 16);
