@@ -141,13 +141,17 @@ int main(int argc, char *argv[])
                             break;
                         case HW_BTN_VOLUME_DOWN :
                             if(isMenuPressed) {
-                                settings_setBrightness(settings.brightness - 1, true, false);
-                                osd_showBrightnessBar(settings.brightness);
+                                if((settings.brightness - 1) >= 0) {
+                                    settings_setBrightness(settings.brightness - 1, true, false);
+                                    osd_showBrightnessBar(settings.brightness);
+                                }
                                 applock_stopTimer();
                                 menuPreventDefault = true;
                             } else {
-                                settings_setVolume(settings.volume - 1, true);
-                                osd_showVolumeBar(settings.volume, false);
+                                if((settings.volume - 1) >= 0) {
+                                    settings_setVolume(settings.volume - 1, true);
+                                    osd_showVolumeBar(settings.volume, false);
+                                }
                             }
                             break;
                         case HW_BTN_VOLUME_UP :
