@@ -1,4 +1,4 @@
-![Total Download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/total.svg) [![v1.3.0 download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/1.3.0/total.svg)](https://github.com/DantSu/Telmi-story-teller/releases/tag/1.3.0)
+![Total Download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/total.svg) [![v1.4.0 download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/1.4.0/total.svg)](https://github.com/DantSu/Telmi-story-teller/releases/tag/1.4.0)
 
 <p align="center"><img src="https://dantsu.com/files/Telmi_1280.png" alt="Telmi OS splash screen" /></p>
 
@@ -13,7 +13,7 @@ The story teller is compatible with stories exported from [STUdio](https://githu
 
 ### Download the installation files
 
-- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/1.3.0/TelmiOS_v1.3.0.zip)
+- [Download the latest version of Telmi](https://github.com/DantSu/Telmi-story-teller/releases/download/1.4.0/TelmiOS_v1.4.0.zip)
 
 ### Format your SD card as FAT32 (not exFAT!)
 
@@ -48,9 +48,9 @@ Make sure you choose: `For use with all systems and devices (FAT)`
 
 Chrome already has a tool to format an SD card. Insert the card into your Chromebook, right-click it and click **Format Device**, make sure `FAT32` is selected under **Format** and click or tap **Erase & Format**. 
 
-### Unzip TelmiOS_v1.3.0.zip
+### Unzip TelmiOS_v1.4.0.zip
 
-Put the content of `TelmiOS_v1.3.0.zip` at the root of the SD card.
+Put the content of `TelmiOS_v1.4.0.zip` at the root of the SD card.
 
 ### Power on your Miyoo
 
