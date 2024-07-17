@@ -489,26 +489,6 @@ void stories_readStage(void) {
     sprintf(story_audio_path, "%s%s/audios/", STORIES_RESOURCES, storiesList[storyIndex]);
     sprintf(story_image_path, "%s%s/images/", STORIES_RESOURCES, storiesList[storyIndex]);
 
-    if (isImageDefined) {
-        display_setScreen(true);
-        storyScreenEnabled = true;
-        video_screenBlack();
-        video_screenAddImage(story_image_path, cJSON_GetStringValue(imageJson), 0, 0, 640);
-        if (hasInventory) {
-            stories_inventory_screenDraw();
-        }
-        if (storiesNightModeEnabled) {
-            stories_nightMode_screenDisplayCount();
-        }
-        video_applyToVideo();
-    } else {
-        video_displayBlackScreen();
-        storyScreenEnabled = false;
-        if (!applock_isLockRecentlyChanged() && !applock_isUnlocking()) {
-            display_setScreen(false);
-        }
-    }
-
     if (isAudioDefined) {
         audio_play(story_audio_path, cJSON_GetStringValue(audioJson), storyTime);
         storyStartTime = get_time();
@@ -523,15 +503,37 @@ void stories_readStage(void) {
         stories_autosleep_unlock();
     }
 
-    if (storiesNightModeEnabled && storyAutoplay && !storyOkAction && !storyScreenEnabled) {
-        sprintf(storiesNightModeCurrentAudio, "%s%s", story_audio_path, cJSON_GetStringValue(audioJson));
+    if (isImageDefined) {
         display_setScreen(true);
+        storyScreenEnabled = true;
         video_screenBlack();
-        video_screenAddImage(SYSTEM_RESOURCES, "storytellerNightMode.png", 0, 0, 640);
-        stories_nightMode_screenDisplayCount();
+        video_screenAddImage(story_image_path, cJSON_GetStringValue(imageJson), 0, 0, 640);
+        if (hasInventory) {
+            stories_inventory_screenDraw();
+        }
+        if (storiesNightModeEnabled) {
+            storiesNightModeCurrentAudio[0] = '\0';
+            stories_nightMode_screenDisplayCount();
+        }
         video_applyToVideo();
     } else {
-        storiesNightModeCurrentAudio[0] = '\0';
+        storyScreenEnabled = false;
+        if (storiesNightModeEnabled && storyAutoplay && !storyOkAction) {
+            sprintf(storiesNightModeCurrentAudio, "%s%s", story_audio_path, cJSON_GetStringValue(audioJson));
+            display_setScreen(true);
+            video_screenBlack();
+            video_screenAddImage(SYSTEM_RESOURCES, "storytellerNightMode.png", 0, 0, 640);
+            stories_nightMode_screenDisplayCount();
+            video_applyToVideo();
+        } else {
+            video_displayBlackScreen();
+            if (!applock_isLockRecentlyChanged() && !applock_isUnlocking()) {
+                display_setScreen(false);
+            }
+            if (storiesNightModeEnabled) {
+                storiesNightModeCurrentAudio[0] = '\0';
+            }
+        }
     }
 }
 
