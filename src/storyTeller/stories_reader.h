@@ -319,8 +319,8 @@ void stories_inventory_screenDraw(void) {
             }
             case 1: {
                 int maxNumber = (int) cJSON_GetNumberValue(cJSON_GetObjectItem(item, "maxNumber"));
-                video_drawRectangle(xItem + 2, y + 73, 72, 3, 75, 75, 75);
-                video_drawRectangle(xItem + 2,
+                video_drawRectangle(xItem + 4, y + 73, 72, 3, 75, 75, 75);
+                video_drawRectangle(xItem + 4,
                                     y + 73,
                                     storyInventoryCount[i] * 72 / maxNumber,
                                     3,
@@ -359,10 +359,10 @@ int stories_inventory_updateGetValue(int type, int number, int itemNumber, int m
             break;
         }
     }
-    if(itemNumber > maxNumber) {
+    if (itemNumber > maxNumber) {
         return maxNumber;
     }
-    if(itemNumber < 0) {
+    if (itemNumber < 0) {
         return 0;
     }
     return itemNumber;
@@ -470,15 +470,30 @@ void stories_readStage(void) {
         stories_inventory_update(stageNode);
     }
 
-    char story_audio_path[STR_MAX], story_image_path[STR_MAX], imageFilename[STR_MAX], soundFilename[STR_MAX];
+    cJSON *controlJson = cJSON_GetObjectItem(stageNode, "control");
+    storyAutoplay = cJSON_IsTrue(cJSON_GetObjectItem(controlJson, "autoplay"));
+    storyOkAction = true;
+
+    cJSON *audioJson = cJSON_GetObjectItem(stageNode, "audio");
+    bool isAudioDefined = audioJson != NULL && cJSON_IsString(audioJson);
+
+    if (!isAudioDefined && storyAutoplay) {
+        callback_stories_autoplay();
+        return;
+    }
+
+    cJSON *imageJson = cJSON_GetObjectItem(stageNode, "image");
+    bool isImageDefined = imageJson != NULL && cJSON_IsString(imageJson);
+
+    char story_audio_path[STR_MAX], story_image_path[STR_MAX];
     sprintf(story_audio_path, "%s%s/audios/", STORIES_RESOURCES, storiesList[storyIndex]);
     sprintf(story_image_path, "%s%s/images/", STORIES_RESOURCES, storiesList[storyIndex]);
 
-    if (!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "image")) && json_getString(stageNode, "image", imageFilename)) {
+    if (isImageDefined) {
         display_setScreen(true);
         storyScreenEnabled = true;
         video_screenBlack();
-        video_screenAddImage(story_image_path, imageFilename, 0, 0, 640);
+        video_screenAddImage(story_image_path, cJSON_GetStringValue(imageJson), 0, 0, 640);
         if (hasInventory) {
             stories_inventory_screenDraw();
         }
@@ -493,14 +508,12 @@ void stories_readStage(void) {
             display_setScreen(false);
         }
     }
-    storyAutoplay = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "autoplay"));
-    storyOkAction = true;
 
-    if (!cJSON_IsNull(cJSON_GetObjectItem(stageNode, "audio")) && json_getString(stageNode, "audio", soundFilename)) {
-        audio_play(story_audio_path, soundFilename, storyTime);
+    if (isAudioDefined) {
+        audio_play(story_audio_path, cJSON_GetStringValue(audioJson), storyTime);
         storyStartTime = get_time();
         if (storyAutoplay) {
-            storyOkAction = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(stageNode, "control"), "ok"));
+            storyOkAction = cJSON_IsTrue(cJSON_GetObjectItem(controlJson, "ok"));
             autosleep_lock();
             Mix_HookMusicFinished(callback_stories_autoplay);
         } else {
@@ -508,14 +521,10 @@ void stories_readStage(void) {
         }
     } else {
         stories_autosleep_unlock();
-        if (storyAutoplay) {
-            callback_stories_autoplay();
-            return;
-        }
     }
 
     if (storiesNightModeEnabled && storyAutoplay && !storyOkAction && !storyScreenEnabled) {
-        sprintf(storiesNightModeCurrentAudio, "%s%s", story_audio_path, soundFilename);
+        sprintf(storiesNightModeCurrentAudio, "%s%s", story_audio_path, cJSON_GetStringValue(audioJson));
         display_setScreen(true);
         video_screenBlack();
         video_screenAddImage(SYSTEM_RESOURCES, "storytellerNightMode.png", 0, 0, 640);
