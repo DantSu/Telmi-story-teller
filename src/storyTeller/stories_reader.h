@@ -409,6 +409,9 @@ bool stories_inventory_test(int comparator, int conditionNumber, int itemNumber)
         case 4: {
             return itemNumber >= conditionNumber;
         }
+        case 5: {
+            return itemNumber != conditionNumber;
+        }
     }
     return false;
 }
