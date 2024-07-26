@@ -481,6 +481,8 @@ void stories_readStage(void) {
     bool isAudioDefined = audioJson != NULL && cJSON_IsString(audioJson);
 
     if (!isAudioDefined && storyAutoplay) {
+        storyOkAction = false;
+        storyScreenEnabled = false;
         callback_stories_autoplay();
         return;
     }
@@ -540,9 +542,15 @@ void stories_readStage(void) {
     }
 }
 
-void stories_readAction(void) {
+void stories_readAction(int direction) {
     if (storiesCount == 0) {
         return;
+    }
+
+    storyActionOptionIndex += direction;
+
+    if(direction == 0) {
+        direction = 1;
     }
 
     cJSON *nodeAction = stories_getAction();
@@ -570,7 +578,7 @@ void stories_readAction(void) {
         cJSON *option = cJSON_GetArrayItem(nodeAction, storyActionOptionIndex);
 
         if (option == NULL || (hasInventory && !stories_inventory_testNode(option))) {
-            ++storyActionOptionIndex;
+            storyActionOptionIndex += direction;
             continue;
         }
 
@@ -597,7 +605,7 @@ void stories_loadAction(void) {
         storyActionOptionIndex = rand() % storyActionOptionsCount;
     }
 
-    stories_readAction();
+    stories_readAction(0);
 }
 
 void stories_load(void) {
@@ -812,8 +820,7 @@ void stories_next(void) {
         if (storyActionKey[0] == '\0') {
             stories_changeTitle(1);
         } else {
-            storyActionOptionIndex += 1;
-            stories_readAction();
+            stories_readAction(1);
         }
     }
 }
@@ -829,8 +836,7 @@ void stories_previous(void) {
         if (storyActionKey[0] == '\0') {
             stories_changeTitle(-1);
         } else {
-            storyActionOptionIndex -= 1;
-            stories_readAction();
+            stories_readAction(-1);
         }
     }
 }
