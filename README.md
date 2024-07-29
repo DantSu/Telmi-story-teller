@@ -86,4 +86,5 @@ Then plug SD card of Telmi OS on your computer, it will be reconized by TelmiSyn
 
 # Discord
 
-Tu parles français et tu veux discuter avec moi ? Rendez vous sur le discord de [Raconte moi une histoire](https://monurl.ca/lunii.creations) dans le channel `#telmi`.
+Tu parles français et tu veux discuter avec moi ? Demander de l'aide ? Poser des questions ?
+Rendez vous sur le discord de [Telmi](https://discord.gg/jkBr7pcQ).
