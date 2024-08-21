@@ -56,7 +56,10 @@ main() {
     # start_networking
     rm -rf /tmp/is_booting
 
+    flash_telmi_logo
+
     launch_storyteller
+
     while true; do
         check_off_order "End"
     done
@@ -80,8 +83,6 @@ clear_logs() {
         2> /dev/null
 }
 
-
-
 is_running() {
     process_name="$1"
     pgrep "$process_name" > /dev/null
@@ -91,6 +92,47 @@ get_info_value() {
     echo "$1" | grep "$2\b" | awk '{split($0,a,"="); print a[2]}' | awk -F'"' '{print $2}' | tr -d '\n'
 }
 
+flash_telmi_logo() {
+    log "\n:: Flash Telmi Logo"
+
+    # Beacon detection and logo name retrieving are done here, such that the actual flash script can also be called
+    # during initial TelmiOS installation (as the beacon will be somewhere else, and there is no reboot extension)
+
+    beaconfile="/mnt/SDCARD/Saves/.flashLogo" # "beacon" file (contains the logo name to be flashed, if file exists)
+    rebootext=".reboot"  # optional "reboot" extension (indicates that a reboot is requested)
+
+    log "Looking for a beacon at $beaconfile (with or without $rebootext extension)"
+
+    # Check whether a "beacon" file exists (with or without reboot option), otherwise abort flashing
+    if [ -f "$beaconfile" ]; then
+        beacon="$beaconfile"
+        reboot=0
+    elif [ -f "$beaconfile$rebootext" ]; then
+        beacon="$beaconfile$rebootext"
+        reboot=1
+    else  # Abort flashing if there is no "beacon" file
+        log "No beacon detected. Abort."
+        return
+    fi
+
+    logo=$(cat "$beacon")
+    log "Beacon detected! Requested logo: $logo"
+
+    # Rename and defuse the "beacon" file; this prevents bootloop and flashing again on following startups,
+    # yet allows to remember which logo was flashed last
+    mv -f "$beacon" "${beaconfile}_"
+
+    # Flashes the logo
+    log "Running flashing script..."
+    $sysdir/script/customlogo/flash_logo.sh "$logo" $reboot
+    status=$?
+
+    if [ $status -eq 0 ]; then  # flashing successful
+        log "Flashing successful!"
+    else  # flashing failed
+        log "Flashing failed with status=$status"
+    fi
+}
 
 launch_storyteller() {
     log "\n:: Launch Story Teller"
