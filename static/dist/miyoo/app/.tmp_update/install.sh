@@ -320,10 +320,7 @@ flash_custom_logo() {
 
     logo=$(cat "$beacon")
     echo "Beacon detected! Requested logo: $logo"
-
-    # Move (and defuse) the "beacon" file to its final destination; this allows to remember which logo was flashed last
-    mv -f "$beacon" "/mnt/SDCARD/Saves/${beaconfile}_"
-    echo "Beacon moved to /mnt/SDCARD/Saves/${beaconfile}_"
+    rm -f "$beacon"  # The "beacon" file can now be safely deleted
 
     echo "Running flashing script... "
     echo "Flashing custom logo..." >> /tmp/.update_msg

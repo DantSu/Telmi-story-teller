@@ -117,10 +117,7 @@ flash_telmi_logo() {
 
     logo=$(cat "$beacon")
     log "Beacon detected! Requested logo: $logo"
-
-    # Rename and defuse the "beacon" file; this prevents bootloop and flashing again on following startups,
-    # yet allows to remember which logo was flashed last
-    mv -f "$beacon" "${beaconfile}_"
+    rm -f "$beacon"  # The "beacon" file can now be safely deleted
 
     # Flashes the logo
     log "Running flashing script..."
