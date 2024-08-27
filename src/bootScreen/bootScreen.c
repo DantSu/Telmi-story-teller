@@ -43,8 +43,6 @@ int main(int argc, char *argv[])
     } else if (argc > 1 && strcmp(argv[1], "lowBat") == 0) {
         background = loadImage("lowBat");
         show_version = false;
-    } else if (argc > 1 && strcmp(argv[1], "convertingFiles") == 0) {
-        background = loadImage("convertingFiles");
     } else {
         background = loadImage("bootScreen");
     }
