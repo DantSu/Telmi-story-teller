@@ -173,7 +173,10 @@ run_installation() {
     fi
 
     verify_file
+
     install_core "1/1: $verb Telmi..."
+
+    flash_custom_logo
 
     install_configs $reset_configs
 
@@ -294,6 +297,47 @@ install_core() {
 
     # Cleanup
     rm -f $CORE_PACKAGE_FILE
+}
+
+flash_custom_logo() {
+    echo "\n:: Flash custom logo"
+
+    # At the time this function is called, all files needed for flashing (script and logos) should already be
+    # present in their respective destinations (the unpacking of files has already happened)
+
+    # "beacon" file (contains the logo name to be flashed, if file exists)
+    beaconfile=".flashLogo"
+    beacon="/mnt/SDCARD/${beaconfile}"
+
+    echo "Looking for a beacon at $beacon"
+
+    # Do not flash if the "beacon" file does not exist
+    if [ ! -f "$beacon" ]; then
+        echo "No beacon detected. Abort."
+        echo
+        return
+    fi
+
+    logo=$(cat "$beacon")
+    echo "Beacon detected! Requested logo: $logo"
+    rm -f "$beacon"  # The "beacon" file can now be safely deleted
+
+    echo "Running flashing script... "
+    echo "Flashing custom logo..." >> /tmp/.update_msg
+
+    /mnt/SDCARD/.tmp_update/script/customlogo/flash_logo.sh "$logo" 0
+    status=$?
+
+    if [ $status -eq 0 ]; then  # flashing successful
+        echo "Flashing successful!"
+        echo "Flashing successful!" >> /tmp/.update_msg
+    else  # flashing failed
+        echo "Flashing failed with status=$status"
+        echo "Flashing failed..." >> /tmp/.update_msg
+    fi
+
+    echo
+    sleep 1
 }
 
 
