@@ -21,12 +21,21 @@ static char appImages[3][32] = {"selectStories.png", "selectMusic.png", "selectN
 static int appIndex = 0;
 static bool appOpened = false;
 
-void app_refreshScreen(void) {
-    if (appIndex >= APP_COUNT) {
-        appIndex = 0;
-    } else if (appIndex < 0) {
-        appIndex = APP_COUNT - 1;
+int app_validAppIndex(int currentAppIndex, int direction) {
+    int newAppIndex = currentAppIndex + direction;
+    if (newAppIndex >= APP_COUNT) {
+        return app_validAppIndex(-1 * direction, direction);
     }
+    if (newAppIndex < 0) {
+        return app_validAppIndex(APP_COUNT - 1 - direction, direction);
+    }
+    if(newAppIndex == APP_NIGHTMODE && parameters_getStoryDisableNightMode()) {
+        return app_validAppIndex(newAppIndex, direction);
+    }
+    return newAppIndex;
+}
+
+void app_refreshScreen(void) {
     video_displayImage(SYSTEM_RESOURCES, appImages[appIndex]);
     display_setScreen(true);
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
@@ -92,7 +101,7 @@ void app_previous(void) {
                 break;
         }
     } else {
-        appIndex -= 1;
+        appIndex = app_validAppIndex(appIndex, -1);
         app_refreshScreen();
     }
 }
@@ -111,7 +120,7 @@ void app_next(void) {
                 break;
         }
     } else {
-        appIndex += 1;
+        appIndex = app_validAppIndex(appIndex, 1);
         app_refreshScreen();
     }
 }

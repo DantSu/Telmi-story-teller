@@ -112,7 +112,7 @@ void musicplayer_interfaceplayer_drawSideMusic(int index, int top) {
 
 void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
     char fileImageName[STR_MAX], writeTitle[STR_MAX], writeArtist[STR_MAX], writeDuration[STR_MAX], writeTime[STR_MAX],
-            imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_", imageRepeatMode[STR_MAX];
+            imageName[STR_MAX - 4], imageNameCopy[STR_MAX - 4], imageNameDelimiter[] = "_";
 
     int length = strlen(musicPlayerTracksList[musicPlayerTrackIndex]) - 4;
     strncpy(imageName, musicPlayerTracksList[musicPlayerTrackIndex], length);
@@ -132,7 +132,6 @@ void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
     sprintf(writeDuration, "%i:%02i", musicDuration / 60, musicDuration % 60);
     sprintf(writeTime, "%i:%02i", displayMusicPosition / 60, displayMusicPosition % 60);
     sprintf(fileImageName, "%s.png", imageName);
-    sprintf(imageRepeatMode, "musicPlayerRepeatMode%i.png", musicPlayerRepeatMode);
 
     video_screenBlack();
     video_drawRectangle(185, 258, (int) ((double) displayMusicPosition * 422.0 / (double) musicDuration), 12, 255, 186,
@@ -143,7 +142,11 @@ void musicplayer_interfaceplayer_drawInterface(int displayMusicPosition) {
     video_screenWriteFont(writeArtist, fontRegular20, colorWhite, 185, 222, SDL_ALIGN_LEFT);
     video_screenWriteFont(writeTime, fontRegular18, colorWhite, 185, 275, SDL_ALIGN_LEFT);
     video_screenWriteFont(writeDuration, fontRegular18, colorWhite, 605, 275, SDL_ALIGN_RIGHT);
-    video_screenAddImage(SYSTEM_RESOURCES, imageRepeatMode, 332, 274, 128);
+    if(!parameters_getMusicDisableRepeatModes()) {
+        char imageRepeatMode[STR_MAX];
+        sprintf(imageRepeatMode, "musicPlayerRepeatMode%i.png", musicPlayerRepeatMode);
+        video_screenAddImage(SYSTEM_RESOURCES, imageRepeatMode, 332, 274, 128);
+    }
     musicplayer_interfaceplayer_drawSideMusic(-2, 0);
     musicplayer_interfaceplayer_drawSideMusic(-1, 83);
     musicplayer_interfaceplayer_drawSideMusic(1, 314);
@@ -394,15 +397,20 @@ void musicplayer_ok(void) {
     if (musicPlayerTracksCount == 0) {
         return;
     }
-    musicplayer_screenActivate();
+    if(!display_enabled) {
+        musicplayer_screenActivate();
+        return;
+    }
     if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
-        musicPlayerRepeatMode++;
-        if (musicPlayerRepeatMode > MUSICPLAYER_REPEAT_TITLE) {
-            musicPlayerRepeatMode = MUSICPLAYER_REPEAT_ALL;
-        } else if (musicPlayerRepeatMode < MUSICPLAYER_REPEAT_ALL) {
-            musicPlayerRepeatMode = MUSICPLAYER_REPEAT_TITLE;
+        if(!parameters_getMusicDisableRepeatModes()) {
+            musicPlayerRepeatMode++;
+            if (musicPlayerRepeatMode > MUSICPLAYER_REPEAT_TITLE) {
+                musicPlayerRepeatMode = MUSICPLAYER_REPEAT_ALL;
+            } else if (musicPlayerRepeatMode < MUSICPLAYER_REPEAT_ALL) {
+                musicPlayerRepeatMode = MUSICPLAYER_REPEAT_TITLE;
+            }
+            musicplayer_interfaceplayer_drawInterface(musicplayer_getTrackPosition());
         }
-        musicplayer_interfaceplayer_drawInterface(musicplayer_getTrackPosition());
     } else {
         musicPlayerMode = MUSICPLAYER_MODE_PLAYER;
         musicPlayerTrackPosition = 0;
