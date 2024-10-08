@@ -368,6 +368,18 @@ int stories_inventory_updateGetValue(int type, int number, int itemNumber, int m
     return itemNumber;
 }
 
+int stories_inventory_update_getNumber(cJSON *updateItem) {
+    int number = 0;
+    if (json_getInt(updateItem, "number", &number)) {
+        return number;
+    }
+    int item = 0;
+    if (json_getInt(updateItem, "assignItem", &item)) {
+        return storyInventoryCount[item];
+    }
+    return 0;
+}
+
 void stories_inventory_update(cJSON *node) {
     cJSON *inventory = cJSON_GetObjectItem(storyJson, "inventory");
     cJSON *updateItems = cJSON_GetObjectItem(node, "items");
@@ -376,15 +388,12 @@ void stories_inventory_update(cJSON *node) {
         for (int i = 0; i < updateItemsSize; ++i) {
             cJSON *updateItem = cJSON_GetArrayItem(updateItems, i);
             int index = 0;
-            int number = 0;
             int type = 0;
             json_getInt(updateItem, "item", &index);
-            json_getInt(updateItem, "number", &number);
             json_getInt(updateItem, "type", &type);
-
             storyInventoryCount[index] = stories_inventory_updateGetValue(
                     type,
-                    number,
+                    stories_inventory_update_getNumber(updateItem),
                     storyInventoryCount[index],
                     (int) cJSON_GetNumberValue(cJSON_GetObjectItem(cJSON_GetArrayItem(inventory, index), "maxNumber"))
             );
@@ -416,6 +425,19 @@ bool stories_inventory_test(int comparator, int conditionNumber, int itemNumber)
     return false;
 }
 
+
+int stories_inventory_testNode_getNumber(cJSON *condition) {
+    int number = 0;
+    if (json_getInt(condition, "number", &number)) {
+        return number;
+    }
+    int item = 0;
+    if (json_getInt(condition, "compareItem", &item)) {
+        return storyInventoryCount[item];
+    }
+    return 0;
+}
+
 bool stories_inventory_testNode(cJSON *node) {
     cJSON *conditions = cJSON_GetObjectItem(node, "conditions");
 
@@ -428,16 +450,17 @@ bool stories_inventory_testNode(cJSON *node) {
     for (int i = 0; i < conditionsSize; ++i) {
         cJSON *condition = cJSON_GetArrayItem(conditions, i);
         int index = 0;
-        int number = 0;
         int comparator = 0;
         json_getInt(condition, "item", &index);
-        json_getInt(condition, "number", &number);
         json_getInt(condition, "comparator", &comparator);
-        result = result && stories_inventory_test(comparator, number, storyInventoryCount[index]);
+        result = result && stories_inventory_test(
+                comparator,
+                stories_inventory_testNode_getNumber(condition),
+                storyInventoryCount[index]
+        );
     }
     return result;
 }
-
 
 cJSON *stories_getStage(void) {
     cJSON *stageNodes = cJSON_GetObjectItem(storyJson, "stages");
@@ -549,7 +572,7 @@ void stories_readAction(int direction) {
 
     storyActionOptionIndex += direction;
 
-    if(direction == 0) {
+    if (direction == 0) {
         direction = 1;
     }
 
@@ -605,11 +628,29 @@ void stories_loadAction(void) {
         storyActionOptionIndex = rand() % storyActionOptionsCount;
     }
 
+    if (storyActionOptionIndex >= storyActionOptionsCount) {
+        storyActionOptionIndex = storyActionOptionsCount - 1;
+    }
+
     stories_readAction(0);
 }
 
+void stories_loadAction_keyIndex(cJSON *transition) {
+    storyTime = 0;
+    json_getString(transition, "action", storyActionKey);
+    if (json_getInt(transition, "index", &storyActionOptionIndex)) {
+        return;
+    }
+    int item = 0;
+    if (json_getInt(transition, "indexItem", &item)) {
+        storyActionOptionIndex = storyInventoryCount[item];
+        return;
+    }
+    storyActionOptionIndex = 0;
+}
+
 void stories_load(void) {
-    if (storiesCount == 0) {
+    if (storiesCount == 0 || storiesCount <= storyIndex) {
         return;
     }
 
@@ -647,9 +688,7 @@ void stories_load(void) {
             return callback_stories_reset();
         }
 
-        json_getString(startTransition, "action", storyActionKey);
-        json_getInt(startTransition, "index", &storyActionOptionIndex);
-        storyTime = 0;
+        stories_loadAction_keyIndex(startTransition);
     }
 
     stories_loadAction();
@@ -757,11 +796,7 @@ void stories_transition(char *transition) {
     }
 
     Mix_HookMusicFinished(NULL);
-    storyTime = 0;
-
-    json_getString(transitionNode, "action", storyActionKey);
-    json_getInt(transitionNode, "index", &storyActionOptionIndex);
-
+    stories_loadAction_keyIndex(transitionNode);
     stories_loadAction();
 }
 
