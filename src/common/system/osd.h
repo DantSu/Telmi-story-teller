@@ -243,7 +243,7 @@ void osd_hideBar(void)
 
 void osd_showVolumeBar(int volume, bool mute)
 {
-    osd_showBar(volume, 20, mute ? OSD_MUTE_ON_COLOR : OSD_VOLUME_COLOR);
+    osd_showBar(volume, 22, mute ? OSD_MUTE_ON_COLOR : OSD_VOLUME_COLOR);
 }
 
 void osd_showBrightnessBar(int brightness)
