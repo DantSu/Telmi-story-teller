@@ -446,20 +446,21 @@ bool stories_inventory_testNode(cJSON *node) {
     }
 
     int conditionsSize = cJSON_GetArraySize(conditions);
-    bool result = true;
     for (int i = 0; i < conditionsSize; ++i) {
         cJSON *condition = cJSON_GetArrayItem(conditions, i);
         int index = 0;
         int comparator = 0;
         json_getInt(condition, "item", &index);
         json_getInt(condition, "comparator", &comparator);
-        result = result && stories_inventory_test(
+        if (!stories_inventory_test(
                 comparator,
                 stories_inventory_testNode_getNumber(condition),
                 storyInventoryCount[index]
-        );
+        )) {
+            return false;
+        }
     }
-    return result;
+    return true;
 }
 
 cJSON *stories_getStage(void) {
@@ -625,7 +626,23 @@ void stories_loadAction(void) {
     }
 
     if (storyActionOptionIndex < 0) {
-        storyActionOptionIndex = rand() % storyActionOptionsCount;
+        if (!hasInventory) {
+            storyActionOptionIndex = rand() % storyActionOptionsCount;
+        } else {
+            int countOptions = 0;
+            int indexesOptions[storyActionOptionsCount];
+            for (int i = 0; i < storyActionOptionsCount; ++i) {
+                cJSON *option = cJSON_GetArrayItem(nodeAction, i);
+                if (stories_inventory_testNode(option)) {
+                    indexesOptions[countOptions] = i;
+                    ++countOptions;
+                }
+            }
+            if (countOptions == 0) {
+                return callback_stories_reset();
+            }
+            storyActionOptionIndex = indexesOptions[rand() % countOptions];
+        }
     }
 
     if (storyActionOptionIndex >= storyActionOptionsCount) {
