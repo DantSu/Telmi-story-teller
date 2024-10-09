@@ -505,6 +505,7 @@ void stories_readStage(void) {
     bool isAudioDefined = audioJson != NULL && cJSON_IsString(audioJson);
 
     if (!isAudioDefined && storyAutoplay) {
+        audio_free_music();
         storyOkAction = false;
         storyScreenEnabled = false;
         callback_stories_autoplay();
@@ -529,6 +530,7 @@ void stories_readStage(void) {
             stories_autosleep_unlock();
         }
     } else {
+        audio_free_music();
         stories_autosleep_unlock();
     }
 
