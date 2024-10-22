@@ -67,6 +67,9 @@ static bool storyScreenEnabled = true;
 static bool storyAutoplay = false;
 static bool storyOkAction = true;
 
+static long storyLastPlayingTime = 0;
+static int storyPlayingTime = 0;
+
 static void (*callback_stories_autoplay)(void);
 
 static void (*callback_stories_nightMode)(void);
@@ -75,6 +78,18 @@ static void (*callback_stories_reset)(void);
 
 void stories_autosleep_unlock(void) {
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
+}
+
+void stories_initPlayingTime(void) {
+    storyPlayingTime = 0;
+    storyLastPlayingTime = get_time();
+}
+
+int stories_getPlayingTime(void) {
+    long time = get_time();
+    storyPlayingTime += time - storyLastPlayingTime;
+    storyLastPlayingTime = time;
+    return storyPlayingTime;
 }
 
 void stories_saveSession(void) {
@@ -119,12 +134,13 @@ void stories_saveSession(void) {
         }
         file_save(
                 APP_SAVEFILE,
-                "{\"app\":%d, \"storyIndex\":%d, \"storyActionKey\":\"%s\", \"storyActionOptionIndex\":%d, \"storyTime\":%lf, \"inventory\":[%s]}",
+                "{\"app\":%d, \"storyIndex\":%d, \"storyActionKey\":\"%s\", \"storyActionOptionIndex\":%d, \"storyTime\":%lf, \"storyPlayingTime\":%d, \"inventory\":[%s]}",
                 APP_STORIES,
                 storyIndex,
                 storyActionKey,
                 storyActionOptionIndex,
                 storyAutoplay ? storyTime : 0,
+                stories_getPlayingTime(),
                 jsonInventory
         );
     }
@@ -132,6 +148,7 @@ void stories_saveSession(void) {
 
 bool stories_loadSession(void) {
     storyStageKey[0] = '\0';
+    stories_initPlayingTime();
     cJSON *savedState = json_load(APP_SAVEFILE);
     int a;
     bool b;
@@ -160,6 +177,7 @@ bool stories_loadSession(void) {
             json_getInt(savedState, "storyIndex", &storyIndex);
             json_getString(savedState, "storyActionKey", storyActionKey);
             json_getInt(savedState, "storyActionOptionIndex", &storyActionOptionIndex);
+            json_getInt(savedState, "storyPlayingTime", &storyPlayingTime);
 
             cJSON *inventoryState = cJSON_GetObjectItem(savedState, "inventory");
             if (inventoryState != NULL && cJSON_IsArray(inventoryState) && cJSON_GetArraySize(inventoryState) > 0) {
@@ -358,6 +376,18 @@ int stories_inventory_updateGetValue(int type, int number, int itemNumber, int m
             itemNumber = number;
             break;
         }
+        case 3: {
+            itemNumber *= number;
+            break;
+        }
+        case 4: {
+            itemNumber /= number;
+            break;
+        }
+        case 5: {
+            itemNumber %= number;
+            break;
+        }
     }
     if (itemNumber > maxNumber) {
         return maxNumber;
@@ -376,6 +406,10 @@ int stories_inventory_update_getNumber(cJSON *updateItem) {
     int item = 0;
     if (json_getInt(updateItem, "assignItem", &item)) {
         return storyInventoryCount[item];
+    }
+    bool playingTime = false;
+    if (json_getBool(updateItem, "playingTime", &playingTime) && playingTime) {
+        return stories_getPlayingTime();
     }
     return 0;
 }
@@ -701,6 +735,8 @@ void stories_load(void) {
     }
 
     if (storyActionKey[0] == '\0') {
+        stories_initPlayingTime();
+
         cJSON *startTransition = cJSON_GetObjectItem(storyJson, "startAction");
 
         if (startTransition == NULL) {
