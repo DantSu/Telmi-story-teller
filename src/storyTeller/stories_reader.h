@@ -542,6 +542,11 @@ void stories_readStage(void) {
         audio_free_music();
         storyOkAction = false;
         storyScreenEnabled = false;
+
+        if (storiesNightModeEnabled) {
+            storiesNightModeCurrentAudio[0] = '\0';
+        }
+
         callback_stories_autoplay();
         return;
     }
