@@ -327,10 +327,10 @@ void stories_inventory_screenDraw(void) {
                     char strCountItem[STR_MAX];
                     sprintf(strCountItem, "%d", storyInventoryCount[i]);
                     video_screenWriteFont(strCountItem,
-                                          fontBold18,
+                                          fontBold24,
                                           colorWhite,
                                           xItem + itemWidth - 2,
-                                          y + itemWidth - 20,
+                                          y + itemWidth - 27,
                                           SDL_ALIGN_RIGHT);
                 }
                 break;
