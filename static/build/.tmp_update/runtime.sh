@@ -134,7 +134,7 @@ flash_telmi_logo() {
 launch_storyteller() {
     log "\n:: Launch Story Teller"
     cd $sysdir
-    LD_PRELOAD="$miyoodir/lib/libpadsp.so" storyTeller
+    LD_PRELOAD="$miyoodir/lib/libpadsp.so" storyTeller 2>&1 | tee -a "$sysdir/logs/StoryTeller.log"
     sync
 }
 
