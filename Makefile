@@ -86,6 +86,11 @@ build: core apps external
 
 core: $(CACHE)/.setup
 	@$(ECHO) $(PRINT_RECIPE)
+	@cp -r /root/workspace/build/.tmp_update/lib/libEGL.so /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
+	@cp -r /root/workspace/build/.tmp_update/lib/libGLESv2.so /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
+	@cp -r /root/workspace/build/.tmp_update/lib/libjson-c.so.5 /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
+	@cp -r /root/workspace/build/.tmp_update/lib/libneon.so /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
+	@cp -r /root/workspace/lib/libSDL2* /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
 # Build Telmi binaries
 	@cd $(SRC_DIR)/bootScreen && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/storyTeller && BUILD_DIR=$(BIN_DIR) make
@@ -178,7 +183,7 @@ patch:
 	@chmod a+x $(ROOT_DIR)/.github/create_patch.sh && $(ROOT_DIR)/.github/create_patch.sh
 
 lib:
-	@cd $(ROOT_DIR)/include/cJSON && make clean && make
+#	@cd $(ROOT_DIR)/include/cJSON && make clean && make
 	@cd $(ROOT_DIR)/include/SDL && make clean && make
 
 test:

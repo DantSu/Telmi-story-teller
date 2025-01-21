@@ -9,15 +9,14 @@
 #include "system/settings.h"
 #include "system/settings_sync.h"
 #include "system/display.h"
-#include "utils/log.h"
 
+#include "./logs_helper.h"
 #include "./time_helper.h"
 #include "./app_lock.h"
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
 #include "./app_selector.h"
 #include "./app_parameters.h"
-
 
 // for ev.value
 #define RELEASED 0
@@ -42,6 +41,8 @@ bool keyinput_isValid(void)
 
 int main(int argc, char *argv[])
 {
+    writeLog("storyTeller", "Before init !");
+
     srand(time(NULL));
     video_audio_init();
     settings_init();
@@ -49,6 +50,8 @@ int main(int argc, char *argv[])
     parameters_init();
     settings_setVolume(parameters_getAudioVolumeStartup(), true);
     settings_setBrightness(parameters_getScreenBrightnessStartup(), true, false);
+
+    writeLog("storyTeller", "After init !");
 
     autosleep_init(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
     app_init();
