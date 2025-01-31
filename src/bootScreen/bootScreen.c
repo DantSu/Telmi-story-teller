@@ -1,6 +1,6 @@
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
-#include <SDL/SDL_ttf.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,9 +31,13 @@ int main(int argc, char *argv[])
     // End : Ending screen without save
 
     SDL_Init(SDL_INIT_VIDEO);
+    IMG_Init(IMG_INIT_PNG);
+    TTF_Init();
 
-    SDL_Surface *video = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
-    SDL_Surface *screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
+    SDL_Window *window = SDL_CreateWindow("main", 0, 0, 640, 480, SDL_WINDOW_SHOWN);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    SDL_Surface *screen = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
+    SDL_Texture *texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, screen->w, screen->h);
 
     SDL_Surface *background;
     bool show_version = true;
@@ -57,8 +61,6 @@ int main(int argc, char *argv[])
         SDL_FreeSurface(background);
     }
 
-    TTF_Init();
-
     TTF_Font *font = loadFont(18);
     SDL_Color color = {255, 255, 255};
 
@@ -80,12 +82,13 @@ int main(int argc, char *argv[])
             SDL_FreeSurface(message);
         }
     }
-    
-    // Blit twice, to clear the video buffer
-    SDL_BlitSurface(screen, NULL, video, NULL);
-    SDL_Flip(video);
-    SDL_BlitSurface(screen, NULL, video, NULL);
-    SDL_Flip(video);
+
+    SDL_RenderClear(renderer);
+    SDL_UpdateTexture(texture, NULL, screen->pixels, screen->pitch);
+    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    SDL_RenderPresent(renderer);
+
+    SDL_Delay(500);
 
     if (argc > 1 && strcmp(argv[1], "Boot") != 0)
         temp_flag_set(".offOrder", false);
@@ -94,8 +97,11 @@ int main(int argc, char *argv[])
     sleep(4); // for debugging purposes
 #endif
 
+    TTF_Quit();
     SDL_FreeSurface(screen);
-    SDL_FreeSurface(video);
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     SDL_Quit();
 
     return EXIT_SUCCESS;

@@ -8,6 +8,7 @@
 #include "SDL2/SDL_mixer.h"
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_ttf.h"
+#include "SDL2/SDL_gfx.h"
 
 #include "system/battery.h"
 #include "utils/str.h"
@@ -25,11 +26,12 @@
 
 static SDL_Window *window = NULL;
 static SDL_Surface *screen = NULL;
+static SDL_Surface *appSurface = NULL;
 static SDL_Texture *texture = NULL;
 static SDL_Renderer *renderer = NULL;
 // static SDL_Surface *video;
 static Mix_Music *music;
-static int musicDuration;
+static double musicDuration;
 static TTF_Font *fontBold24;
 static TTF_Font *fontBold20;
 static TTF_Font *fontBold18;
@@ -48,24 +50,28 @@ void video_audio_init(void) {
     writeLog("storyTeller", "Before video_audio_init !");
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     writeLog("storyTeller", "video_audio_init 1 !");
     IMG_Init(IMG_INIT_PNG);
     writeLog("storyTeller", "video_audio_init 2 !");
     TTF_Init();
     writeLog("storyTeller", "video_audio_init 3 !");
-    if (Mix_OpenAudio(44100, 32784, 2, 2048) < 0) {
-        Mix_Volume(-1, MIX_MAX_VOLUME);
-        Mix_VolumeMusic(MIX_MAX_VOLUME);
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) == -1) {
+        writeLog("storyTeller", "Mix_OpenAudio Error !");
     }
+    Mix_Init(MIX_INIT_MP3);
+    Mix_Volume(-1, MIX_MAX_VOLUME);
+    Mix_VolumeMusic(MIX_MAX_VOLUME);
     writeLog("storyTeller", "video_audio_init 4 !");
-    // video = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
-    // screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
 
-    window = SDL_CreateWindow("main", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN);
+    window = SDL_CreateWindow("main", 0, 0, 640, 480, SDL_WINDOW_SHOWN);
     writeLog("storyTeller", "video_audio_init 5 !");
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     writeLog("storyTeller", "video_audio_init 6 !");
     screen = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
+    appSurface = SDL_CreateRGBSurface(0, screen->w, screen->h, 32, 0, 0, 0, 0);
     writeLog("storyTeller", "video_audio_init 7 !");
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, screen->w, screen->h);
     writeLog("storyTeller", "video_audio_init 8 !");
@@ -82,9 +88,7 @@ void video_audio_init(void) {
 
 
 void video_audio_quit(void) {
-    // SDL_BlitSurface(screen, NULL, video, NULL);
-    // SDL_Flip(video);
-
+    writeLog("storyTeller", "video_audio_quit !");
     TTF_Quit();
 
     if (music != NULL) {
@@ -93,7 +97,7 @@ void video_audio_quit(void) {
     }
     Mix_CloseAudio();
 
-    // SDL_FreeSurface(video);
+    SDL_FreeSurface(appSurface);
     SDL_FreeSurface(screen);
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
@@ -102,14 +106,17 @@ void video_audio_quit(void) {
 }
 
 void video_screenBlack(void) {
-    SDL_FillRect(screen, NULL, 0);
+    writeLog("storyTeller", "video_screenBlack !");
+    SDL_FillRect(appSurface, NULL, 0);
 }
 
 void video_drawRectangle(int x, int y, int width, int height, Uint8 r, Uint8 g, Uint8 b) {
-    SDL_FillRect(screen, &(SDL_Rect) {x, y, width, height}, SDL_MapRGB(screen->format, r, g, b));
+    writeLog("storyTeller", "video_drawRectangle !");
+    SDL_FillRect(appSurface, &(SDL_Rect) {x, y, width, height}, SDL_MapRGB(appSurface->format, r, g, b));
 }
 
 void video_screenAddImage(const char *dir, char *name, int x, int y, int width) {
+    writeLog("storyTeller", "video_screenAddImage !");
     char image_path[STR_MAX * 2];
     sprintf(image_path, "%s%s", dir, name);
     SDL_Surface *image = IMG_Load(image_path);
@@ -118,27 +125,30 @@ void video_screenAddImage(const char *dir, char *name, int x, int y, int width) 
         return;
     }
 
-    /*if (width != image->w) {
-        SDL_Surface *imageScaled = rotozoomSurface(image, 0.0, (double) width / (double) image->w, 0);
+    if (width != image->w) {
+        writeLog("storyTeller", "video_screenAddImage : rotozoomSurface !");
+        SDL_Surface *imageScaled = rotozoomSurface(image, 0.0, (double) width / (double) image->w, 1);
         if (imageScaled != NULL) {
-            SDL_BlitSurface(imageScaled, NULL, screen, &(SDL_Rect) {x, y});
+            SDL_BlitSurface(imageScaled, NULL, appSurface, &(SDL_Rect) {x, y});
             SDL_FreeSurface(imageScaled);
         }
-    } else {*/
-        SDL_BlitSurface(image, NULL, screen, &(SDL_Rect) {x, y});
-    //}
+    } else {
+        SDL_BlitSurface(image, NULL, appSurface, &(SDL_Rect) {x, y});
+    }
     SDL_FreeSurface(image);
 }
 
 void video_screenWriteFont(const char *text, TTF_Font *font, SDL_Color color, int x, int y, int align) {
+    writeLog("storyTeller", "video_screenWriteFont !");
     SDL_Surface *sdlText = TTF_RenderUTF8_Blended(font, text, color);
     if (sdlText != NULL) {
-        SDL_BlitSurface(sdlText, NULL, screen, &(SDL_Rect) {x - (sdlText->w / align), y});
+        SDL_BlitSurface(sdlText, NULL, appSurface, &(SDL_Rect) {x - (sdlText->w / align), y});
         SDL_FreeSurface(sdlText);
     }
 }
 
 void video_applyToVideo(void) {
+    writeLog("storyTeller", "video_applyToVideo !");
     int batteryPercentage = battery_getPercentage();
     SDL_Color colorBattery;
     if(batteryPercentage < 6) {
@@ -159,42 +169,37 @@ void video_applyToVideo(void) {
     sprintf(strBatteryPercent, "%i%%", batteryPercentage);
     video_screenWriteFont(strBatteryPercent, fontRegular16, colorBattery, 555, 2, SDL_ALIGN_CENTER);
 
-    // SDL_BlitSurface(screen, NULL, video, NULL);
-    SDL_Surface *tmpSurface = SDL_CreateRGBSurface(0, screen->w, screen->h, 32, 0, 0, 0, 0);
-    SDL_BlitSurface(screen, NULL, tmpSurface, NULL);
+    SDL_BlitSurface(appSurface, NULL, screen, NULL);
 
     if (applock_isLocked()) {
         char image_path[STR_MAX * 2];
         sprintf(image_path, "%s%s", SYSTEM_RESOURCES, "storytellerLock.png");
         SDL_Surface *image = IMG_Load(image_path);
-        // SDL_BlitSurface(image, NULL, video, NULL);
-        SDL_BlitSurface(image, NULL, tmpSurface, NULL);
+        SDL_BlitSurface(image, NULL, screen, NULL);
         SDL_FreeSurface(image);
     } else if (applock_isRecentlyUnlocked()) {
         char image_path[STR_MAX * 2];
         sprintf(image_path, "%s%s", SYSTEM_RESOURCES, "storytellerUnlock.png");
         SDL_Surface *image = IMG_Load(image_path);
-        // SDL_BlitSurface(image, NULL, video, NULL);
-        SDL_BlitSurface(image, NULL, tmpSurface, NULL);
+        SDL_BlitSurface(image, NULL, screen, NULL);
         SDL_FreeSurface(image);
     }
 
-    // SDL_Flip(video);
     SDL_RenderClear(renderer);
-    SDL_UpdateTexture(texture, NULL, tmpSurface->pixels, tmpSurface->pitch);
+    SDL_UpdateTexture(texture, NULL, screen->pixels, screen->pitch);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
-    SDL_FreeSurface(tmpSurface);
 }
 
 void video_displayImage(const char *dir, char *name) {
+    writeLog("storyTeller", "video_displayImage !");
     char image_path[STR_MAX * 2];
     sprintf(image_path, "%s%s", dir, name);
     SDL_Surface *image = IMG_Load(image_path);
 
-    SDL_FillRect(screen, NULL, 0);
+    SDL_FillRect(appSurface, NULL, 0);
     if (image != NULL) {
-        SDL_BlitSurface(image, NULL, screen, &(SDL_Rect) {(screen->w - image->w) / 2, (screen->h - image->h) / 2});
+        SDL_BlitSurface(image, NULL, appSurface, &(SDL_Rect) {(appSurface->w - image->w) / 2, (appSurface->h - image->h) / 2});
         SDL_FreeSurface(image);
     }
 
@@ -202,11 +207,13 @@ void video_displayImage(const char *dir, char *name) {
 }
 
 void video_displayBlackScreen(void) {
+    writeLog("storyTeller", "video_displayBlackScreen !");
     video_screenBlack();
     video_applyToVideo();
 }
 
 void audio_free_music(void) {
+    writeLog("storyTeller", "audio_free_music !");
     if (music != NULL) {
         Mix_HookMusicFinished(NULL);
         Mix_HaltMusic();
@@ -216,6 +223,7 @@ void audio_free_music(void) {
 }
 
 void audio_setPosition(double position) {
+    writeLog("storyTeller", "audio_setPosition !");
     if (music != NULL && Mix_PlayingMusic() == 1) {
         Mix_RewindMusic();
         Mix_SetMusicPosition(position);
@@ -223,20 +231,23 @@ void audio_setPosition(double position) {
 }
 
 int audio_getDuration(void) {
+    writeLog("storyTeller", "audio_getDuration !");
     return musicDuration;
 }
 
 void audio_play_path(char *sound_path, double position) {
+    writeLog("storyTeller", "audio_play_path !");
     audio_free_music();
-    musicDuration = (int) (((double) (file_getSize(sound_path) - 16300L) / 24000.0) + 0.5);
     music = Mix_LoadMUS(sound_path);
     if (music != NULL) {
+        musicDuration = Mix_MusicDuration(music);
         Mix_PlayMusic(music, 1);
         Mix_SetMusicPosition(position);
     }
 }
 
 void audio_play(const char *dir, const char *name, double position) {
+    writeLog("storyTeller", "audio_play !");
     char sound_path[STR_MAX * 2];
     sprintf(sound_path, "%s%s", dir, name);
     audio_play_path(sound_path, position);

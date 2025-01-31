@@ -86,11 +86,8 @@ build: core apps external
 
 core: $(CACHE)/.setup
 	@$(ECHO) $(PRINT_RECIPE)
-	@cp -r /root/workspace/build/.tmp_update/lib/libEGL.so /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
-	@cp -r /root/workspace/build/.tmp_update/lib/libGLESv2.so /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
-	@cp -r /root/workspace/build/.tmp_update/lib/libjson-c.so.5 /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
-	@cp -r /root/workspace/build/.tmp_update/lib/libneon.so /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
 	@cp -r /root/workspace/lib/libSDL2* /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
+	@cp /root/workspace/lib/libmpg123.so.0 /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib/libmpg123.so.0
 # Build Telmi binaries
 	@cd $(SRC_DIR)/bootScreen && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/storyTeller && BUILD_DIR=$(BIN_DIR) make

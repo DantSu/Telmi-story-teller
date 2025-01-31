@@ -658,8 +658,8 @@ rotozoomSurface (SDL_Surface * src, double angle, double zoom, int smooth)
 	  transformSurfaceRGBA (rz_src, rz_dst, dstwidthhalf, dstheighthalf,
 				(int) (sanglezoominv),
 				(int) (canglezoominv), smooth);
-	  /* Turn on source-alpha support
-	  SDL_SetAlpha (rz_dst, SDL_SRCALPHA, 255);*/
+	  /* Turn on source-alpha support*/
+	  SDL_SetAlpha (rz_dst, SDL_SRCALPHA, 255);
 	}
       else
 	{
@@ -725,8 +725,8 @@ rotozoomSurface (SDL_Surface * src, double angle, double zoom, int smooth)
 	{
 	  /* Call the 32bit transformation routine to do the zooming (using alpha) */
 	  zoomSurfaceRGBA (rz_src, rz_dst, smooth);
-	  /* Turn on source-alpha support
-	  SDL_SetAlpha (rz_dst, SDL_SRCALPHA, 255);*/
+	  /* Turn on source-alpha support*/
+	  SDL_SetAlpha (rz_dst, SDL_SRCALPHA, 255);
 	}
       else
 	{
@@ -848,8 +848,8 @@ zoomSurface (SDL_Surface * src, double zoomx, double zoomy, int smooth)
     {
       /* Call the 32bit transformation routine to do the zooming (using alpha) */
       zoomSurfaceRGBA (rz_src, rz_dst, smooth);
-      /* Turn on source-alpha support
-      SDL_SetAlpha (rz_dst, SDL_SRCALPHA, 255);*/
+      /* Turn on source-alpha support*/
+      SDL_SetAlpha (rz_dst, SDL_SRCALPHA, 255);
     }
   else
     {
