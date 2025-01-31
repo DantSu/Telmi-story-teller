@@ -275,9 +275,15 @@ void musicplayer_load(void) {
         musicPlayerTrackIndex = 0;
     }
 
+    bool isPaused = Mix_PlayingMusic() == 1 && Mix_PausedMusic() == 1;
+
     musicPlayerTrackStartTime = get_time();
     audio_play(MUSICPLAYER_RESOURCES, musicPlayerTracksList[musicPlayerTrackIndex], (double) musicPlayerTrackPosition);
     Mix_HookMusicFinished(callback_musicplayer_autoplay);
+
+    if(isPaused) {
+        Mix_PauseMusic();
+    }
 
     if (display_enabled && musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
         musicplayer_interfaceplayer_drawInterface(musicPlayerTrackPosition);
