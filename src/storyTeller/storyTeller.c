@@ -41,7 +41,6 @@ bool keyinput_isValid(void)
 
 int main(int argc, char *argv[])
 {
-    writeLog("storyTeller", "Before init !");
 
     srand(time(NULL));
     video_audio_init();
@@ -50,8 +49,6 @@ int main(int argc, char *argv[])
     parameters_init();
     settings_setVolume(parameters_getAudioVolumeStartup(), true);
     settings_setBrightness(parameters_getScreenBrightnessStartup(), true, false);
-
-    writeLog("storyTeller", "After init !");
 
     autosleep_init(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
     app_init();
