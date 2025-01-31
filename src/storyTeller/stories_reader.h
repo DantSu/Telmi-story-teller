@@ -362,6 +362,15 @@ void stories_inventory_screenDraw(void) {
     }
 }
 
+void stories_inventory_defaultValue(void) {
+    cJSON *inventory = cJSON_GetObjectItem(storyJson, "inventory");
+    for (int i = 0; i < storyInventoryCountLength; ++i) {
+        storyInventoryCount[i] = cJSON_GetNumberValue(
+                cJSON_GetObjectItem(cJSON_GetArrayItem(inventory, i), "initialNumber")
+        );
+    }
+}
+
 int stories_inventory_updateGetValue(int type, int number, int itemNumber, int maxNumber) {
     switch (type) {
         case 0: {
@@ -415,6 +424,11 @@ int stories_inventory_update_getNumber(cJSON *updateItem) {
 }
 
 void stories_inventory_update(cJSON *node) {
+    cJSON *inventoryReset = cJSON_GetObjectItem(node, "inventoryReset");
+    if(inventoryReset != NULL && cJSON_IsTrue(inventoryReset)) {
+        stories_inventory_defaultValue();
+    }
+
     cJSON *inventory = cJSON_GetObjectItem(storyJson, "inventory");
     cJSON *updateItems = cJSON_GetObjectItem(node, "items");
     if (updateItems != NULL && cJSON_IsArray(updateItems) && cJSON_GetArraySize(updateItems) > 0) {
@@ -731,11 +745,7 @@ void stories_load(void) {
         if (storyInventoryCount == NULL) {
             storyInventoryCountLength = inventorySize;
             storyInventoryCount = malloc(storyInventoryCountLength * sizeof(int));
-            for (int i = 0; i < storyInventoryCountLength; ++i) {
-                storyInventoryCount[i] = cJSON_GetNumberValue(
-                        cJSON_GetObjectItem(cJSON_GetArrayItem(inventory, i), "initialNumber")
-                );
-            }
+            stories_inventory_defaultValue();
         }
     }
 
