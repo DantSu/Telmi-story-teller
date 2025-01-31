@@ -3,6 +3,9 @@ sysdir=/mnt/SDCARD/.tmp_update
 miyoodir=/mnt/SDCARD/miyoo
 export LD_LIBRARY_PATH="/lib:/config/lib:$miyoodir/lib:$sysdir/lib:$sysdir/lib/parasyte"
 export PATH="$sysdir/bin:$PATH"
+export SDL_VIDEODRIVER=mmiyoo
+export SDL_AUDIODRIVER=mmiyoo
+export EGL_VIDEODRIVER=mmiyoo
 
 logfile=$(basename "$0" .sh)
 . $sysdir/script/log.sh
@@ -45,12 +48,12 @@ main() {
     fi
 
     cd $sysdir
-    bootScreen "Boot"
+    bootScreen "Boot" 2>&1 | tee -a "$sysdir/logs/BootScreen.log"
 
     # Init
     rm /tmp/.offOrder 2> /dev/null
     HOME=/mnt/SDCARD/Stories/
-    
+
     mkdir -m 777 -p /mnt/SDCARD/Saves
 
     # start_networking
@@ -159,7 +162,7 @@ init_system() {
         $sysdir/script/lcdvolt.sh 2> /dev/null
     fi
 
-    start_audioserver
+    # start_audioserver
 
     brightness=$(/customer/app/jsonval brightness)
     brightness_raw=$(awk "BEGIN { print int(3 * exp(0.350656 * $brightness) + 0.5) }")
@@ -237,6 +240,10 @@ update_time() {
 start_audioserver() {
     defvol=$(echo $(/customer/app/jsonval vol) | awk '{ printf "%.0f\n", 48 * (log(1 + $1) / log(10)) - 60 }')
     runifnecessary "audioserver" $miyoodir/app/audioserver $defvol
+}
+
+kill_audio_servers() {
+    $sysdir/script/stop_audioserver.sh
 }
 
 runifnecessary() {
