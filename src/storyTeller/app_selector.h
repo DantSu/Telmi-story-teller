@@ -44,6 +44,10 @@ void app_refreshScreen(void) {
 void app_screenUpdate(void) {
     if (appOpened) {
         switch (appIndex) {
+            case APP_STORIES:
+            case APP_NIGHTMODE:
+                stories_screenUpdate();
+                break;
             case APP_MUSIC:
                 musicplayer_screenUpdate();
                 break;

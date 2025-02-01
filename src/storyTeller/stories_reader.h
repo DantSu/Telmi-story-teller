@@ -67,6 +67,10 @@ static bool storyScreenEnabled = true;
 static bool storyAutoplay = false;
 static bool storyOkAction = true;
 
+static bool storyShowTimeline = false;
+static long int storyLastScreenRefreshTime = 0;
+static long int storyScreenEnableEndTime = 0;
+
 static long storyLastPlayingTime = 0;
 static int storyPlayingTime = 0;
 
@@ -204,6 +208,7 @@ bool stories_loadSession(void) {
 void stories_nightMode_reset(void) {
     storiesNightModeEnabled = false;
     storiesNightModePlaying = false;
+    storyShowTimeline = false;
     storiesNightModeIndex = 0;
     for (int i = 0; i < MAX_STORIES_NIGHT_MODE; ++i) {
         storiesNightModePlaylist[i][0] = '\0';
@@ -254,8 +259,8 @@ void stories_nightMode_resume(void) {
     video_displayBlackScreen();
     display_setScreen(false);
     storyScreenEnabled = false;
-
     storiesNightModePlaying = true;
+    storyShowTimeline = true;
     storiesNightModeCurrentAudio[0] = '\0';
     stories_nightMode_play();
 }
@@ -274,6 +279,7 @@ void stories_nightMode_next(void) {
         stories_nightMode_play();
     } else {
         storiesNightModePlaying = false;
+        storyShowTimeline = false;
         autosleep_unlock(5, 5);
     }
 }
@@ -425,7 +431,7 @@ int stories_inventory_update_getNumber(cJSON *updateItem) {
 
 void stories_inventory_update(cJSON *node) {
     cJSON *inventoryReset = cJSON_GetObjectItem(node, "inventoryReset");
-    if(inventoryReset != NULL && cJSON_IsTrue(inventoryReset)) {
+    if (inventoryReset != NULL && cJSON_IsTrue(inventoryReset)) {
         stories_inventory_defaultValue();
     }
 
@@ -511,6 +517,62 @@ bool stories_inventory_testNode(cJSON *node) {
     return true;
 }
 
+void stories_screenUpdate(void) {
+    if (display_enabled && storyShowTimeline) {
+        long int cTime = get_time();
+
+        if (!applock_isLockRecentlyChanged() && !applock_isUnlocking() && cTime > storyScreenEnableEndTime) {
+            video_screenBlack();
+            video_applyToVideo();
+            display_setScreen(false);
+            return;
+        }
+
+        if (cTime > storyLastScreenRefreshTime) {
+            int currentStoryTime = Mix_PausedMusic() == 1 ? storyTime : storyTime + cTime - storyStartTime;
+            int totalStoryTime = audio_getDuration();
+            double currentPosition = (double) currentStoryTime / (double) totalStoryTime;
+            if (currentPosition > 1.0) {
+                currentPosition = 1.0;
+            }
+            char strCurrentStoryTime[16], strTotalStoryTime[16];
+            sprintf(strCurrentStoryTime, "%i:%02i", currentStoryTime / 60, currentStoryTime % 60);
+            sprintf(strTotalStoryTime, "%i:%02i", totalStoryTime / 60, totalStoryTime % 60);
+
+            video_screenBlack();
+            video_drawRectangle(80, 217, (int) (currentPosition * 479.0), 19, 255, 186, 0);
+            video_screenAddImage(SYSTEM_RESOURCES, "storytellerStoryPlayer.png", 61, 203, 518);
+            if (Mix_PausedMusic() == 1) {
+                video_screenAddImage(SYSTEM_RESOURCES, "storytellerPause.png", 308, 245, 24);
+            } else {
+                video_screenAddImage(SYSTEM_RESOURCES, "storytellerPlay.png", 308, 245, 24);
+            }
+            if (storyOkAction) {
+                video_screenAddImage(SYSTEM_RESOURCES, "storytellerSkip.png", 270, 300, 101);
+            }
+            video_screenWriteFont(strCurrentStoryTime, fontRegular20, colorWhite, 85, 244, SDL_ALIGN_LEFT);
+            video_screenWriteFont(strTotalStoryTime, fontRegular20, colorWhite, 554, 244, SDL_ALIGN_RIGHT);
+            if (storiesNightModePlaying) {
+                char strNightModeCount[16];
+                sprintf(strNightModeCount, "%i / %i", storiesNightModeIndex + 1, stories_nightMode_count());
+                video_screenWriteFont(strNightModeCount, fontRegular20, colorWhite, 298, 244, SDL_ALIGN_RIGHT);
+            }
+            stories_inventory_screenDraw();
+            video_applyToVideo();
+        }
+
+        storyLastScreenRefreshTime = cTime;
+    }
+}
+
+void stories_showTimeline(void) {
+    if(storyShowTimeline) {
+        storyScreenEnableEndTime = get_time() + 5;
+        display_setScreen(true);
+        stories_screenUpdate();
+    }
+}
+
 cJSON *stories_getStage(void) {
     cJSON *stageNodes = cJSON_GetObjectItem(storyJson, "stages");
 
@@ -548,6 +610,7 @@ void stories_readStage(void) {
     cJSON *controlJson = cJSON_GetObjectItem(stageNode, "control");
     storyAutoplay = cJSON_IsTrue(cJSON_GetObjectItem(controlJson, "autoplay"));
     storyOkAction = true;
+    storyShowTimeline = false;
 
     cJSON *audioJson = cJSON_GetObjectItem(stageNode, "audio");
     bool isAudioDefined = audioJson != NULL && cJSON_IsString(audioJson);
@@ -610,6 +673,7 @@ void stories_readStage(void) {
             stories_nightMode_screenDisplayCount();
             video_applyToVideo();
         } else {
+            storyShowTimeline = true;
             video_displayBlackScreen();
             if (!applock_isLockRecentlyChanged() && !applock_isUnlocking()) {
                 display_setScreen(false);
@@ -888,22 +952,30 @@ void stories_changeTitle(int direction) {
 }
 
 void stories_up(void) {
-    if (storiesCount == 0 || storiesNightModePlaying) {
+    if (storiesCount == 0) {
         return;
     }
 
-    if (storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
-        stories_changeTitle(-3);
+    if (storyAutoplay || storiesNightModePlaying) {
+        stories_showTimeline();
+    } else {
+        if (storyActionKey[0] == '\0' && storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
+            stories_changeTitle(-3);
+        }
     }
 }
 
 void stories_down(void) {
-    if (storiesCount == 0 || storiesNightModePlaying) {
+    if (storiesCount == 0) {
         return;
     }
 
-    if (storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
-        stories_changeTitle(3);
+    if (storyAutoplay || storiesNightModePlaying) {
+        stories_showTimeline();
+    } else {
+        if (storyActionKey[0] == '\0' && storiesDiplayMode == STORIES_DISPLAY_MODE_TILES) {
+            stories_changeTitle(3);
+        }
     }
 }
 
@@ -921,6 +993,7 @@ void stories_next(void) {
 
     if (storyAutoplay || storiesNightModePlaying) {
         stories_rewind(10);
+        stories_showTimeline();
     } else {
         if (storyActionKey[0] == '\0') {
             stories_changeTitle(1);
@@ -937,6 +1010,7 @@ void stories_previous(void) {
 
     if (storyAutoplay || storiesNightModePlaying) {
         stories_rewind(-10);
+        stories_showTimeline();
     } else {
         if (storyActionKey[0] == '\0') {
             stories_changeTitle(-1);
@@ -970,7 +1044,12 @@ void stories_menu(void) {
 }
 
 void stories_ok(void) {
-    if (storiesCount == 0 || storiesNightModePlaying) {
+    if (storiesCount == 0) {
+        return;
+    }
+
+    if (storiesNightModePlaying) {
+        stories_showTimeline();
         return;
     }
 
@@ -983,8 +1062,12 @@ void stories_ok(void) {
             } else {
                 stories_transition("home");
             }
-        } else if (storyOkAction) {
-            stories_transition("ok");
+        } else {
+            if (storyOkAction) {
+                stories_transition("ok");
+            } else {
+                stories_showTimeline();
+            }
         }
     }
 }
@@ -1016,6 +1099,7 @@ void stories_pause(void) {
                 storyTime += (double) (ts - storyStartTime);
                 storyStartTime = ts;
             }
+            stories_showTimeline();
         }
     }
 }
@@ -1058,6 +1142,12 @@ void stories_reset(void) {
     storyActionKey[0] = '\0';
     storyActionOptionIndex = 0;
     storyTime = 0;
+    storyStartTime = 0;
+    storyShowTimeline = false;
+    storyLastScreenRefreshTime = 0;
+    storyScreenEnableEndTime = 0;
+    storyLastPlayingTime = 0;
+    storyPlayingTime = 0;
     if (hasInventory) {
         hasInventory = false;
         free(storyInventoryCount);
