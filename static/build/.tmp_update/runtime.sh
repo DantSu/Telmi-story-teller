@@ -48,7 +48,8 @@ main() {
     fi
 
     cd $sysdir
-    bootScreen "Boot" 2>&1 | tee -a "$sysdir/logs/BootScreen.log"
+    # bootScreen "Boot" 2>&1 | tee -a "$sysdir/logs/BootScreen.log"
+    bootScreen "Boot" &
 
     # Init
     rm /tmp/.offOrder 2> /dev/null
