@@ -62,21 +62,23 @@ int setVolumeRaw(int value, int add)
     return value;
 }
 
-// Increments between 0 and 22
+// Increments between 0 and 25
 int setVolume(int volume)
 {
-    int volume_divided = volume / 1.1;
+    int volume_base = volume;
+    int volume_boost = 0;
     int volume_raw = 0;
 
-    if (volume_divided > 20)
-        volume_divided = 20;
-    else if (volume_divided < 0)
-        volume_divided = 0;
+    if (volume_base > 20) {
+        volume_boost = volume_base - 20;
+        volume_base = 20;
+    } else if (volume_base < 0)
+        volume_base = 0;
 
-    if (volume_divided != 0)
-        volume_raw = round(53 * log10(1 + volume_divided)); // see volume curve below
+    if (volume_base != 0)
+        volume_raw = round(48 * log10(1 + volume_base)) + volume_boost; // see volume curve below
 
-    printf_debug("set volume: %d -> %d\n", volume_divided, volume_raw);
+    printf_debug("set volume: %d -> %d\n", volume_base, volume_raw);
 
     setVolumeRaw(volume_raw, 0);
     return volume;

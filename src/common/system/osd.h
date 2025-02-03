@@ -20,6 +20,7 @@
 #define OSD_COLOR_YELLOW 0x00DCFF62
 
 #define OSD_BRIGHTNESS_COLOR OSD_COLOR_WHITE
+#define OSD_VOLUME_OVER_COLOR OSD_COLOR_RED
 #define OSD_VOLUME_COLOR OSD_COLOR_GREEN
 #define OSD_MUTE_ON_COLOR OSD_COLOR_RED
 
@@ -243,7 +244,7 @@ void osd_hideBar(void)
 
 void osd_showVolumeBar(int volume, bool mute)
 {
-    osd_showBar(volume, 22, mute ? OSD_MUTE_ON_COLOR : OSD_VOLUME_COLOR);
+    osd_showBar(volume, 25, mute ? OSD_MUTE_ON_COLOR : (volume > 20 ? OSD_VOLUME_OVER_COLOR : OSD_VOLUME_COLOR));
 }
 
 void osd_showBrightnessBar(int brightness)

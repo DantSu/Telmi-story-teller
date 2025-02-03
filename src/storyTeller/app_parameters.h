@@ -18,11 +18,11 @@ static bool parametersMusicDisableRepeatModes = false;
 
 
 int parameters_getAudioVolumeStartup() {
-    return (int)(parametersAudioVolumeStartup * 22 + 0.5);
+    return (int)(parametersAudioVolumeStartup * 25.0 + 0.5);
 }
 
 int parameters_getAudioVolumeMax() {
-    return (int)(parametersAudioVolumeMax * 22 + 0.5);
+    return (int)(parametersAudioVolumeMax * 25.0 + 0.5);
 }
 
 int parameters_getAudioVolumeValidation(int audioVolume) {

@@ -354,8 +354,8 @@ bool settings_setVolume(int value, bool apply)
 {
     bool changed = false;
 
-    if (value > 22)
-        value = 22;
+    if (value > 25)
+        value = 25;
     else if (value < 0)
         value = 0;
 
