@@ -60,10 +60,11 @@ int main(int argc, char *argv[])
 
     bool isMenuPressed = false;
     bool menuPreventDefault = false;
-    long startPowerPressed = 0;
+    bool startPowerPressed = false;
+    long startPowerPressedTime = 0;
 
     while (1) {
-        if(autosleep_isSleepingTime()) {
+        if(autosleep_isSleepingTime() || (startPowerPressed && (get_time() - startPowerPressedTime) > 1)) {
             goto exit_loop;
         }
 
@@ -87,7 +88,8 @@ int main(int argc, char *argv[])
                             }
                             break;
                         case HW_BTN_POWER :
-                            startPowerPressed = get_time();
+                            startPowerPressedTime = get_time();
+                            startPowerPressed = true;
                             break;
                     }
                     break;
@@ -103,9 +105,7 @@ int main(int argc, char *argv[])
                     switch (ev.code)
                     {
                         case HW_BTN_POWER :
-                            if((get_time() - startPowerPressed) > 0) {
-                                goto exit_loop;
-                            }
+                            startPowerPressed = false;
                             break;
                         case HW_BTN_MENU :
                             if(!menuPreventDefault) {
