@@ -1111,12 +1111,7 @@ bool stories_home(void) {
     }
 
     if (storyActionKey[0] == '\0' || storiesNightModePlaying) {
-        Mix_HookMusicFinished(NULL);
-        if (Mix_PlayingMusic() == 1) {
-            if (Mix_PausedMusic() != 1) {
-                Mix_PauseMusic();
-            }
-        }
+        audio_free_music();
         stories_nightMode_reset();
         return true;
     } else {
