@@ -1,5 +1,5 @@
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <linux/fb.h>
@@ -21,7 +21,6 @@
 #include "system/keymap_hw.h"
 #include "system/rumble.h"
 #include "system/system.h"
-#include "theme/config.h"
 #include "utils/file.h"
 #include "utils/log.h"
 #include "utils/msleep.h"
@@ -40,31 +39,40 @@ static int input_fd;
 static struct input_event ev;
 static struct pollfd fds[1];
 
-void suspend(bool enabled, SDL_Surface *video)
-{
+SDL_Window *window = NULL;
+SDL_Renderer *renderer = NULL;
+SDL_Surface *screen = NULL;
+SDL_Texture *texture = NULL;
+
+void applyScreen(void) {
+    SDL_RenderClear(renderer);
+    SDL_UpdateTexture(texture, NULL, screen->pixels, screen->pitch);
+    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    SDL_RenderPresent(renderer);
+}
+
+void suspend(bool enabled) {
     suspended = enabled;
     if (suspended) {
-        SDL_FillRect(video, NULL, 0);
-        SDL_Flip(video);
+        SDL_FillRect(screen, NULL, 0);
+        applyScreen();
     }
     // system_powersave(suspended);
     display_setScreen(!suspended);
 }
 
-static void sigHandler(int sig)
-{
+static void sigHandler(int sig) {
     switch (sig) {
-    case SIGINT:
-    case SIGTERM:
-        quit = true;
-        break;
-    default:
-        break;
+        case SIGINT:
+        case SIGTERM:
+            quit = true;
+            break;
+        default:
+            break;
     }
 }
 
-int main(void)
-{
+int main(void) {
     signal(SIGINT, sigHandler);
     signal(SIGTERM, sigHandler);
 
@@ -73,11 +81,12 @@ int main(void)
     getDeviceModel();
 
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_ShowCursor(SDL_DISABLE);
-    SDL_EnableKeyRepeat(300, 50);
+    IMG_Init(IMG_INIT_PNG);
 
-    SDL_Surface *video = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE);
-    SDL_Surface *screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
+    window = SDL_CreateWindow("main", 0, 0, 640, 480, SDL_WINDOW_SHOWN);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    screen = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, screen->w, screen->h);
 
     int min_delay = 15;
     int frame_delay = 80;
@@ -126,7 +135,7 @@ int main(void)
     system_powersave_on();
 
     uint32_t acc_ticks = 0, last_ticks = SDL_GetTicks(),
-             display_timer = last_ticks;
+            display_timer = last_ticks;
 
     while (!quit) {
         while (poll(fds, 1, suspended ? 1000 - min_delay : 0)) {
@@ -139,16 +148,14 @@ int main(void)
                 if (ev.value == PRESSED) {
                     power_pressed = true;
                     repeat_power = 0;
-                }
-                else if (ev.value == RELEASED && power_pressed) {
+                } else if (ev.value == RELEASED && power_pressed) {
                     if (suspended) {
                         acc_ticks = 0;
                         last_ticks = SDL_GetTicks();
                     }
-                    suspend(!suspended, video);
+                    suspend(!suspended);
                     power_pressed = false;
-                }
-                else if (ev.value == REPEATING) {
+                } else if (ev.value == REPEATING) {
                     if (repeat_power >= 5) {
                         quit = true; // power on
                         break;
@@ -177,9 +184,8 @@ int main(void)
                     quit = true;
                     turn_off = true;
                     break;
-                }
-                else {
-                    suspend(true, video);
+                } else {
+                    suspend(true);
                     continue;
                 }
             }
@@ -199,8 +205,7 @@ int main(void)
                     current_frame = (current_frame + 1) % frame_count;
                 }
 
-                SDL_BlitSurface(screen, NULL, video, NULL);
-                SDL_Flip(video);
+                applyScreen();
 
                 acc_ticks -= frame_delay;
             }
@@ -209,10 +214,6 @@ int main(void)
         msleep(min_delay);
     }
 
-    // Clear the screen when exiting
-    SDL_FillRect(video, NULL, 0);
-    SDL_Flip(video);
-
 #ifndef PLATFORM_MIYOOMINI
     msleep(100);
 #endif
@@ -220,7 +221,9 @@ int main(void)
     for (int i = 0; i < frame_count; i++)
         SDL_FreeSurface(frames[i]);
     SDL_FreeSurface(screen);
-    SDL_FreeSurface(video);
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     SDL_Quit();
 
     if (turn_off) {
@@ -228,8 +231,7 @@ int main(void)
         display_setScreen(false);
         system("shutdown; sleep 10");
 #endif
-    }
-    else {
+    } else {
 #ifdef PLATFORM_MIYOOMINI
         display_setScreen(true);
         short_pulse();
