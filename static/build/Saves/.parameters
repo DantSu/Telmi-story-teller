@@ -1,6 +1,6 @@
 {
-  "audioVolumeStartup": 0.3,
-  "audioVolumeMax": 0.6,
+  "audioVolumeStartup": 0.2,
+  "audioVolumeMax": 0.5,
   "screenBrightnessStartup": 0.3,
   "screenBrightnessMax": 0.6,
   "screenOnInactivityTime": 60,
@@ -8,6 +8,7 @@
   "musicInactivityTime": 1800,
   "storyDisplayTiles": true,
   "storyDisableNightMode": false,
+  "storyDisableTimeline": false,
   "musicDisableRepeatModes": false,
   "bootSplashscreen": ""
 }

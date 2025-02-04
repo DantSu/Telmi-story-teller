@@ -12,6 +12,7 @@ static int parametersScreenOffInactivityTime = 300;
 static int parametersMusicInactivityTime = 3600;
 static bool parametersStoryDisplayTiles = false;
 static bool parametersStoryDisableNightMode = false;
+static bool parametersStoryDisableTimeline = false;
 static bool parametersMusicDisableRepeatModes = false;
 
 #define APP_PARAMETERS_PATH "/mnt/SDCARD/Saves/.parameters"
@@ -61,6 +62,10 @@ bool parameters_getStoryDisableNightMode() {
     return parametersStoryDisableNightMode;
 }
 
+bool parameters_getStoryDisableTimeline() {
+    return parametersStoryDisableTimeline;
+}
+
 bool parameters_getMusicDisableRepeatModes() {
     return parametersMusicDisableRepeatModes;
 }
@@ -81,6 +86,9 @@ void parameters_init(void)
         }
         if(!cJSON_IsNull(cJSON_GetObjectItem(parameters, "storyDisableNightMode"))) {
             json_getBool(parameters, "storyDisableNightMode", &parametersStoryDisableNightMode);
+        }
+        if(!cJSON_IsNull(cJSON_GetObjectItem(parameters, "storyDisableTimeline"))) {
+            json_getBool(parameters, "storyDisableTimeline", &parametersStoryDisableTimeline);
         }
         if(!cJSON_IsNull(cJSON_GetObjectItem(parameters, "musicDisableRepeatModes"))) {
             json_getBool(parameters, "musicDisableRepeatModes", &parametersMusicDisableRepeatModes);

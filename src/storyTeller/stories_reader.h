@@ -260,7 +260,7 @@ void stories_nightMode_resume(void) {
     display_setScreen(false);
     storyScreenEnabled = false;
     storiesNightModePlaying = true;
-    storyShowTimeline = true;
+    storyShowTimeline = !parameters_getStoryDisableTimeline();
     storiesNightModeCurrentAudio[0] = '\0';
     stories_nightMode_play();
 }
@@ -673,7 +673,7 @@ void stories_readStage(void) {
             stories_nightMode_screenDisplayCount();
             video_applyToVideo();
         } else {
-            storyShowTimeline = true;
+            storyShowTimeline = !parameters_getStoryDisableTimeline();
             video_displayBlackScreen();
             if (!applock_isLockRecentlyChanged() && !applock_isUnlocking()) {
                 display_setScreen(false);
