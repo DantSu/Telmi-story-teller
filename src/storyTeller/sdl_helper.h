@@ -239,15 +239,13 @@ void audio_play(const char *dir, const char *name, double position) {
 }
 
 void video_audio_init(void) {
-
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     IMG_Init(IMG_INIT_PNG);
     TTF_Init();
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) == -1) {
-    }
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
     Mix_Init(MIX_INIT_MP3);
     Mix_Volume(-1, MIX_MAX_VOLUME);
     Mix_VolumeMusic(MIX_MAX_VOLUME);
