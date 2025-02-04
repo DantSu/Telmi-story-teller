@@ -71,8 +71,8 @@ SDL_Surface *video_findCacheSurface(char* surfaceKey) {
     return NULL;
 }
 
-void video_saveCacheSurface(char* surfaceKey, SDL_Surface *surface) {
-    if(cacheSurfaces[15] != NULL) {
+void video_saveCacheSurface(char *surfaceKey, SDL_Surface *surface) {
+    if (cacheSurfaces[15] != NULL) {
         SDL_FreeSurface(cacheSurfaces[15]);
     }
     for (int i = 15; i > 0; --i) {
@@ -81,54 +81,6 @@ void video_saveCacheSurface(char* surfaceKey, SDL_Surface *surface) {
     }
     strcpy(cacheSurfacesKeys[0], surfaceKey);
     cacheSurfaces[0] = surface;
-}
-
-
-void video_audio_init(void) {
-
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    IMG_Init(IMG_INIT_PNG);
-    TTF_Init();
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) == -1) {
-    }
-    Mix_Init(MIX_INIT_MP3);
-    Mix_Volume(-1, MIX_MAX_VOLUME);
-    Mix_VolumeMusic(MIX_MAX_VOLUME);
-
-    window = SDL_CreateWindow("main", 0, 0, 640, 480, SDL_WINDOW_SHOWN);
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    screen = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
-    appSurface = SDL_CreateRGBSurface(0, screen->w, screen->h, 32, 0, 0, 0, 0);
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, screen->w, screen->h);
-
-    fontBold24 = TTF_OpenFont(FALLBACK_FONT_BOLD, 24);
-    fontBold20 = TTF_OpenFont(FALLBACK_FONT_BOLD, 20);
-    fontBold18 = TTF_OpenFont(FALLBACK_FONT_BOLD, 18);
-    fontRegular20 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 20);
-    fontRegular18 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 18);
-    fontRegular16 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 16);
-
-}
-
-
-void video_audio_quit(void) {
-    TTF_Quit();
-
-    if (music != NULL) {
-        Mix_FreeMusic(music);
-        music = NULL;
-    }
-    Mix_CloseAudio();
-
-    SDL_FreeSurface(appSurface);
-    SDL_FreeSurface(screen);
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
 }
 
 void video_screenBlack(void) {
@@ -147,7 +99,7 @@ void video_screenAddImage(const char *dir, char *name, int x, int y, int width) 
 
     SDL_Surface *image = video_findCacheSurface(image_key);
 
-    if(image != NULL) {
+    if (image != NULL) {
         SDL_BlitSurface(image, NULL, appSurface, &(SDL_Rect) {x, y});
         return;
     }
@@ -226,14 +178,22 @@ void video_displayImage(const char *dir, char *name) {
     char image_path[STR_MAX * 2];
     sprintf(image_path, "%s%s", dir, name);
 
-    SDL_Surface *image = IMG_Load(image_path);
-    SDL_FillRect(appSurface, NULL, 0);
-    if (image != NULL) {
-        SDL_BlitSurface(image, NULL, appSurface,
-                        &(SDL_Rect) {(appSurface->w - image->w) / 2, (appSurface->h - image->h) / 2});
-        SDL_FreeSurface(image);
+    SDL_Surface *image = video_findCacheSurface(image_path);
+
+    if (image == NULL) {
+        image = IMG_Load(image_path);
     }
 
+    SDL_FillRect(appSurface, NULL, 0);
+    if (image != NULL) {
+        SDL_BlitSurface(
+                image,
+                NULL,
+                appSurface,
+                &(SDL_Rect) {(appSurface->w - image->w) / 2, (appSurface->h - image->h) / 2}
+        );
+        video_saveCacheSurface(image_path, image);
+    }
     video_applyToVideo();
 }
 
@@ -276,6 +236,52 @@ void audio_play(const char *dir, const char *name, double position) {
     char sound_path[STR_MAX * 2];
     sprintf(sound_path, "%s%s", dir, name);
     audio_play_path(sound_path, position);
+}
+
+void video_audio_init(void) {
+
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    IMG_Init(IMG_INIT_PNG);
+    TTF_Init();
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) == -1) {
+    }
+    Mix_Init(MIX_INIT_MP3);
+    Mix_Volume(-1, MIX_MAX_VOLUME);
+    Mix_VolumeMusic(MIX_MAX_VOLUME);
+
+    window = SDL_CreateWindow("main", 0, 0, 640, 480, SDL_WINDOW_SHOWN);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    screen = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
+    appSurface = SDL_CreateRGBSurface(0, screen->w, screen->h, 32, 0, 0, 0, 0);
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, screen->w, screen->h);
+
+    fontBold24 = TTF_OpenFont(FALLBACK_FONT_BOLD, 24);
+    fontBold20 = TTF_OpenFont(FALLBACK_FONT_BOLD, 20);
+    fontBold18 = TTF_OpenFont(FALLBACK_FONT_BOLD, 18);
+    fontRegular20 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 20);
+    fontRegular18 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 18);
+    fontRegular16 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 16);
+}
+
+
+void video_audio_quit(void) {
+    TTF_Quit();
+
+    if (music != NULL) {
+        Mix_FreeMusic(music);
+        music = NULL;
+    }
+    Mix_CloseAudio();
+
+    SDL_FreeSurface(appSurface);
+    SDL_FreeSurface(screen);
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }
 
 #endif // STORYTELLER_SDL_HELPER__
