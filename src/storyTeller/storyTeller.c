@@ -28,8 +28,7 @@ static int input_fd;
 static struct input_event ev;
 static struct pollfd fds[1];
 
-bool keyinput_isValid(void)
-{
+bool keyinput_isValid(void) {
     read(input_fd, &ev, sizeof(ev));
 
     if (ev.type != EV_KEY || ev.value > REPEAT) {
@@ -39,8 +38,7 @@ bool keyinput_isValid(void)
     return true;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
     srand(time(NULL));
     video_audio_init();
@@ -64,7 +62,7 @@ int main(int argc, char *argv[])
     long startPowerPressedTime = 0;
 
     while (1) {
-        if(autosleep_isSleepingTime() || (startPowerPressed && (get_time() - startPowerPressedTime) > 1)) {
+        if (autosleep_isSleepingTime() || (startPowerPressed && (get_time() - startPowerPressedTime) > 1)) {
             goto exit_loop;
         }
 
@@ -78,37 +76,37 @@ int main(int argc, char *argv[])
 
             switch (ev.value) {
                 case PRESSED:
-                    switch (ev.code)
-                    {
+                    switch (ev.code) {
                         case HW_BTN_MENU :
                             isMenuPressed = true;
                             applock_startTimer();
-                            if(applock_isLocked()) {
+                            if (applock_isLocked()) {
                                 menuPreventDefault = true;
                             }
                             break;
                         case HW_BTN_POWER :
-                            startPowerPressedTime = get_time();
-                            startPowerPressed = true;
+                            if (!applock_isLocked()) {
+                                startPowerPressedTime = get_time();
+                                startPowerPressed = true;
+                            }
                             break;
                     }
                     break;
-                
+
                 case RELEASED:
-                    if(applock_isLocked()) {
-                        if(ev.code == HW_BTN_MENU) {
+                    if (applock_isLocked()) {
+                        if (ev.code == HW_BTN_MENU) {
                             applock_stopTimer();
                         }
                         break;
                     }
                     autosleep_keepAwake();
-                    switch (ev.code)
-                    {
+                    switch (ev.code) {
                         case HW_BTN_POWER :
                             startPowerPressed = false;
                             break;
                         case HW_BTN_MENU :
-                            if(!menuPreventDefault) {
+                            if (!menuPreventDefault) {
                                 app_menu();
                             }
                             isMenuPressed = false;
@@ -139,43 +137,52 @@ int main(int argc, char *argv[])
                         case HW_BTN_X :
                             app_home();
                             break;
-                        case HW_BTN_VOLUME_DOWN :
-                            if(isMenuPressed) {
-                                if((settings.brightness - 1) >= 0) {
-                                    settings_setBrightness(settings.brightness - 1, true, false);
-                                    osd_showBrightnessBar(settings.brightness);
-                                }
-                                applock_stopTimer();
-                                menuPreventDefault = true;
-                            } else {
-                                if((settings.volume - 1) >= 0) {
-                                    settings_setVolume(settings.volume - 1, true);
-                                    osd_showVolumeBar(settings.volume, false);
-                                }
-                            }
-                            break;
-                        case HW_BTN_VOLUME_UP :
-                            if(isMenuPressed) {
-                                settings_setBrightness(parameters_getScreenBrightnessValidation(settings.brightness + 1), true, false);
+                    }
+
+                    if (isMenuPressed) {
+                        switch (ev.code) {
+                            case HW_BTN_L2 :
+                            case HW_BTN_VOLUME_DOWN :
+                                settings_setBrightness(settings.brightness - 1, true, false);
                                 osd_showBrightnessBar(settings.brightness);
                                 applock_stopTimer();
                                 menuPreventDefault = true;
-                            } else {
+                                break;
+                            case HW_BTN_R2 :
+                            case HW_BTN_VOLUME_UP :
+                                settings_setBrightness(
+                                        parameters_getScreenBrightnessValidation(settings.brightness + 1),
+                                        true,
+                                        false);
+                                osd_showBrightnessBar(settings.brightness);
+                                applock_stopTimer();
+                                menuPreventDefault = true;
+                                break;
+                            default:
+                                break;
+                        }
+                    } else {
+                        switch (ev.code) {
+                            case HW_BTN_VOLUME_DOWN :
+                                settings_setVolume(settings.volume - 1, true);
+                                osd_showVolumeBar(settings.volume, false);
+                                break;
+                            case HW_BTN_VOLUME_UP :
                                 settings_setVolume(parameters_getAudioVolumeValidation(settings.volume + 1), true);
                                 osd_showVolumeBar(settings.volume, false);
-                            }
-                            break;
-                        default:
-                            break;
+                                break;
+                            default:
+                                break;
+                        }
                     }
                     break;
-                
+
                 default:
                     break;
             }
         }
     }
-    
+
     exit_loop:
     app_save();
     display_setScreen(true);

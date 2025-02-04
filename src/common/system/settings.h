@@ -339,8 +339,13 @@ bool settings_saveSystemProperty(const char *prop_name, int value)
     return true;
 }
 
-void settings_setBrightness(uint32_t value, bool apply, bool save)
+void settings_setBrightness(int value, bool apply, bool save)
 {
+    if (value > 10)
+        value = 10;
+    else if (value < 0)
+        value = 0;
+
     settings.brightness = value;
 
     if (apply)
