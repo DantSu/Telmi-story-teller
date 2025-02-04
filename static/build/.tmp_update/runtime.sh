@@ -49,7 +49,7 @@ main() {
 
     cd $sysdir
     # bootScreen "Boot" 2>&1 | tee -a "$sysdir/logs/BootScreen.log"
-    bootScreen "Boot" &
+    bootScreen "Boot"
 
     # Init
     rm /tmp/.offOrder 2> /dev/null
@@ -138,7 +138,8 @@ flash_telmi_logo() {
 launch_storyteller() {
     log "\n:: Launch Story Teller"
     cd $sysdir
-    LD_PRELOAD="$miyoodir/lib/libpadsp.so" storyTeller 2>&1 | tee -a "$sysdir/logs/StoryTeller.log"
+    # LD_PRELOAD="$miyoodir/lib/libpadsp.so" storyTeller 2>&1 | tee -a "$sysdir/logs/StoryTeller.log"
+    LD_PRELOAD="$miyoodir/lib/libpadsp.so" storyTeller
     sync
 }
 
