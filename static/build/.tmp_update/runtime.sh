@@ -181,8 +181,9 @@ device_uuid=$(read_uuid)
 device_settings="/mnt/SDCARD/.tmp_update/config/system/$device_uuid.json"
 
 load_settings() {
-    if [ -f "$device_settings" ]; then
-        cp -f "$device_settings" /mnt/SDCARD/system.json
+    system_settings="/mnt/SDCARD/.tmp_update/res/miyoo${DEVICE_ID}_system.json"
+    if [ -f "$system_settings" ]; then
+        cp -f "$system_settings" /mnt/SDCARD/system.json
     fi
 
     # link /appconfigs/system.json to SD card

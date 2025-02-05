@@ -9,6 +9,7 @@
 #include "SDL2/SDL_ttf.h"
 #include "SDL2/SDL_gfx.h"
 
+#include "./logs_helper.h"
 #include "system/battery.h"
 #include "utils/str.h"
 #include "./file_helper.h"
@@ -81,6 +82,17 @@ void video_saveCacheSurface(char *surfaceKey, SDL_Surface *surface) {
     }
     strcpy(cacheSurfacesKeys[0], surfaceKey);
     cacheSurfaces[0] = surface;
+}
+
+SDL_Surface *video_loadAndCacheImage(char *image_path) {
+    SDL_Surface *image = video_findCacheSurface(image_path);
+    if (image == NULL) {
+        image = IMG_Load(image_path);
+        if (image != NULL) {
+            video_saveCacheSurface(image_path, image);
+        }
+    }
+    return image;
 }
 
 void video_screenBlack(void) {
@@ -157,15 +169,13 @@ void video_applyToVideo(void) {
     if (applock_isLocked()) {
         char image_path[STR_MAX * 2];
         sprintf(image_path, "%s%s", SYSTEM_RESOURCES, "storytellerLock.png");
-        SDL_Surface *image = IMG_Load(image_path);
+        SDL_Surface *image = video_loadAndCacheImage(image_path);
         SDL_BlitSurface(image, NULL, screen, NULL);
-        SDL_FreeSurface(image);
     } else if (applock_isRecentlyUnlocked()) {
         char image_path[STR_MAX * 2];
         sprintf(image_path, "%s%s", SYSTEM_RESOURCES, "storytellerUnlock.png");
-        SDL_Surface *image = IMG_Load(image_path);
+        SDL_Surface *image = video_loadAndCacheImage(image_path);
         SDL_BlitSurface(image, NULL, screen, NULL);
-        SDL_FreeSurface(image);
     }
 
     SDL_RenderClear(renderer);
@@ -178,11 +188,7 @@ void video_displayImage(const char *dir, char *name) {
     char image_path[STR_MAX * 2];
     sprintf(image_path, "%s%s", dir, name);
 
-    SDL_Surface *image = video_findCacheSurface(image_path);
-
-    if (image == NULL) {
-        image = IMG_Load(image_path);
-    }
+    SDL_Surface *image = video_loadAndCacheImage(image_path);
 
     SDL_FillRect(appSurface, NULL, 0);
     if (image != NULL) {
@@ -192,7 +198,6 @@ void video_displayImage(const char *dir, char *name) {
                 appSurface,
                 &(SDL_Rect) {(appSurface->w - image->w) / 2, (appSurface->h - image->h) / 2}
         );
-        video_saveCacheSurface(image_path, image);
     }
     video_applyToVideo();
 }
