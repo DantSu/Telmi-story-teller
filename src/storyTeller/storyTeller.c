@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
         }
 
         applock_checkLock();
-        app_screenUpdate();
+        app_update();
 
         if (poll(fds, 1, 0) > 0) {
             if (!keyinput_isValid()) {

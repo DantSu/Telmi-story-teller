@@ -41,15 +41,15 @@ void app_refreshScreen(void) {
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
 }
 
-void app_screenUpdate(void) {
+void app_update(void) {
     if (appOpened) {
         switch (appIndex) {
             case APP_STORIES:
             case APP_NIGHTMODE:
-                stories_screenUpdate();
+                stories_update();
                 break;
             case APP_MUSIC:
-                musicplayer_screenUpdate();
+                musicplayer_update();
                 break;
             default:
                 break;

@@ -209,7 +209,6 @@ void video_displayBlackScreen(void) {
 
 void audio_free_music(void) {
     if (music != NULL) {
-        Mix_HookMusicFinished(NULL);
         Mix_HaltMusic();
         Mix_FreeMusic(music);
         music = NULL;
@@ -218,13 +217,19 @@ void audio_free_music(void) {
 
 void audio_setPosition(double position) {
     if (music != NULL && Mix_PlayingMusic() == 1) {
-        // Mix_RewindMusic();
         Mix_SetMusicPosition(position);
     }
 }
 
-int audio_getDuration(void) {
+double audio_getDuration(void) {
     return musicDuration;
+}
+
+double audio_getPosition(void) {
+    if (music != NULL) {
+        return Mix_GetMusicPosition(music);
+    }
+    return 0.0;
 }
 
 void audio_play_path(char *sound_path, double position) {
@@ -234,6 +239,8 @@ void audio_play_path(char *sound_path, double position) {
         musicDuration = Mix_MusicDuration(music);
         Mix_PlayMusic(music, 1);
         Mix_SetMusicPosition(position);
+    } else {
+        musicDuration = 0.0;
     }
 }
 

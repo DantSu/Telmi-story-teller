@@ -62,23 +62,23 @@ static char storyActionKey[STR_MAX] = {'\0'};
 static int storyActionOptionIndex = 0;
 static int storyActionOptionsCount = 0;
 static double storyTime = 0;
-static long int storyStartTime = 0;
 static bool storyScreenEnabled = true;
 static bool storyAutoplay = false;
 static bool storyOkAction = true;
 
 static bool storyShowTimeline = false;
-static long int storyLastScreenRefreshTime = 0;
+static long int storyScreenUpdateTime = 0;
+static int storyDrawTimelineTime = 0;
 static long int storyScreenEnableEndTime = 0;
 
 static long storyLastPlayingTime = 0;
 static int storyPlayingTime = 0;
 
 static void (*callback_stories_autoplay)(void);
-
 static void (*callback_stories_nightMode)(void);
-
 static void (*callback_stories_reset)(void);
+static void (*callback_stories_audio_hook)(void);
+
 
 void stories_autosleep_unlock(void) {
     autosleep_unlock(parameters_getScreenOnInactivityTime(), parameters_getScreenOffInactivityTime());
@@ -143,7 +143,7 @@ void stories_saveSession(void) {
                 storyIndex,
                 storyActionKey,
                 storyActionOptionIndex,
-                storyAutoplay ? storyTime : 0,
+                storyAutoplay ? audio_getPosition() : 0,
                 stories_getPlayingTime(),
                 jsonInventory
         );
@@ -249,8 +249,7 @@ bool stories_nightMode_addToPlaylist(void) {
 
 void stories_nightMode_play(void) {
     audio_play_path(storiesNightModePlaylist[storiesNightModeIndex], storyTime);
-    storyStartTime = get_time();
-    Mix_HookMusicFinished(callback_stories_nightMode);
+    callback_stories_audio_hook = callback_stories_nightMode;
 }
 
 void stories_nightMode_resume(void) {
@@ -517,56 +516,61 @@ bool stories_inventory_testNode(cJSON *node) {
     return true;
 }
 
-void stories_screenUpdate(void) {
-    if (display_enabled && storyShowTimeline) {
-        long int cTime = get_time();
+void stories_drawTimeline(bool forceDraw) {
+    int storyPosition = audio_getPosition();
+    if (!forceDraw && storyDrawTimelineTime == storyPosition) {
+        return;
+    }
+    storyDrawTimelineTime = storyPosition;
+    int storyDuration = audio_getDuration();
 
+    char strCurrentStoryTime[16], strTotalStoryTime[16];
+    sprintf(strCurrentStoryTime, "%i:%02i", storyPosition / 60, storyPosition % 60);
+    sprintf(strTotalStoryTime, "%i:%02i", storyDuration / 60, storyDuration % 60);
+
+    video_screenBlack();
+    video_drawRectangle(80, 217, (int) (((double) storyPosition / (double) storyDuration) * 479.0), 19, 255, 186, 0);
+    video_screenAddImage(SYSTEM_RESOURCES, "storytellerStoryPlayer.png", 61, 203, 518);
+    if (Mix_PausedMusic() == 1) {
+        video_screenAddImage(SYSTEM_RESOURCES, "storytellerPause.png", 308, 245, 24);
+    } else {
+        video_screenAddImage(SYSTEM_RESOURCES, "storytellerPlay.png", 308, 245, 24);
+    }
+    if (storyOkAction) {
+        video_screenAddImage(SYSTEM_RESOURCES, "storytellerSkip.png", 270, 300, 101);
+    }
+    video_screenWriteFont(strCurrentStoryTime, fontRegular20, colorWhite, 85, 244, SDL_ALIGN_LEFT);
+    video_screenWriteFont(strTotalStoryTime, fontRegular20, colorWhite, 554, 244, SDL_ALIGN_RIGHT);
+    if (storiesNightModePlaying) {
+        char strNightModeCount[16];
+        sprintf(strNightModeCount, "%i / %i", storiesNightModeIndex + 1, stories_nightMode_count());
+        video_screenWriteFont(strNightModeCount, fontRegular20, colorWhite, 298, 244, SDL_ALIGN_RIGHT);
+    }
+    stories_inventory_screenDraw();
+    video_applyToVideo();
+}
+
+void stories_screenUpdate(void) {
+    if (!display_enabled || !storyShowTimeline) {
+        return;
+    }
+
+    long int cTime = get_time();
+    if (cTime != storyScreenUpdateTime) {
+        storyScreenUpdateTime = cTime;
         if (!applock_isLockRecentlyChanged() && !applock_isUnlocking() && cTime > storyScreenEnableEndTime) {
             video_screenBlack();
             video_applyToVideo();
             display_setScreen(false);
             return;
         }
-
-        if (cTime > storyLastScreenRefreshTime) {
-            int currentStoryTime = Mix_PausedMusic() == 1 ? storyTime : storyTime + cTime - storyStartTime;
-            int totalStoryTime = audio_getDuration();
-            double currentPosition = (double) currentStoryTime / (double) totalStoryTime;
-            if (currentPosition > 1.0) {
-                currentPosition = 1.0;
-            }
-            char strCurrentStoryTime[16], strTotalStoryTime[16];
-            sprintf(strCurrentStoryTime, "%i:%02i", currentStoryTime / 60, currentStoryTime % 60);
-            sprintf(strTotalStoryTime, "%i:%02i", totalStoryTime / 60, totalStoryTime % 60);
-
-            video_screenBlack();
-            video_drawRectangle(80, 217, (int) (currentPosition * 479.0), 19, 255, 186, 0);
-            video_screenAddImage(SYSTEM_RESOURCES, "storytellerStoryPlayer.png", 61, 203, 518);
-            if (Mix_PausedMusic() == 1) {
-                video_screenAddImage(SYSTEM_RESOURCES, "storytellerPause.png", 308, 245, 24);
-            } else {
-                video_screenAddImage(SYSTEM_RESOURCES, "storytellerPlay.png", 308, 245, 24);
-            }
-            if (storyOkAction) {
-                video_screenAddImage(SYSTEM_RESOURCES, "storytellerSkip.png", 270, 300, 101);
-            }
-            video_screenWriteFont(strCurrentStoryTime, fontRegular20, colorWhite, 85, 244, SDL_ALIGN_LEFT);
-            video_screenWriteFont(strTotalStoryTime, fontRegular20, colorWhite, 554, 244, SDL_ALIGN_RIGHT);
-            if (storiesNightModePlaying) {
-                char strNightModeCount[16];
-                sprintf(strNightModeCount, "%i / %i", storiesNightModeIndex + 1, stories_nightMode_count());
-                video_screenWriteFont(strNightModeCount, fontRegular20, colorWhite, 298, 244, SDL_ALIGN_RIGHT);
-            }
-            stories_inventory_screenDraw();
-            video_applyToVideo();
-        }
-
-        storyLastScreenRefreshTime = cTime;
     }
+
+    stories_drawTimeline(false);
 }
 
 void stories_showTimeline(void) {
-    if(storyShowTimeline) {
+    if (storyShowTimeline) {
         storyScreenEnableEndTime = get_time() + 5;
         display_setScreen(true);
         stories_screenUpdate();
@@ -611,6 +615,7 @@ void stories_readStage(void) {
     storyAutoplay = cJSON_IsTrue(cJSON_GetObjectItem(controlJson, "autoplay"));
     storyOkAction = true;
     storyShowTimeline = false;
+    callback_stories_audio_hook = NULL;
 
     cJSON *audioJson = cJSON_GetObjectItem(stageNode, "audio");
     bool isAudioDefined = audioJson != NULL && cJSON_IsString(audioJson);
@@ -637,11 +642,10 @@ void stories_readStage(void) {
 
     if (isAudioDefined) {
         audio_play(story_audio_path, cJSON_GetStringValue(audioJson), storyTime);
-        storyStartTime = get_time();
         if (storyAutoplay) {
+            callback_stories_audio_hook = callback_stories_autoplay;
             storyOkAction = cJSON_IsTrue(cJSON_GetObjectItem(controlJson, "ok"));
             autosleep_lock();
-            Mix_HookMusicFinished(callback_stories_autoplay);
         } else {
             stories_autosleep_unlock();
         }
@@ -897,13 +901,13 @@ void stories_title(void) {
     }
 
     stories_autosleep_unlock();
-    storyStartTime = get_time();
     storyAutoplay = false;
     storyTime = 0;
 
     char story_path[STR_MAX];
     sprintf(story_path, "%s%s/", STORIES_RESOURCES, storiesList[storyIndex]);
     audio_play(story_path, "title.mp3", storyTime);
+    callback_stories_audio_hook = NULL;
 
     storyScreenEnabled = true;
     display_setScreen(storyScreenEnabled);
@@ -929,7 +933,7 @@ void stories_transition(char *transition) {
         return callback_stories_reset();
     }
 
-    Mix_HookMusicFinished(NULL);
+    callback_stories_audio_hook = NULL;
     stories_loadAction_keyIndex(transitionNode);
     stories_loadAction();
 }
@@ -980,9 +984,17 @@ void stories_down(void) {
 }
 
 void stories_rewind(double time) {
-    long int ts = get_time();
-    storyTime += (double) (ts - storyStartTime) + time;
-    storyStartTime = ts;
+    storyTime = audio_getPosition() + time;
+    double audioDuration = audio_getDuration();
+    if (storyTime > audioDuration) {
+        if(callback_stories_audio_hook != NULL) {
+            callback_stories_audio_hook();
+            return;
+        }
+        storyTime = audioDuration - 1.0;
+    } else if (storyTime < 0) {
+        storyTime = 0;
+    }
     audio_setPosition(storyTime);
 }
 
@@ -1091,13 +1103,9 @@ void stories_pause(void) {
             if (Mix_PausedMusic() == 1) {
                 autosleep_lock();
                 Mix_ResumeMusic();
-                storyStartTime = get_time();
             } else {
                 stories_autosleep_unlock();
                 Mix_PauseMusic();
-                long int ts = get_time();
-                storyTime += (double) (ts - storyStartTime);
-                storyStartTime = ts;
             }
             stories_showTimeline();
         }
@@ -1111,6 +1119,7 @@ bool stories_home(void) {
     }
 
     if (storyActionKey[0] == '\0' || storiesNightModePlaying) {
+        callback_stories_audio_hook = NULL;
         audio_free_music();
         stories_nightMode_reset();
         return true;
@@ -1130,16 +1139,15 @@ void stories_save(void) {
 }
 
 void stories_reset(void) {
-    Mix_HookMusicFinished(NULL);
+    callback_stories_audio_hook = NULL;
     storyAutoplay = false;
     storyOkAction = true;
     storyStageKey[0] = '\0';
     storyActionKey[0] = '\0';
     storyActionOptionIndex = 0;
     storyTime = 0;
-    storyStartTime = 0;
     storyShowTimeline = false;
-    storyLastScreenRefreshTime = 0;
+    storyScreenUpdateTime = 0;
     storyScreenEnableEndTime = 0;
     storyLastPlayingTime = 0;
     storyPlayingTime = 0;
@@ -1154,6 +1162,20 @@ void stories_reset(void) {
         storyJson = NULL;
     }
     stories_title();
+}
+
+bool stories_callCallback(void) {
+    if(callback_stories_audio_hook != NULL && audio_getPosition() == audio_getDuration()) {
+        callback_stories_audio_hook();
+        return true;
+    }
+    return false;
+}
+
+void stories_update(void) {
+    if(!stories_callCallback()) {
+        stories_screenUpdate();
+    }
 }
 
 void stories_init(void) {
