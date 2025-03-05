@@ -323,12 +323,13 @@ void stories_inventory_screenDraw(void) {
             continue;
         }
 
+        int maxNumber = (int) cJSON_GetNumberValue(cJSON_GetObjectItem(item, "maxNumber"));
         int xItem = x - itemsDisplayCount * itemWidth;
         video_screenAddImage(storyPath, cJSON_GetStringValue(cJSON_GetObjectItem(item, "image")), xItem, y, itemWidth);
 
         switch (display) {
             case 0: {
-                if (storyInventoryCount[i] > 1) {
+                if (maxNumber > 1) {
                     char strCountItem[STR_MAX];
                     sprintf(strCountItem, "%d", storyInventoryCount[i]);
                     video_screenWriteFont(strCountItem,
@@ -341,7 +342,6 @@ void stories_inventory_screenDraw(void) {
                 break;
             }
             case 1: {
-                int maxNumber = (int) cJSON_GetNumberValue(cJSON_GetObjectItem(item, "maxNumber"));
                 video_drawRectangle(xItem + 4, y + 73, 72, 3, 75, 75, 75);
                 video_drawRectangle(xItem + 4,
                                     y + 73,
