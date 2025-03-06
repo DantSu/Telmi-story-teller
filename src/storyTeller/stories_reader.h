@@ -573,7 +573,7 @@ void stories_showTimeline(void) {
     if (storyShowTimeline) {
         storyScreenEnableEndTime = get_time() + 5;
         display_setScreen(true);
-        stories_screenUpdate();
+        stories_drawTimeline(true);
     }
 }
 
