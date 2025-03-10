@@ -248,8 +248,8 @@ bool stories_nightMode_addToPlaylist(void) {
 }
 
 void stories_nightMode_play(void) {
-    audio_play_path(storiesNightModePlaylist[storiesNightModeIndex], storyTime);
     callback_stories_audio_hook = callback_stories_nightMode;
+    audio_play_path(storiesNightModePlaylist[storiesNightModeIndex], storyTime);
 }
 
 void stories_nightMode_resume(void) {
@@ -279,6 +279,7 @@ void stories_nightMode_next(void) {
     } else {
         storiesNightModePlaying = false;
         storyShowTimeline = false;
+        callback_stories_audio_hook = NULL;
         autosleep_unlock(5, 5);
     }
 }
