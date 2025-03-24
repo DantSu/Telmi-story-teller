@@ -12,7 +12,6 @@
 #include "./logs_helper.h"
 #include "system/battery.h"
 #include "utils/str.h"
-#include "./file_helper.h"
 #include "./app_lock.h"
 
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"

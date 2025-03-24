@@ -112,7 +112,7 @@ void musicplayer_interfaceplayer_drawSideMusic(int index, int top) {
 
 void musicplayer_interfaceplayer_drawInterface(bool forceDraw) {
     int musicPosition = audio_getPosition();
-    if(!forceDraw && musicPosition == musicPlayerDrawInterfaceTime) {
+    if (!forceDraw && musicPosition == musicPlayerDrawInterfaceTime) {
         return;
     }
     musicPlayerDrawInterfaceTime = musicPosition;
@@ -244,7 +244,7 @@ void musicplayer_screenUpdate(void) {
 }
 
 bool musicplayer_callCallback(void) {
-    if(callback_musicplayer_autoplay != NULL && audio_getPosition() == audio_getDuration()) {
+    if (callback_musicplayer_autoplay != NULL && audio_getPosition() == audio_getDuration()) {
         callback_musicplayer_autoplay();
         return true;
     }
@@ -252,7 +252,7 @@ bool musicplayer_callCallback(void) {
 }
 
 void musicplayer_update(void) {
-    if(!musicplayer_callCallback()) {
+    if (!musicplayer_callCallback()) {
         musicplayer_screenUpdate();
     }
 }
@@ -277,8 +277,6 @@ void musicplayer_load(void) {
         video_displayImage(SYSTEM_RESOURCES, "noMusic.png");
         return;
     }
-
-    musicplayer_loadSession();
 
     if (musicPlayerTrackIndex < 0) {
         musicPlayerTrackIndex = musicPlayerTracksCount - 1;
@@ -490,6 +488,10 @@ void musicplayer_menu(void) {
 }
 
 void musicplayer_save(void) {
+    if (musicPlayerTracksCount == 0) {
+        return;
+    }
+
     if (Mix_PlayingMusic() == 1) {
         if (Mix_PausedMusic() != 1) {
             musicplayer_pause();
@@ -529,53 +531,57 @@ void musicplayer_init(void) {
 
     video_displayImage(SYSTEM_RESOURCES, "loadingMusic.png");
 
+    callback_musicplayer_autoplay = &musicplayer_nextSong;
+
     musicPlayerTracksCount = 0;
     DIR *d;
     struct dirent *dir;
     d = opendir(MUSICPLAYER_RESOURCES);
-
     while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG && musicplayer_isMp3File(dir->d_name)) {
             musicPlayerTracksCount++;
         }
     }
 
-    if (musicPlayerTracksCount > 0) {
-        musicPlayerTracksList = (char **) malloc(musicPlayerTracksCount * sizeof(char *));
-        int i = 0;
+    if (musicPlayerTracksCount == 0) {
+        closedir(d);
+        return musicplayer_load();
+    }
 
-        rewinddir(d);
-        while ((dir = readdir(d)) != NULL) {
-            if (dir->d_type == DT_REG && musicplayer_isMp3File(dir->d_name)) {
-                musicPlayerTracksList[i] = malloc(STR_MAX);
-                strcpy(musicPlayerTracksList[i], dir->d_name);
-                i++;
-            }
+    musicPlayerTracksList = (char **) malloc(musicPlayerTracksCount * sizeof(char *));
+    int i = 0;
+
+    rewinddir(d);
+    while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type == DT_REG && musicplayer_isMp3File(dir->d_name)) {
+            musicPlayerTracksList[i] = malloc(STR_MAX);
+            strcpy(musicPlayerTracksList[i], dir->d_name);
+            i++;
         }
+    }
+    closedir(d);
 
-        sort(musicPlayerTracksList, musicPlayerTracksCount);
+    sort(musicPlayerTracksList, musicPlayerTracksCount);
 
-        char lastAlbum[STR_MAX] = {'\0'};
-        musicPlayerAlbumsCount = 0;
-        for (i = 0; i < musicPlayerTracksCount; i++) {
-            if (musicplayer_isNewAlbum(musicPlayerTracksList[i], lastAlbum)) {
-                musicPlayerAlbumsCount++;
-            }
-        }
-
-        musicPlayerAlbumsIndex = (int *) malloc(sizeof(int) * musicPlayerAlbumsCount);
-        lastAlbum[0] = '\0';
-        int j = 0;
-        for (i = 0; i < musicPlayerTracksCount; i++) {
-            if (musicplayer_isNewAlbum(musicPlayerTracksList[i], lastAlbum)) {
-                musicPlayerAlbumsIndex[j] = i;
-                j++;
-            }
+    char lastAlbum[STR_MAX] = {'\0'};
+    musicPlayerAlbumsCount = 0;
+    for (i = 0; i < musicPlayerTracksCount; i++) {
+        if (musicplayer_isNewAlbum(musicPlayerTracksList[i], lastAlbum)) {
+            musicPlayerAlbumsCount++;
         }
     }
 
-    closedir(d);
-    callback_musicplayer_autoplay = &musicplayer_nextSong;
+    musicPlayerAlbumsIndex = (int *) malloc(sizeof(int) * musicPlayerAlbumsCount);
+    lastAlbum[0] = '\0';
+    int j = 0;
+    for (i = 0; i < musicPlayerTracksCount; i++) {
+        if (musicplayer_isNewAlbum(musicPlayerTracksList[i], lastAlbum)) {
+            musicPlayerAlbumsIndex[j] = i;
+            j++;
+        }
+    }
+
+    musicplayer_loadSession();
     musicplayer_load();
 }
 
