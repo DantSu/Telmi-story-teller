@@ -252,6 +252,9 @@ bool stories_loadSession(char *pathJson) {
 }
 
 void stories_saveCurrentSession(void) {
+    if(storiesNightModeEnabled) {
+        return;
+    }
     char jsonPath[STR_MAX];
     sprintf(jsonPath, "%s%s", STORIES_SAVES, storiesList[storyIndex]);
     storiesHasSaveList[storyIndex] = true;
@@ -259,7 +262,7 @@ void stories_saveCurrentSession(void) {
 }
 
 void stories_loadCurrentSession() {
-    if (!storiesHasSaveList[storyIndex]) {
+    if(storiesNightModeEnabled || !storiesHasSaveList[storyIndex]) {
         return;
     }
     char jsonPath[STR_MAX];
@@ -904,7 +907,7 @@ void stories_title_single(void) {
     sprintf(story_path, "%s%s/", STORIES_RESOURCES, storiesList[storyIndex]);
     video_drawRectangle(0, 0, 640, 480, 0, 0, 0);
     video_screenAddImage(story_path, "title.png", 0, 0, 640);
-    if (storiesHasSaveList[storyIndex]) {
+    if (!storiesNightModeEnabled && storiesHasSaveList[storyIndex]) {
         video_screenAddImage(SYSTEM_RESOURCES, "storytellerResumeStory.png", 15, 15, 48);
     }
     video_applyToVideo();
@@ -927,7 +930,7 @@ void stories_title_tile(int base, int pos) {
     sprintf(story_path, "%s%s/", STORIES_RESOURCES, storiesList[sIndex]);
     video_drawRectangle(x, y, 171, 128, 0, 0, 0);
     video_screenAddImage(story_path, "title.png", x, y, 171);
-    if (storiesHasSaveList[sIndex]) {
+    if (!storiesNightModeEnabled && storiesHasSaveList[sIndex]) {
         video_screenAddImage(SYSTEM_RESOURCES, "storytellerResumeStory.png", x + 5, y + 5, 48);
     }
 }
