@@ -7,10 +7,10 @@
 
 #include "./app_parameters.h"
 
-static bool autosleepLocked = false;
-static long int autosleepTime = 0;
-static int autosleepTimeScreenOn = 0;
-static int autosleepTimeScreenOff = 0;
+static bool app_autosleep_locked = false;
+static long int app_autosleep_time = 0;
+static int app_autosleep_timeScreenOn = 0;
+static int app_autosleep_timeScreenOff = 0;
 
 long int autosleep_timestamp(void) {
     return (long int) time(0);
@@ -19,30 +19,30 @@ long int autosleep_timestamp(void) {
 void autosleep_keepAwake(void)
 {
     if(display_enabled) {
-        autosleepTime = autosleep_timestamp() + autosleepTimeScreenOn;
+        app_autosleep_time = autosleep_timestamp() + app_autosleep_timeScreenOn;
     } else {
-        autosleepTime = autosleep_timestamp() + autosleepTimeScreenOff;
+        app_autosleep_time = autosleep_timestamp() + app_autosleep_timeScreenOff;
     }
 }
 
 bool autosleep_isSleepingTime(void)
 {
     long int cTime = autosleep_timestamp();
-    if(!autosleepLocked && cTime > autosleepTime) {
+    if(!app_autosleep_locked && cTime > app_autosleep_time) {
         return true;
     }
     return false;
 }
 
 void autosleep_lock(void) {
-    autosleepLocked = true;
+    app_autosleep_locked = true;
 }
 
 void autosleep_unlock(int timeScreenOn, int timeScreenOff) {
-    autosleepTimeScreenOn = timeScreenOn;
-    autosleepTimeScreenOff = timeScreenOff;
+    app_autosleep_timeScreenOn = timeScreenOn;
+    app_autosleep_timeScreenOff = timeScreenOff;
     autosleep_keepAwake();
-    autosleepLocked = false;
+    app_autosleep_locked = false;
 }
 
 void autosleep_init(int timeScreenOn, int timeScreenOff)

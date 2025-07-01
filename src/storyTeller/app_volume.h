@@ -23,7 +23,7 @@ int app_volume_getCurrent(void) {
 }
 
 int app_volume_getMax(void) {
-    return 25;
+    return app_parameters_audioSystemVolumeMax;
 }
 
 bool app_volume_up(void) {

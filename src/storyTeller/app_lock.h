@@ -3,72 +3,72 @@
 
 #include "./time_helper.h"
 
-static bool appLockIsLocked = false;
-static bool appLockIsRecentlyUnlocked = false;
-static long appLockTimer = 0;
-static long appLockChangedTimer = 0;
+static bool app_lock_IsLocked = false;
+static bool app_lock_IsRecentlyUnlocked = false;
+static long app_lock_Timer = 0;
+static long app_lock_ChangedTimer = 0;
 
 bool applock_isLocked(void) {
-    return appLockIsLocked;
+    return app_lock_IsLocked;
 }
 
 bool applock_isRecentlyUnlocked(void) {
-    return appLockIsRecentlyUnlocked;
+    return app_lock_IsRecentlyUnlocked;
 }
 
 bool applock_isLockRecentlyChanged(void) {
-    return appLockChangedTimer > 0;
+    return app_lock_ChangedTimer > 0;
 }
 
 bool applock_isUnlocking(void) {
-    return appLockTimer > 0 && appLockIsLocked;
+    return app_lock_Timer > 0 && app_lock_IsLocked;
 }
 
 bool applock_startTimer(void) {
-    appLockTimer = get_time();
-    return appLockIsLocked;
+    app_lock_Timer = get_time();
+    return app_lock_IsLocked;
 }
 
 bool applock_stopTimer(void) {
-    appLockTimer = 0;
-    return appLockIsLocked;
+    app_lock_Timer = 0;
+    return app_lock_IsLocked;
 }
 
 bool applock_lock(void) {
     applock_stopTimer();
-    appLockIsLocked = true;
-    appLockChangedTimer = get_time();
+    app_lock_IsLocked = true;
+    app_lock_ChangedTimer = get_time();
     return true;
 }
 
 void applock_stopLockChangedTimer(void) {
-    appLockChangedTimer = 0;
-    appLockIsRecentlyUnlocked = false;
+    app_lock_ChangedTimer = 0;
+    app_lock_IsRecentlyUnlocked = false;
 }
 
 bool applock_unlock(void) {
-    appLockIsLocked = false;
+    app_lock_IsLocked = false;
     applock_stopTimer();
-    appLockIsRecentlyUnlocked = true;
-    appLockChangedTimer = get_time();
+    app_lock_IsRecentlyUnlocked = true;
+    app_lock_ChangedTimer = get_time();
     return true;
 }
 
 bool applock_checkLock(void) {
     long time = get_time(), laps;
 
-    if (appLockChangedTimer > 0) {
-        laps = time - appLockChangedTimer;
+    if (app_lock_ChangedTimer > 0) {
+        laps = time - app_lock_ChangedTimer;
         if (laps > 2) {
             applock_stopLockChangedTimer();
             return true;
         }
     }
 
-    if (appLockTimer > 0) {
-        laps = time - appLockTimer;
+    if (app_lock_Timer > 0) {
+        laps = time - app_lock_Timer;
         if (laps > 1) {
-            if (appLockIsLocked) {
+            if (app_lock_IsLocked) {
                 return applock_unlock();
             } else {
                 return applock_lock();

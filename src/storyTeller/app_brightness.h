@@ -23,7 +23,7 @@ int app_brightness_getCurrent(void) {
 }
 
 int app_brightness_getMax(void) {
-    return 10;
+    return app_parameters_screenSystemBrightnessMax;
 }
 
 bool app_brightness_up(void) {
