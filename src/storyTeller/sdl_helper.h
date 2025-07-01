@@ -9,9 +9,9 @@
 #include "SDL2/SDL_ttf.h"
 #include "SDL2/SDL_gfx.h"
 
-#include "./logs_helper.h"
-#include "system/battery.h"
 #include "utils/str.h"
+#include "./logs_helper.h"
+#include "./app_battery.h"
 #include "./app_lock.h"
 #include "./app_volume.h"
 #include "./app_brightness.h"
@@ -145,7 +145,7 @@ void video_screenWriteFont(const char *text, TTF_Font *font, SDL_Color color, in
 }
 
 void video_showBattery(void) {
-    int batteryPercentage = battery_getPercentage();
+    int batteryPercentage = app_battery_getPercentage();
     SDL_Color colorBattery;
     if (batteryPercentage < 6) {
         colorBattery = colorRed;
