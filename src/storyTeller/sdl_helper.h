@@ -13,6 +13,8 @@
 #include "system/battery.h"
 #include "utils/str.h"
 #include "./app_lock.h"
+#include "./app_volume.h"
+#include "./app_brightness.h"
 
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
 
@@ -83,12 +85,12 @@ void video_saveCacheSurface(char *surfaceKey, SDL_Surface *surface) {
     cacheSurfaces[0] = surface;
 }
 
-SDL_Surface *video_loadAndCacheImage(char *image_path) {
-    SDL_Surface *image = video_findCacheSurface(image_path);
+SDL_Surface *video_loadAndCacheImage(char *imagePath) {
+    SDL_Surface *image = video_findCacheSurface(imagePath);
     if (image == NULL) {
-        image = IMG_Load(image_path);
+        image = IMG_Load(imagePath);
         if (image != NULL) {
-            video_saveCacheSurface(image_path, image);
+            video_saveCacheSurface(imagePath, image);
         }
     }
     return image;
@@ -103,19 +105,19 @@ void video_drawRectangle(int x, int y, int width, int height, Uint8 r, Uint8 g, 
 }
 
 void video_screenAddImage(const char *dir, char *name, int x, int y, int width) {
-    char image_path[STR_MAX * 2];
-    char image_key[STR_MAX * 2 + 12];
-    sprintf(image_path, "%s%s", dir, name);
-    sprintf(image_key, "%s|%i", image_path, width);
+    char imagePath[STR_MAX * 2];
+    char imageKey[STR_MAX * 2 + 12];
+    sprintf(imagePath, "%s%s", dir, name);
+    sprintf(imageKey, "%s|%i", imagePath, width);
 
-    SDL_Surface *image = video_findCacheSurface(image_key);
+    SDL_Surface *image = video_findCacheSurface(imageKey);
 
     if (image != NULL) {
         SDL_BlitSurface(image, NULL, appSurface, &(SDL_Rect) {x, y});
         return;
     }
 
-    image = IMG_Load(image_path);
+    image = IMG_Load(imagePath);
 
     if (image == NULL) {
         return;
@@ -125,12 +127,12 @@ void video_screenAddImage(const char *dir, char *name, int x, int y, int width) 
         SDL_Surface *imageScaled = rotozoomSurface(image, 0.0, (double) width / (double) image->w, 1);
         if (imageScaled != NULL) {
             SDL_BlitSurface(imageScaled, NULL, appSurface, &(SDL_Rect) {x, y});
-            video_saveCacheSurface(image_key, imageScaled);
+            video_saveCacheSurface(imageKey, imageScaled);
         }
         SDL_FreeSurface(image);
     } else {
         SDL_BlitSurface(image, NULL, appSurface, &(SDL_Rect) {x, y});
-        video_saveCacheSurface(image_key, image);
+        video_saveCacheSurface(imageKey, image);
     }
 }
 
@@ -142,7 +144,7 @@ void video_screenWriteFont(const char *text, TTF_Font *font, SDL_Color color, in
     }
 }
 
-void video_applyToVideo(void) {
+void video_showBattery(void) {
     int batteryPercentage = battery_getPercentage();
     SDL_Color colorBattery;
     if (batteryPercentage < 6) {
@@ -162,20 +164,44 @@ void video_applyToVideo(void) {
     char strBatteryPercent[6];
     sprintf(strBatteryPercent, "%i%%", batteryPercentage);
     video_screenWriteFont(strBatteryPercent, fontRegular16, colorBattery, 555, 2, SDL_ALIGN_CENTER);
+}
 
-    SDL_BlitSurface(appSurface, NULL, screen, NULL);
-
-    if (applock_isLocked()) {
-        char image_path[STR_MAX * 2];
-        sprintf(image_path, "%s%s", SYSTEM_RESOURCES, "storytellerLock.png");
-        SDL_Surface *image = video_loadAndCacheImage(image_path);
-        SDL_BlitSurface(image, NULL, screen, NULL);
-    } else if (applock_isRecentlyUnlocked()) {
-        char image_path[STR_MAX * 2];
-        sprintf(image_path, "%s%s", SYSTEM_RESOURCES, "storytellerUnlock.png");
-        SDL_Surface *image = video_loadAndCacheImage(image_path);
-        SDL_BlitSurface(image, NULL, screen, NULL);
+void video_showBar(void) {
+    int height;
+    char imageName[32];
+    if(app_brightness_isShowed()) {
+        height = app_brightness_getCurrent() * 350 / app_brightness_getMax();
+        sprintf(imageName, "%s", "storytellerBrightnessBar.png");
+    } else if (app_volume_isShowed()) {
+        height = app_volume_getCurrent() * 350 / app_volume_getMax();
+        sprintf(imageName, "%s", "storytellerVolumeBar.png");
+    } else {
+        return;
     }
+
+    SDL_FillRect(screen, &(SDL_Rect) {19, 47, 26, 350}, SDL_MapRGB(screen->format, 0, 0, 0));
+    SDL_FillRect(screen, &(SDL_Rect) {19, 397 - height, 26, height}, SDL_MapRGB(screen->format, 255, 186, 0));
+
+    char imagePath[STR_MAX * 2];
+    sprintf(imagePath, "%s%s", SYSTEM_RESOURCES, imageName);
+    SDL_Surface *image = video_loadAndCacheImage(imagePath);
+    SDL_BlitSurface(image, NULL, screen, NULL);
+}
+void video_showAppLock(void) {
+    if (!applock_isLocked() && !applock_isRecentlyUnlocked()) {
+        return;
+    }
+    char imagePath[STR_MAX * 2];
+    sprintf(imagePath, "%s%s", SYSTEM_RESOURCES, applock_isLocked() ? "storytellerLock.png" : "storytellerUnlock.png");
+    SDL_Surface *image = video_loadAndCacheImage(imagePath);
+    SDL_BlitSurface(image, NULL, screen, NULL);
+}
+
+void video_applyToVideo(void) {
+    video_showBattery();
+    SDL_BlitSurface(appSurface, NULL, screen, NULL);
+    video_showAppLock();
+    video_showBar();
 
     SDL_RenderClear(renderer);
     SDL_UpdateTexture(texture, NULL, screen->pixels, screen->pitch);
@@ -184,10 +210,10 @@ void video_applyToVideo(void) {
 }
 
 void video_displayImage(const char *dir, char *name) {
-    char image_path[STR_MAX * 2];
-    sprintf(image_path, "%s%s", dir, name);
+    char imagePath[STR_MAX * 2];
+    sprintf(imagePath, "%s%s", dir, name);
 
-    SDL_Surface *image = video_loadAndCacheImage(image_path);
+    SDL_Surface *image = video_loadAndCacheImage(imagePath);
 
     SDL_FillRect(appSurface, NULL, 0);
     if (image != NULL) {
@@ -231,9 +257,9 @@ double audio_getPosition(void) {
     return 0.0;
 }
 
-void audio_play_path(char *sound_path, double position) {
+void audio_play_path(char *soundPath, double position) {
     audio_free_music();
-    music = Mix_LoadMUS(sound_path);
+    music = Mix_LoadMUS(soundPath);
     if (music != NULL) {
         musicDuration = Mix_MusicDuration(music);
         Mix_PlayMusic(music, 1);
@@ -244,9 +270,9 @@ void audio_play_path(char *sound_path, double position) {
 }
 
 void audio_play(const char *dir, const char *name, double position) {
-    char sound_path[STR_MAX * 2];
-    sprintf(sound_path, "%s%s", dir, name);
-    audio_play_path(sound_path, position);
+    char soundPath[STR_MAX * 2];
+    sprintf(soundPath, "%s%s", dir, name);
+    audio_play_path(soundPath, position);
 }
 
 void video_audio_init(void) {

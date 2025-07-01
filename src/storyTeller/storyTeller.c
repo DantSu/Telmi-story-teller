@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "system/osd.h"
 #include "system/system.h"
 #include "system/keymap_hw.h"
 #include "system/settings.h"
@@ -13,6 +12,8 @@
 #include "./logs_helper.h"
 #include "./time_helper.h"
 #include "./app_lock.h"
+#include "./app_brightness.h"
+#include "./app_volume.h"
 #include "./app_autosleep.h"
 #include "./sdl_helper.h"
 #include "./app_selector.h"
@@ -66,7 +67,9 @@ int main(int argc, char *argv[]) {
             goto exit_loop;
         }
 
-        applock_checkLock();
+        bool forceRefreshScreen = applock_checkLock();
+        forceRefreshScreen = app_volume_checkDisplay() || forceRefreshScreen;
+        forceRefreshScreen = app_brightness_checkDisplay() || forceRefreshScreen;
         app_update();
 
         if (poll(fds, 1, 0) > 0) {
@@ -79,7 +82,7 @@ int main(int argc, char *argv[]) {
                     switch (ev.code) {
                         case HW_BTN_MENU :
                             isMenuPressed = true;
-                            applock_startTimer();
+                            forceRefreshScreen = applock_startTimer() || forceRefreshScreen;
                             if (applock_isLocked()) {
                                 menuPreventDefault = true;
                             }
@@ -96,7 +99,7 @@ int main(int argc, char *argv[]) {
                 case RELEASED:
                     if (applock_isLocked()) {
                         if (ev.code == HW_BTN_MENU) {
-                            applock_stopTimer();
+                            forceRefreshScreen = applock_stopTimer() || forceRefreshScreen;
                         }
                         break;
                     }
@@ -111,7 +114,7 @@ int main(int argc, char *argv[]) {
                             }
                             isMenuPressed = false;
                             menuPreventDefault = false;
-                            applock_stopTimer();
+                            forceRefreshScreen = applock_stopTimer() || forceRefreshScreen;
                             break;
                         case HW_BTN_LEFT :
                             app_previous();
@@ -143,18 +146,13 @@ int main(int argc, char *argv[]) {
                         switch (ev.code) {
                             case HW_BTN_L2 :
                             case HW_BTN_VOLUME_DOWN :
-                                settings_setBrightness(settings.brightness - 1, true, false);
-                                osd_showBrightnessBar(settings.brightness);
+                                forceRefreshScreen = app_brightness_down();
                                 applock_stopTimer();
                                 menuPreventDefault = true;
                                 break;
                             case HW_BTN_R2 :
                             case HW_BTN_VOLUME_UP :
-                                settings_setBrightness(
-                                        parameters_getScreenBrightnessValidation(settings.brightness + 1),
-                                        true,
-                                        false);
-                                osd_showBrightnessBar(settings.brightness);
+                                forceRefreshScreen = app_brightness_up();
                                 applock_stopTimer();
                                 menuPreventDefault = true;
                                 break;
@@ -164,12 +162,10 @@ int main(int argc, char *argv[]) {
                     } else {
                         switch (ev.code) {
                             case HW_BTN_VOLUME_DOWN :
-                                settings_setVolume(settings.volume - 1, true);
-                                osd_showVolumeBar(settings.volume, false);
+                                forceRefreshScreen = app_volume_down();
                                 break;
                             case HW_BTN_VOLUME_UP :
-                                settings_setVolume(parameters_getAudioVolumeValidation(settings.volume + 1), true);
-                                osd_showVolumeBar(settings.volume, false);
+                                forceRefreshScreen = app_volume_up();
                                 break;
                             default:
                                 break;
@@ -180,6 +176,10 @@ int main(int argc, char *argv[]) {
                 default:
                     break;
             }
+        }
+
+        if(forceRefreshScreen) {
+            app_forceRefreshScreen();
         }
     }
 

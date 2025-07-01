@@ -57,15 +57,15 @@ void app_update(void) {
     }
 }
 
-void app_lockChanged(void) {
+void app_forceRefreshScreen(void) {
     if (appOpened) {
         switch (appIndex) {
             case APP_STORIES:
             case APP_NIGHTMODE:
-                stories_lockChanged();
+                stories_forceRefreshScreen();
                 break;
             case APP_MUSIC:
-                musicplayer_lockChanged();
+                musicplayer_forceRefreshScreen();
                 break;
             default:
                 break;

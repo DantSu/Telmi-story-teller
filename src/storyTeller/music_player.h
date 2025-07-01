@@ -220,7 +220,7 @@ int musicplayer_getCurrentAlbumIndex(void) {
     return index;
 }
 
-void musicplayer_screenUpdate(void) {
+void musicplayer_screenUpdate(bool forceDraw) {
     if (!display_enabled || musicPlayerTracksList == NULL) {
         return;
     }
@@ -228,10 +228,10 @@ void musicplayer_screenUpdate(void) {
     long int ts = get_time();
     if (musicPlayerScreenUpdateTime != ts) {
         musicPlayerScreenUpdateTime = ts;
-        bool lockChanged = applock_isLockRecentlyChanged() || applock_isUnlocking();
+        bool enableScreen = applock_isLockRecentlyChanged() || applock_isUnlocking() || app_volume_isShowed() || app_brightness_isShowed();
         int inactivityTime = ts - musicPlayerLastActivity;
 
-        if (inactivityTime > 10 && !lockChanged) {
+        if (inactivityTime > 10 && !enableScreen) {
             video_displayBlackScreen();
             display_setScreen(false);
             return;
@@ -239,7 +239,7 @@ void musicplayer_screenUpdate(void) {
     }
 
     if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
-        musicplayer_interfaceplayer_drawInterface(false);
+        musicplayer_interfaceplayer_drawInterface(forceDraw);
     }
 }
 
@@ -253,7 +253,7 @@ bool musicplayer_callCallback(void) {
 
 void musicplayer_update(void) {
     if (!musicplayer_callCallback()) {
-        musicplayer_screenUpdate();
+        musicplayer_screenUpdate(false);
     }
 }
 
@@ -265,7 +265,7 @@ void musicplayer_screenActivate(void) {
 void musicplayer_setMode(int mode) {
     musicPlayerMode = mode;
     if (musicPlayerMode == MUSICPLAYER_MODE_PLAYER) {
-        musicplayer_screenUpdate();
+        musicplayer_screenUpdate(true);
     } else {
         musicPlayerAlbumIndex = musicplayer_getCurrentAlbumIndex();
         musicplayer_interfacealbum_draw();
@@ -466,9 +466,9 @@ bool musicplayer_home(void) {
     }
 }
 
-void musicplayer_lockChanged(void) {
-    bool lockChanged = applock_isLockRecentlyChanged() || applock_isUnlocking();
-    if (lockChanged && !display_enabled) {
+void musicplayer_forceRefreshScreen(void) {
+    bool enableScreen = applock_isLockRecentlyChanged() || applock_isUnlocking() || app_volume_isShowed() || app_brightness_isShowed();
+    if (!display_enabled && enableScreen) {
         display_setScreen(true);
     }
     musicplayer_setMode(musicPlayerMode);

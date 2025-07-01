@@ -24,27 +24,21 @@ bool applock_isUnlocking(void) {
     return appLockTimer > 0 && appLockIsLocked;
 }
 
-#include "./app_selector.h"
-
-void applock_startTimer(void) {
+bool applock_startTimer(void) {
     appLockTimer = get_time();
-    if(appLockIsLocked) {
-        app_lockChanged();
-    }
+    return appLockIsLocked;
 }
 
-void applock_stopTimer(void) {
+bool applock_stopTimer(void) {
     appLockTimer = 0;
-    if(appLockIsLocked) {
-        app_lockChanged();
-    }
+    return appLockIsLocked;
 }
 
-void applock_lock(void) {
+bool applock_lock(void) {
     applock_stopTimer();
     appLockIsLocked = true;
     appLockChangedTimer = get_time();
-    app_lockChanged();
+    return true;
 }
 
 void applock_stopLockChangedTimer(void) {
@@ -52,22 +46,22 @@ void applock_stopLockChangedTimer(void) {
     appLockIsRecentlyUnlocked = false;
 }
 
-void applock_unlock(void) {
+bool applock_unlock(void) {
     appLockIsLocked = false;
     applock_stopTimer();
     appLockIsRecentlyUnlocked = true;
     appLockChangedTimer = get_time();
-    app_lockChanged();
+    return true;
 }
 
-void applock_checkLock(void) {
+bool applock_checkLock(void) {
     long time = get_time(), laps;
 
     if (appLockChangedTimer > 0) {
         laps = time - appLockChangedTimer;
         if (laps > 2) {
             applock_stopLockChangedTimer();
-            app_lockChanged();
+            return true;
         }
     }
 
@@ -75,12 +69,13 @@ void applock_checkLock(void) {
         laps = time - appLockTimer;
         if (laps > 1) {
             if (appLockIsLocked) {
-                applock_unlock();
+                return applock_unlock();
             } else {
-                applock_lock();
+                return applock_lock();
             }
         }
     }
+    return false;
 }
 
 #endif // STORYTELLER_APP_LOCK__
