@@ -1,7 +1,6 @@
 #!/bin/sh
 sysdir=/mnt/SDCARD/.tmp_update
-miyoodir=/mnt/SDCARD/miyoo
-export LD_LIBRARY_PATH="/lib:/config/lib:$miyoodir/lib:$sysdir/lib:$sysdir/lib/parasyte"
+export LD_LIBRARY_PATH="/lib:/config/lib:$sysdir/lib"
 export PATH="$sysdir/bin:$PATH"
 export SDL_VIDEODRIVER=mmiyoo
 export SDL_AUDIODRIVER=mmiyoo
@@ -20,7 +19,6 @@ main() {
     echo -n "$DEVICE_ID" > /tmp/deviceModel
 
     touch /tmp/is_booting
-    check_installer
     clear_logs
 
     init_system
@@ -31,6 +29,7 @@ main() {
     mount -o bind $sysdir/config/group /etc/group
 
     # Start the battery monitor
+    # batmon 2>&1 | tee -a "$sysdir/logs/Batmon.log" &
     batmon &
 
     # Check is charging
@@ -40,6 +39,8 @@ main() {
         axp_status="0x$(axp 0 | cut -d':' -f2)"
         is_charging=$([ $(($axp_status & 0x4)) -eq 4 ] && echo 1 || echo 0)
     fi
+
+    sync
 
     # Show charging animation
     if [ $is_charging -eq 1 ]; then
@@ -57,7 +58,6 @@ main() {
 
     mkdir -m 777 -p /mnt/SDCARD/Saves
 
-    # start_networking
     rm -rf /tmp/is_booting
 
     flash_telmi_logo
@@ -77,14 +77,7 @@ clear_logs() {
     mkdir -p $sysdir/logs
 
     cd $sysdir/logs
-    rm -f \
-    #    ./keymon.log \
-        ./dnsmasq.log \
-        ./ftp.log \
-        ./runtime.log \
-        ./update_networking.log \
-        ./easy_netplay.log \
-        2> /dev/null
+    rm -f ./runtime.log 2> /dev/null
 }
 
 is_running() {
@@ -138,8 +131,8 @@ flash_telmi_logo() {
 launch_storyteller() {
     log "\n:: Launch Story Teller"
     cd $sysdir
-    # LD_PRELOAD="$miyoodir/lib/libpadsp.so" storyTeller 2>&1 | tee -a "$sysdir/logs/StoryTeller.log"
-    LD_PRELOAD="$miyoodir/lib/libpadsp.so" storyTeller
+    # LD_PRELOAD="$sysdir/lib/libpadsp.so" storyTeller 2>&1 | tee -a "$sysdir/logs/StoryTeller.log"
+    LD_PRELOAD="$sysdir/lib/libpadsp.so" storyTeller
     sync
 }
 
@@ -164,8 +157,6 @@ init_system() {
         $sysdir/script/lcdvolt.sh 2> /dev/null
     fi
 
-    # start_audioserver
-
     brightness=$(/customer/app/jsonval brightness)
     brightness_raw=$(awk "BEGIN { print int(3 * exp(0.350656 * $brightness) + 0.5) }")
     log "brightness: $brightness -> $brightness_raw"
@@ -177,19 +168,15 @@ init_system() {
     echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable
 }
 
-device_uuid=$(read_uuid)
-device_settings="/mnt/SDCARD/.tmp_update/config/system/$device_uuid.json"
-
 load_settings() {
     system_settings="/mnt/SDCARD/.tmp_update/res/miyoo${DEVICE_ID}_system.json"
+    # echo $system_settings > "/mnt/SDCARD/.tmp_update/logs/runtime.log"
     if [ -f "$system_settings" ]; then
         cp -f "$system_settings" /mnt/SDCARD/system.json
     fi
 
     # link /appconfigs/system.json to SD card
-    if [ -L /appconfigs/system.json ] && [ "$(readlink /appconfigs/system.json)" == "/mnt/SDCARD/system.json" ]; then
-        rm /appconfigs/system.json
-    fi
+    rm -f /appconfigs/system.json
     ln -s /mnt/SDCARD/system.json /appconfigs/system.json
 
     if [ $DEVICE_ID -eq $MODEL_MM ]; then
@@ -207,12 +194,6 @@ load_settings() {
                     > temp
             mv -f temp /mnt/SDCARD/system.json
         fi
-    fi
-}
-
-save_settings() {
-    if [ -f /mnt/SDCARD/system.json ]; then
-        cp -f /mnt/SDCARD/system.json "$device_settings"
     fi
 }
 
@@ -240,11 +221,6 @@ update_time() {
     date +%s -s @$currentTime
 }
 
-start_audioserver() {
-    defvol=$(echo $(/customer/app/jsonval vol) | awk '{ printf "%.0f\n", 48 * (log(1 + $1) / log(10)) - 60 }')
-    runifnecessary "audioserver" $miyoodir/app/audioserver $defvol
-}
-
 kill_audio_servers() {
     $sysdir/script/stop_audioserver.sh
 }
@@ -262,37 +238,8 @@ runifnecessary() {
     done
 }
 
-start_networking() {
-    rm $sysdir/config/.hotspotState # dont start hotspot at boot
-
-    touch /tmp/network_changed
-    sync
-
-    check_networking
-}
-
-check_networking() {
-    if [ $DEVICE_ID -ne $MODEL_MMP ] || [ ! -f /tmp/network_changed ] && [ -f /tmp/ntp_synced ]; then
-        check_timezone
-        return
-    fi
-
-    if pgrep -f update_networking.sh; then
-        log "update_networking already running"
-    else
-        rm /tmp/network_changed
-        $sysdir/script/network/update_networking.sh check
-    fi
-
-    check_timezone
-}
-
 check_timezone() {
     export TZ=$(cat "$sysdir/config/.tz")
-}
-
-check_installer() {
-    :
 }
 
 if [ -f $sysdir/config/.logging ]; then

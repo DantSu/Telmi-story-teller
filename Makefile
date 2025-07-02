@@ -29,14 +29,10 @@ BUILD_DIR           := $(ROOT_DIR)/build
 BUILD_TEST_DIR      := $(ROOT_DIR)/build_test
 TEST_SRC_DIR		:= $(ROOT_DIR)/test
 BIN_DIR             := $(ROOT_DIR)/build/.tmp_update/bin
-DIST_DIR            := $(ROOT_DIR)/dist
-INSTALLER_DIR       := $(DIST_DIR)/miyoo/app/.tmp_update
 RELEASE_DIR         := $(ROOT_DIR)/release
 STATIC_BUILD        := $(ROOT_DIR)/static/build
-STATIC_DIST         := $(ROOT_DIR)/static/dist
 STATIC_CONFIGS      := $(ROOT_DIR)/static/configs
 CACHE               := $(ROOT_DIR)/cache
-TEMP_DIR            := $(ROOT_DIR)/cache/temp
 INCLUDE_DIR         := $(ROOT_DIR)/include
 ifeq (,$(GTEST_INCLUDE_DIR))
 GTEST_INCLUDE_DIR = /usr/include/
@@ -59,14 +55,13 @@ print-version:
 
 $(CACHE)/.setup:
 	@$(ECHO) $(PRINT_RECIPE)
-	@mkdir -p $(BUILD_DIR) $(DIST_DIR) $(RELEASE_DIR)
+	@mkdir -p $(BUILD_DIR) $(RELEASE_DIR)
 	@rsync -a --exclude='.gitkeep' $(STATIC_BUILD)/ $(BUILD_DIR)
-	@rsync -a --exclude='.gitkeep' $(STATIC_DIST)/ $(DIST_DIR)
 # Copy shared libraries
-	@cp -R $(ROOT_DIR)/lib/. $(DIST_DIR)/miyoo/app/.tmp_update/lib
+	@cp -R $(ROOT_DIR)/lib/. $(BUILD_DIR)/.tmp_update/lib
 # Set version number
-	@mkdir -p $(BUILD_DIR)/.tmp_update/onionVersion
-	@echo -n "v$(VERSION)" > $(BUILD_DIR)/.tmp_update/onionVersion/version.txt
+	@mkdir -p $(BUILD_DIR)/.tmp_update/telmiVersion
+	@echo -n "v$(VERSION)" > $(BUILD_DIR)/.tmp_update/telmiVersion/version.txt
 	@sed -i "s/{VERSION}/$(VERSION)/g" $(BUILD_DIR)/autorun.inf
 # Copy all resources from src folders
 	@find \
@@ -74,10 +69,9 @@ $(CACHE)/.setup:
 		$(SRC_DIR)/storyTeller \
 		$(SRC_DIR)/chargingState \
 		-depth -type d -name res -exec cp -r {}/. $(BUILD_DIR)/.tmp_update/res/ \;
-	@find $(SRC_DIR)/installUI -depth -type d -name res -exec cp -r {}/. $(INSTALLER_DIR)/res/ \;
 # Copy static configs
-	@mkdir -p $(TEMP_DIR)/configs $(BUILD_DIR)/.tmp_update/config
-	@rsync -a --exclude='.gitkeep' $(STATIC_CONFIGS)/ $(TEMP_DIR)/configs
+	@mkdir -p $(BUILD_DIR)/.tmp_update/config
+	@rsync -a --exclude='.gitkeep' $(STATIC_CONFIGS)/ $(BUILD_DIR)
 # Set flag: finished setup
 	@touch $(CACHE)/.setup
 
@@ -89,68 +83,26 @@ core: $(CACHE)/.setup
 	@cp -r /root/workspace/lib/libSDL2* /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib
 	@cp /root/workspace/lib/libmpg123.so.0 /opt/miyoomini-toolchain/usr/arm-linux-gnueabihf/libc/lib/libmpg123.so.0
 # Build Telmi binaries
+	@cd $(SRC_DIR)/axp && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/bootScreen && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/storyTeller && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/chargingState && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/gameSwitcher && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/mainUiBatPerc && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/keymon && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/playActivity && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/themeSwitcher && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/tweaks && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/packageManager && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/sendkeys && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/setState && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/renameRom && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/infoPanel && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/prompt && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/batmon && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/easter && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/read_uuid && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/detectKey && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/axp && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/pressMenu2Kill && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/pngScale && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/libgamename && BUILD_DIR=$(BIN_DIR) make
-	@cd $(SRC_DIR)/gameNameList && BUILD_DIR=$(BIN_DIR) make
-# Build dependencies for installer
-	@mkdir -p $(INSTALLER_DIR)/bin
-	@cd $(SRC_DIR)/installUI && BUILD_DIR=$(INSTALLER_DIR)/bin/ VERSION=$(VERSION) make
-	@cp $(BIN_DIR)/prompt $(INSTALLER_DIR)/bin/
-	@cp $(BIN_DIR)/batmon $(INSTALLER_DIR)/bin/
-	@cp $(BIN_DIR)/detectKey $(INSTALLER_DIR)/bin/
-	@cp $(BIN_DIR)/infoPanel $(INSTALLER_DIR)/bin/
-	@cp $(BIN_DIR)/gameNameList $(INSTALLER_DIR)/bin/
-	@cp $(BIN_DIR)/playActivity $(INSTALLER_DIR)/bin/
-	@cp $(BIN_DIR)/7z $(INSTALLER_DIR)/bin/
-# Overrider miyoo libraries
-	@cp $(BIN_DIR)/libgamename.so $(BUILD_DIR)/miyoo/lib/
 
 dist: build
 	@$(ECHO) $(PRINT_RECIPE)
-# Package configs
-	@echo -n "Packaging configs..."
-	@cd $(TEMP_DIR)/configs && 7z a -mtm=off $(BUILD_DIR)/.tmp_update/config/configs.pak . -bsp1 -bso0
-	@echo " DONE"
-	@rm -rf $(TEMP_DIR)/configs
-	@rmdir $(TEMP_DIR)
-# Package Telmi core
-	@echo -n "Packaging TelmiOS..."
-	@cd $(BUILD_DIR) && 7z a -mtm=off $(DIST_DIR)/miyoo/app/.tmp_update/onion.pak . -bsp1 -bso0
 	@echo " DONE"
 	@$(ECHO) $(PRINT_DONE)
 
 release: dist
 	@$(ECHO) $(PRINT_RECIPE)
 	@rm -f "$(RELEASE_DIR)/$(RELEASE_NAME).zip" "$(RELEASE_DIR)/$(RELEASE_NAME)-update.zip"
-	@cd "$(DIST_DIR)" && 7z a -mtc=off "$(RELEASE_DIR)/$(RELEASE_NAME).zip" . -bsp1 -bso0
-	@cd "$(BUILD_DIR)" && 7z a -mtc=off -spf -tzip "$(RELEASE_DIR)/$(RELEASE_NAME)-update.zip" "autorun.inf" ".tmp_update/bin/batmon" ".tmp_update/bin/bootScreen" ".tmp_update/bin/chargingState" ".tmp_update/bin/storyTeller" ".tmp_update/onionVersion/version.txt" ".tmp_update/res" ".tmp_update/script/customlogo" ".tmp_update/runtime.sh" "miyoo/lib/libz.so.1" -bsp1 -bso0
-	@cd "$(DIST_DIR)/miyoo/app" && 7z a -mtc=off -spf -tzip "$(RELEASE_DIR)/$(RELEASE_NAME)-update.zip" ".tmp_update/lib/libSDL2*" ".tmp_update/lib/libmpg123.so.0" -bsp1 -bso0
+	@cd "$(BUILD_DIR)" && 7z a -mtc=off "$(RELEASE_DIR)/$(RELEASE_NAME).zip" . -bsp1 -bso0
 	@$(ECHO) $(PRINT_DONE)
 
 clean:
 	@$(ECHO) $(PRINT_RECIPE)
-	@rm -rf $(BUILD_DIR) $(BUILD_TEST_DIR) $(ROOT_DIR)/dist $(TEMP_DIR)/configs
+	@rm -rf $(BUILD_DIR) $(BUILD_TEST_DIR) $(ROOT_DIR)/dist
 	@rm -f $(CACHE)/.setup
 	@find include src -type f -name *.o -exec rm -f {} \;
 
@@ -181,7 +133,6 @@ patch:
 	@chmod a+x $(ROOT_DIR)/.github/create_patch.sh && $(ROOT_DIR)/.github/create_patch.sh
 
 lib:
-#	@cd $(ROOT_DIR)/include/cJSON && make clean && make
 	@cd $(ROOT_DIR)/include/SDL && make clean && make
 
 test:

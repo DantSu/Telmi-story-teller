@@ -36,19 +36,11 @@ if [ "$0" = "/tmp/_shutdown" ]; then
 
 	sync
 
-	if [ -f /mnt/SDCARD/system.json ]; then
-		mkdir -p /mnt/SDCARD/.tmp_update/config/system
-		mv -f /mnt/SDCARD/system.json "/mnt/SDCARD/.tmp_update/config/system/$(read_uuid).json"
-		sync
-	fi
-
 	rm -f /appconfigs/system.json 2> /dev/null
+	rm -f /mnt/SDCARD/system.json 2> /dev/null
 	rm -f /mnt/SDCARD/update.log 2> /dev/null
 
 	umount /etc/passwd /etc/group /etc/profile
-	umount /mnt/SDCARD/miyoo/app/MainUI
-	umount /mnt/SDCARD/RetroArch/retroarch
-	umount /customer/lib/libgamename.so
 	swapoff /mnt/SDCARD/cachefile
 	umount -r /mnt/SDCARD
 	umount /mnt/SDCARD

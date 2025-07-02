@@ -10,7 +10,7 @@
 #include "utils/log.h"
 
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
-#define FALLBACK_FONT "/customer/app/Exo-2-Bold-Italic.ttf"
+#define FALLBACK_FONT "/mnt/SDCARD/.tmp_update/res/Exo2-Bold.ttf"
 
 SDL_Surface *loadImage(const char *name)
 {
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     SDL_Color color = {255, 255, 255};
 
     if (show_version) {
-        const char *version_str = file_read("/mnt/SDCARD/.tmp_update/onionVersion/version.txt");
+        const char *version_str = file_read("/mnt/SDCARD/.tmp_update/telmiVersion/version.txt");
         if (strlen(version_str) > 0) {
             SDL_Surface *version = TTF_RenderUTF8_Blended(font, version_str, color);
             if (version) {

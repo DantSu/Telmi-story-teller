@@ -9,7 +9,7 @@
 #include "utils/str.h"
 
 #define SYSTEM_CONFIG "/mnt/SDCARD/system.json"
-#define FALLBACK_FONT "/customer/app/Exo-2-Bold-Italic.ttf"
+#define FALLBACK_FONT "/mnt/SDCARD/.tmp_update/res/Exo2-Bold.ttf"
 #define FALLBACK_PATH "/mnt/SDCARD/miyoo/app/"
 #define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
 #define THEME_OVERRIDES "/mnt/SDCARD/Saves/CurrentProfile/theme"
