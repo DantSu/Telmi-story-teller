@@ -22,10 +22,6 @@ int app_volume_getCurrent(void) {
     return settings.volume;
 }
 
-int app_volume_getMax(void) {
-    return app_parameters_audioSystemVolumeMax;
-}
-
 bool app_volume_up(void) {
     settings_setVolume(parameters_getAudioVolumeValidation(app_volume_getCurrent() + 1), true);
     return app_volume_show();

@@ -22,10 +22,6 @@ int app_brightness_getCurrent(void) {
     return settings.brightness;
 }
 
-int app_brightness_getMax(void) {
-    return app_parameters_screenSystemBrightnessMax;
-}
-
 bool app_brightness_up(void) {
     settings_setBrightness(
             parameters_getScreenBrightnessValidation(app_brightness_getCurrent() + 1),

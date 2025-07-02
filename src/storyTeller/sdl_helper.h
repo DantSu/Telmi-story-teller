@@ -13,6 +13,7 @@
 #include "./logs_helper.h"
 #include "./app_battery.h"
 #include "./app_lock.h"
+#include "./app_parameters.h"
 #include "./app_volume.h"
 #include "./app_brightness.h"
 
@@ -167,13 +168,15 @@ void video_showBattery(void) {
 }
 
 void video_showBar(void) {
-    int height;
+    int height, heightMax;
     char imageName[32];
     if(app_brightness_isShowed()) {
-        height = app_brightness_getCurrent() * 350 / app_brightness_getMax();
+        height = app_brightness_getCurrent() * 350 / parameters_getSystemScreenBrightnessMax();
+        heightMax = parameters_getScreenBrightnessMax() * 350 / parameters_getSystemScreenBrightnessMax();
         sprintf(imageName, "%s", "storytellerBrightnessBar.png");
     } else if (app_volume_isShowed()) {
-        height = app_volume_getCurrent() * 350 / app_volume_getMax();
+        height = app_volume_getCurrent() * 350 / parameters_getSystemAudioVolumeMax();
+        heightMax = parameters_getAudioVolumeMax() * 350 / parameters_getSystemAudioVolumeMax();
         sprintf(imageName, "%s", "storytellerVolumeBar.png");
     } else {
         return;
@@ -181,12 +184,16 @@ void video_showBar(void) {
 
     SDL_FillRect(screen, &(SDL_Rect) {19, 47, 26, 350}, SDL_MapRGB(screen->format, 0, 0, 0));
     SDL_FillRect(screen, &(SDL_Rect) {19, 397 - height, 26, height}, SDL_MapRGB(screen->format, 255, 186, 0));
+    if(heightMax < 350) {
+        SDL_FillRect(screen, &(SDL_Rect) {19, 397 - heightMax, 26, 2}, SDL_MapRGB(screen->format, 238, 45, 0));
+    }
 
     char imagePath[STR_MAX * 2];
     sprintf(imagePath, "%s%s", SYSTEM_RESOURCES, imageName);
     SDL_Surface *image = video_loadAndCacheImage(imagePath);
     SDL_BlitSurface(image, NULL, screen, NULL);
 }
+
 void video_showAppLock(void) {
     if (!applock_isLocked() && !applock_isRecentlyUnlocked()) {
         return;

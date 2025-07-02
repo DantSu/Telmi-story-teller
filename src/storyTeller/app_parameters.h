@@ -5,10 +5,10 @@
 
 static double app_parameters_audioVolumeStartup = 0.3;
 static double app_parameters_audioVolumeMax = 0.6;
-static double app_parameters_audioSystemVolumeMax = 25.0;
+static double app_parameters_systemAudioVolumeMax = 25.0;
 static double app_parameters_screenBrightnessStartup = 0.3;
 static double app_parameters_screenBrightnessMax = 0.6;
-static double app_parameters_screenSystemBrightnessMax = 10.0;
+static double app_parameters_systemScreenBrightnessMax = 10.0;
 static int app_parameters_screenOnInactivityTime = 120;
 static int app_parameters_screenOffInactivityTime = 300;
 static int app_parameters_musicInactivityTime = 3600;
@@ -20,11 +20,15 @@ static bool app_parameters_musicDisableRepeatModes = false;
 #define APP_PARAMETERS_PATH "/mnt/SDCARD/Saves/.parameters"
 
 int parameters_getAudioVolumeStartup() {
-    return (int) (app_parameters_audioVolumeStartup * app_parameters_audioSystemVolumeMax + 0.5);
+    return (int) (app_parameters_audioVolumeStartup * app_parameters_systemAudioVolumeMax + 0.5);
 }
 
 int parameters_getAudioVolumeMax() {
-    return (int) (app_parameters_audioVolumeMax * app_parameters_audioSystemVolumeMax + 0.5);
+    return (int) (app_parameters_audioVolumeMax * app_parameters_systemAudioVolumeMax + 0.5);
+}
+
+int parameters_getSystemAudioVolumeMax(void) {
+    return app_parameters_systemAudioVolumeMax;
 }
 
 int parameters_getAudioVolumeValidation(int audioVolume) {
@@ -32,11 +36,15 @@ int parameters_getAudioVolumeValidation(int audioVolume) {
 }
 
 int parameters_getScreenBrightnessStartup() {
-    return (int) (app_parameters_screenBrightnessStartup * app_parameters_screenSystemBrightnessMax + 0.5);
+    return (int) (app_parameters_screenBrightnessStartup * app_parameters_systemScreenBrightnessMax + 0.5);
 }
 
 int parameters_getScreenBrightnessMax() {
-    return (int) (app_parameters_screenBrightnessMax * app_parameters_screenSystemBrightnessMax + 0.5);
+    return (int) (app_parameters_screenBrightnessMax * app_parameters_systemScreenBrightnessMax + 0.5);
+}
+
+int parameters_getSystemScreenBrightnessMax(void) {
+    return app_parameters_systemScreenBrightnessMax;
 }
 
 int parameters_getScreenBrightnessValidation(int brightness) {
