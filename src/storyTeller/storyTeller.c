@@ -140,6 +140,12 @@ int main(int argc, char *argv[]) {
                         case HW_BTN_X :
                             app_home();
                             break;
+                        case HW_BTN_L1 :
+                            app_page_previous();
+                            break;
+                        case HW_BTN_R1 :
+                            app_page_next();
+                            break;
                     }
 
                     if (isMenuPressed) {
