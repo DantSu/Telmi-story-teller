@@ -404,6 +404,37 @@ void musicplayer_previous(void) {
         musicplayer_changeAlbum(-1);
     }
 }
+void musicplayer_page_previous(void) {
+    if (musicPlayerMode != MUSICPLAYER_MODE_ALBUM)
+        return;
+    
+    int current_page = musicPlayerAlbumIndex / 9;
+    int total_pages = (musicPlayerAlbumsCount - 1) / 9;
+    
+    if (current_page > 0) {
+        musicPlayerAlbumIndex = (current_page - 1) * 9;
+    } else {
+        musicPlayerAlbumIndex = total_pages * 9;
+    }
+    
+    musicplayer_interfacealbum_draw();
+}
+
+void musicplayer_page_next(void) {
+    if (musicPlayerMode != MUSICPLAYER_MODE_ALBUM)
+        return;
+    
+    int current_page = musicPlayerAlbumIndex / 9;
+    int total_pages = (musicPlayerAlbumsCount - 1) / 9;
+    
+    if (current_page < total_pages) {
+        musicPlayerAlbumIndex = (current_page + 1) * 9;
+    } else {
+        musicPlayerAlbumIndex = 0;
+    }
+    
+    musicplayer_interfacealbum_draw();
+}
 
 void musicplayer_ok(void) {
     if (musicPlayerTracksCount == 0) {

@@ -1102,6 +1102,37 @@ void stories_previous(void) {
         }
     }
 }
+void stories_page_previous(void) {
+    if (storiesDiplayMode != STORIES_DISPLAY_MODE_TILES || storyActionKey[0] != '\0')
+        return;
+    
+    int current_page = storyIndex / 9;
+    int total_pages = (storiesCount - 1) / 9;
+    
+    if (current_page > 0) {
+        storyIndex = (current_page - 1) * 9;
+    } else {
+        storyIndex = total_pages * 9;
+    }
+    
+    stories_title_tiles();
+}
+
+void stories_page_next(void) {
+    if (storiesDiplayMode != STORIES_DISPLAY_MODE_TILES || storyActionKey[0] != '\0')
+        return;
+    
+    int current_page = storyIndex / 9;
+    int total_pages = (storiesCount - 1) / 9;
+    
+    if (current_page < total_pages) {
+        storyIndex = (current_page + 1) * 9;
+    } else {
+        storyIndex = 0;
+    }
+    
+    stories_title_tiles();
+}
 
 void stories_forceRefreshScreen(void) {
     if (applock_isLockRecentlyChanged() || applock_isUnlocking() || app_volume_isShowed() || app_brightness_isShowed()) {
