@@ -160,6 +160,37 @@ void app_down(void) {
         }
     }
 }
+void app_page_previous(void) {
+    if (appOpened) {
+        switch (appIndex) {
+            case APP_STORIES:
+            case APP_NIGHTMODE:
+                stories_page_previous();
+                break;
+            case APP_MUSIC:
+                musicplayer_page_previous();
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void app_page_next(void) {
+    if (appOpened) {
+        switch (appIndex) {
+            case APP_STORIES:
+            case APP_NIGHTMODE:
+                stories_page_next();
+                break;
+            case APP_MUSIC:
+                musicplayer_page_next();
+                break;
+            default:
+                break;
+        }
+    }
+}
 
 void app_pause(void) {
     if (appOpened) {
