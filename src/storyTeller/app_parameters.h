@@ -17,7 +17,7 @@ static bool app_parameters_storyDisableNightMode = false;
 static bool app_parameters_storyDisableTimeline = false;
 static bool app_parameters_musicDisableRepeatModes = false;
 
-#define APP_PARAMETERS_PATH "/mnt/SDCARD/Saves/.parameters"
+#include "platform_paths.h"
 
 int parameters_getAudioVolumeStartup() {
     return (int) (app_parameters_audioVolumeStartup * app_parameters_systemAudioVolumeMax + 0.5);

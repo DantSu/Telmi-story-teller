@@ -9,8 +9,7 @@
 #define APP_MUSIC 1
 #define APP_NIGHTMODE 2
 
-#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
-#define APP_SAVEFILE "/mnt/SDCARD/Saves/.storytellerState"
+#include "platform_paths.h"
 
 #include "./sdl_helper.h"
 #include "./music_player.h"

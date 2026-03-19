@@ -141,6 +141,9 @@ test:
 	@cp -R $(TEST_SRC_DIR)/infoPanel_test_data $(BUILD_TEST_DIR)/
 	cd $(BUILD_TEST_DIR) && ./test
 
+portmaster:
+	PLATFORM=portmaster CROSS_COMPILE=aarch64-linux-gnu- $(MAKE) -C src/storyTeller
+
 static-analysis:
 	@cd $(ROOT_DIR) && cppcheck -I $(INCLUDE_DIR) --enable=all $(SRC_DIR)
 

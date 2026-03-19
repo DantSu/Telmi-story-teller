@@ -1,0 +1,25 @@
+FROM debian:bullseye
+
+RUN dpkg --add-architecture arm64 && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential \
+      cmake \
+      make \
+      pkg-config \
+      git \
+      ca-certificates \
+      gcc-aarch64-linux-gnu \
+      g++-aarch64-linux-gnu \
+      libc6-dev-arm64-cross \
+      libsdl2-dev:arm64 \
+      libsdl2-image-dev:arm64 \
+      libsdl2-mixer-dev:arm64 \
+      libsdl2-ttf-dev:arm64 \
+      libsdl2-gfx-dev:arm64 \
+      libmpg123-dev:arm64 && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+ENV CC=aarch64-linux-gnu-gcc
+ENV CXX=aarch64-linux-gnu-g++

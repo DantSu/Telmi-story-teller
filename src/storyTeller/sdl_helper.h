@@ -18,11 +18,6 @@
 #include "./app_volume.h"
 #include "./app_brightness.h"
 
-#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
-
-#define FALLBACK_FONT_REGULAR "/mnt/SDCARD/.tmp_update/res/Exo2-Regular.ttf"
-#define FALLBACK_FONT_BOLD "/mnt/SDCARD/.tmp_update/res/Exo2-Bold.ttf"
-
 #define SDL_ALIGN_LEFT 0
 #define SDL_ALIGN_RIGHT 1
 #define SDL_ALIGN_CENTER 2

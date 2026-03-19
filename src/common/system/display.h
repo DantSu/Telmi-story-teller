@@ -26,15 +26,6 @@ static uint32_t stride, bpp;
 static uint8_t *savebuf;
 static bool display_enabled = true;
 
-void display_init(void)
-{
-    // Open and mmap FB
-    fb_fd = open("/dev/fb0", O_RDWR);
-    ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo);
-    fb_addr = (uint32_t *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE,
-                               MAP_SHARED, fb_fd, 0);
-}
-
 //
 //    Save/Clear Display area
 //
@@ -83,58 +74,19 @@ void display_reset(void)
     ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vinfo);
 }
 
-//
-//    Screen On/Off
-//
-void display_setScreen(bool enabled)
+#include "platform_brightness.h"
+
+void display_init(void)
 {
-    // export gpio4, direction: out
-    file_write(GPIO_DIR1 "export", "4", 1);
-    file_write(GPIO_DIR2 "gpio4/direction", "out", 3);
-
-    // screen on/off
-    file_write(GPIO_DIR2 "gpio4/value", enabled ? "1" : "0", 1);
-
-    // unexport gpio4
-    file_write(GPIO_DIR1 "unexport", "4", 1);
-
-    if (enabled) {
-        // re-enable brightness control
-        file_write(PWM_DIR "export", "0", 1);
-        file_write(PWM_DIR "pwm0/enable", "0", 1);
-        file_write(PWM_DIR "pwm0/enable", "1", 1);
-        display_restore();
-    }
-    else {
-        display_save();
-    }
-
-    display_enabled = enabled;
+    // Open and mmap FB
+    fb_fd = open("/dev/fb0", O_RDWR);
+    ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo);
+    fb_addr = (uint32_t *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE,
+                               MAP_SHARED, fb_fd, 0);
+    platform_brightness_init();
 }
 
 void display_toggle(void) { display_setScreen(!display_enabled); }
-
-//
-//    Set Brightness (Raw)
-//
-void display_setBrightnessRaw(uint32_t value)
-{
-    FILE *fp;
-    file_put_sync(fp, PWM_DIR "pwm0/duty_cycle", "%u", value);
-    printf_debug("Raw brightness: %d\n", value);
-}
-
-// Set display brightness (0 - 10)
-void display_setBrightness(uint32_t value)
-{
-    // Linear curve
-    // int value_raw = (value == 0) ? 3 : (value * 10);
-
-    // Exponential curve
-    int value_raw = round(3.0 * exp(0.350656 * value));
-
-    display_setBrightnessRaw(value_raw);
-}
 
 //
 //    Draw frame, fixed 640x480x32bpp for now

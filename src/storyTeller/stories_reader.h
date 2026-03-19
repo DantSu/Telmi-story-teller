@@ -19,10 +19,6 @@
 #include "./time_helper.h"
 #include "./logs_helper.h"
 
-#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
-#define STORIES_RESOURCES "/mnt/SDCARD/Stories/"
-#define STORIES_SAVES "/mnt/SDCARD/Saves/Stories/"
-
 #define STORIES_DISPLAY_MODE_SINGLE 0
 #define STORIES_DISPLAY_MODE_TILES 1
 

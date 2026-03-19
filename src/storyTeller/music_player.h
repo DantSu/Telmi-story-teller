@@ -20,9 +20,6 @@
 #include "./array_helper.h"
 #include "./time_helper.h"
 
-#define SYSTEM_RESOURCES "/mnt/SDCARD/.tmp_update/res/"
-#define MUSICPLAYER_RESOURCES "/mnt/SDCARD/Music/"
-
 #define MUSICPLAYER_MODE_PLAYER 0
 #define MUSICPLAYER_MODE_ALBUM 1
 
