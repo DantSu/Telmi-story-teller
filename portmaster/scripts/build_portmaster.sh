@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-OUT_DIR="$ROOT_DIR/dist/r36s/telmi_app"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+OUT_DIR="$ROOT_DIR/dist/portmaster/telmi_app"
 
 mkdir -p "$OUT_DIR"
 

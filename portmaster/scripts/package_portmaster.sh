@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BUILD_DIR="$ROOT_DIR/dist/r36s/telmi_app"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+BUILD_DIR="$ROOT_DIR/dist/portmaster/telmi_app"
 PORTS_DIR="$ROOT_DIR/dist/portmaster"
 APP_DIR="$PORTS_DIR/telmi_app"
 
 if [[ ! -f "$BUILD_DIR/telmi_rk3326.aarch64" ]]; then
   echo "Missing binary: $BUILD_DIR/telmi_rk3326.aarch64"
-  echo "Run ./scripts/build_r36s.sh first."
+  echo "Run ./portmaster/scripts/build_portmaster.sh first."
   exit 1
 fi
 

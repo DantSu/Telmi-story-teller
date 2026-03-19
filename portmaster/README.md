@@ -8,23 +8,33 @@ Targets ARM64 devices running ArkOS or DarkOS (R36S and similar RK3326 boards).
 
 ## Build
 
+### Quick Build (All-in-One)
+
+Run all steps at once from the project root:
+
+```bash
+docker build -t telmi-builder-portmaster -f Dockerfile.portmaster . && docker run --rm -v "$(pwd)":/workspace telmi-builder-portmaster bash portmaster/scripts/build_portmaster.sh && bash portmaster/scripts/package_portmaster.sh
+```
+
+### Step-by-Step Build
+
 **1. Build the Docker image** (once, from the project root):
 
 ```bash
-docker build -f Dockerfile.r36s -t telmi-builder-r36s .
+docker build -f Dockerfile.portmaster -t telmi-builder-portmaster .
 ```
 
 **2. Compile the binary:**
 
 ```bash
-docker run --rm -v "$(pwd)":/workspace telmi-builder-r36s \
-    bash scripts/build_r36s.sh
+docker run --rm -v "$(pwd)":/workspace telmi-builder-portmaster \
+    bash portmaster/scripts/build_portmaster.sh
 ```
 
 **3. Assemble the PortMaster package:**
 
 ```bash
-bash scripts/package_portmaster.sh
+bash portmaster/scripts/package_portmaster.sh
 ```
 
 The ready-to-deploy package is output to `dist/portmaster/`.
