@@ -1,3 +1,8 @@
+# Hotkey to kill app (SELECT+START)
+# Note: "back" is the controller button that maps to SELECT
+back_hotkey = back
+start_hotkey = start
+
 back = esc
 start = return
 select = backspace

@@ -27,6 +27,13 @@ typedef enum InputAction {
 static SDL_GameController *_platform_input_controllers[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 static int _platform_input_opened_controllers = 0;
 
+// Double-tap SELECT+START to quit
+static bool _select_held = false;
+static bool _start_held = false;
+static Uint32 _last_combo_release_time = 0;
+static int _combo_tap_count = 0;
+#define DOUBLE_TAP_TIMEOUT_MS 500
+
 static InputAction _key_to_action(SDL_Keycode key)
 {
     switch (key) {
@@ -175,6 +182,38 @@ bool platform_input_poll(InputAction *action, bool *is_pressed)
         if (evt_action == INPUT_ACTION_NONE || (!evt_pressed && !evt_released)) {
             continue;
         }
+
+        // Track SELECT+START or MENU+START double-tap for quit
+        // Note: SELECT button may be mapped as MENU when using controller events
+        if (evt_action == INPUT_ACTION_SELECT || evt_action == INPUT_ACTION_MENU) {
+            _select_held = evt_pressed;
+        }
+        if (evt_action == INPUT_ACTION_START) {
+            _start_held = evt_pressed;
+        }
+
+        // Check if both buttons are held together
+        bool combo_held = _select_held && _start_held;
+
+        // When combo is released (both were held, now at least one is released)
+        static bool _last_combo_held = false;
+        if (_last_combo_held && !combo_held) {
+            Uint32 now = SDL_GetTicks();
+            if (now - _last_combo_release_time < DOUBLE_TAP_TIMEOUT_MS) {
+                _combo_tap_count++;
+                if (_combo_tap_count >= 2) {
+                    // Double-tap detected! Send quit action
+                    _combo_tap_count = 0;
+                    *action = INPUT_ACTION_QUIT;
+                    *is_pressed = false;
+                    return true;
+                }
+            } else {
+                _combo_tap_count = 1;
+            }
+            _last_combo_release_time = now;
+        }
+        _last_combo_held = combo_held;
 
         *action = evt_action;
         *is_pressed = evt_pressed;

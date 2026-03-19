@@ -67,7 +67,13 @@ if [ ! -f "$GAMEDIR/data/res/selectStories.png" ]; then
   exit 1
 fi
 
-GPTOKEYB_CMD="${GPTOKEYB:-}"
+# Extract gptokeyb path from GPTOKEYB env var (may include arguments like "-1")
+GPTOKEYB_CMD=""
+if [ -n "$GPTOKEYB" ]; then
+  # Get just the first word (the path, before any arguments)
+  GPTOKEYB_CMD=$(echo "$GPTOKEYB" | awk '{print $1}')
+fi
+
 if [ -z "$GPTOKEYB_CMD" ] && command -v gptokeyb >/dev/null 2>&1; then
   GPTOKEYB_CMD="$(command -v gptokeyb)"
 fi
@@ -76,6 +82,7 @@ if [ -z "$GPTOKEYB_CMD" ] && [ -x "$controlfolder/gptokeyb" ]; then
 fi
 
 if [ -n "$GPTOKEYB_CMD" ] && [ -x "$GPTOKEYB_CMD" ]; then
+  echo "[telmi] Starting gptokeyb: $GPTOKEYB_CMD"
   "$GPTOKEYB_CMD" "$GAMEDIR/telmi_rk3326.aarch64" -c "$GAMEDIR/telmi.gptk" &
 else
   echo "[telmi] WARNING: gptokeyb not found; continuing without gamepad key mapping"
