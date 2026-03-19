@@ -37,9 +37,11 @@ int main(int argc, char *argv[]) {
     bool menuPreventDefault = false;
     bool startPowerPressed = false;
     long startPowerPressedTime = 0;
+    bool shouldPowerOff = false;
 
     while (1) {
         if (autosleep_isSleepingTime() || (startPowerPressed && (get_time() - startPowerPressedTime) > 1)) {
+            shouldPowerOff = true;
             goto exit_loop;
         }
 
@@ -163,6 +165,8 @@ int main(int argc, char *argv[]) {
     platform_input_quit();
     display_setScreen(true);
     video_audio_quit();
-    system_shutdown();
+    if (shouldPowerOff) {
+        system_shutdown();
+    }
     return EXIT_SUCCESS;
 }
