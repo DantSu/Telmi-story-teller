@@ -17,6 +17,7 @@
 #include "./app_parameters.h"
 #include "./app_volume.h"
 #include "./app_brightness.h"
+#include "platform_display.h"
 
 #define SDL_ALIGN_LEFT 0
 #define SDL_ALIGN_RIGHT 1
@@ -357,7 +358,7 @@ void video_audio_init(void) {
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     screen = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
     appSurface = SDL_CreateRGBSurface(0, screen->w, screen->h, 32, 0, 0, 0, 0);
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, screen->w, screen->h);
+    texture = SDL_CreateTexture(renderer, PLATFORM_SDL_PIXEL_FORMAT, SDL_TEXTUREACCESS_STREAMING, screen->w, screen->h);
 
     fontBold24 = TTF_OpenFont(FALLBACK_FONT_BOLD, 24);
     fontBold20 = TTF_OpenFont(FALLBACK_FONT_BOLD, 20);
