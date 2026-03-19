@@ -145,29 +145,40 @@ bool platform_input_poll(InputAction *action, bool *is_pressed)
             evt_released = true;
         }
         else if (event.type == SDL_JOYBUTTONDOWN) {
+            // Skip joystick events for devices opened as game controllers
+            // (SDL sends both controller and joystick events for the same input)
+            if (SDL_IsGameController(event.jbutton.which)) {
+                continue;
+            }
             evt_action = _joystick_button_to_action(event.jbutton.button);
             evt_pressed = true;
         }
         else if (event.type == SDL_JOYBUTTONUP) {
+            if (SDL_IsGameController(event.jbutton.which)) {
+                continue;
+            }
             evt_action = _joystick_button_to_action(event.jbutton.button);
             evt_released = true;
         }
         else if (event.type == SDL_JOYHATMOTION) {
+            if (SDL_IsGameController(event.jhat.which)) {
+                continue;
+            }
             if (event.jhat.value & SDL_HAT_LEFT) {
                 evt_action = INPUT_ACTION_LEFT;
-                evt_released = true;
+                evt_pressed = true;
             }
             else if (event.jhat.value & SDL_HAT_RIGHT) {
                 evt_action = INPUT_ACTION_RIGHT;
-                evt_released = true;
+                evt_pressed = true;
             }
             else if (event.jhat.value & SDL_HAT_UP) {
                 evt_action = INPUT_ACTION_UP;
-                evt_released = true;
+                evt_pressed = true;
             }
             else if (event.jhat.value & SDL_HAT_DOWN) {
                 evt_action = INPUT_ACTION_DOWN;
-                evt_released = true;
+                evt_pressed = true;
             }
         }
         else if (event.type == SDL_KEYDOWN && event.key.repeat == 0) {
