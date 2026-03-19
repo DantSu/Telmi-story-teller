@@ -75,10 +75,10 @@ if [ -z "$GPTOKEYB_CMD" ] && [ -x "$controlfolder/gptokeyb" ]; then
   GPTOKEYB_CMD="$controlfolder/gptokeyb"
 fi
 
-if [ -n "$GPTOKEYB_CMD" ]; then
+if [ -n "$GPTOKEYB_CMD" ] && [ -x "$GPTOKEYB_CMD" ]; then
   "$GPTOKEYB_CMD" "$GAMEDIR/telmi_rk3326.aarch64" -c "$GAMEDIR/telmi.gptk" &
 else
-  echo "[telmi] WARNING: GPTOKEYB is not set; continuing without gamepad key mapping"
+  echo "[telmi] WARNING: gptokeyb not found; continuing without gamepad key mapping"
 fi
 
 "$GAMEDIR/telmi_rk3326.aarch64"

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-BUILD_DIR="$ROOT_DIR/dist/portmaster/telmi_app"
+BUILD_DIR="$ROOT_DIR/dist/portmaster-build"
 PORTS_DIR="$ROOT_DIR/dist/portmaster"
 APP_DIR="$PORTS_DIR/telmi_app"
 
