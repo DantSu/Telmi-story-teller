@@ -6,6 +6,7 @@
 
 #include "clock.h"
 #include "utils/flags.h"
+#include "platform_system.h"
 
 // system directories
 #define GPIO_DIR1 "/sys/class/gpio/"
@@ -20,13 +21,13 @@
 #define system_powersave_off() system_powersave(false)
 
 /**
- * @brief Creates the file `/tmp/.offOrder`,
- * which is used by `runtime.sh` for knowing when to show shutdown screen.
- *
+ * @brief Platform-specific shutdown
+ * - Miyoo Mini: Creates `/tmp/.offOrder` for runtime.sh
+ * - PortMaster: Creates `/tmp/telmi_poweroff.flag` for launcher script
  */
 void system_shutdown(void)
 {
-    temp_flag_set(".offOrder", true);
+    PLATFORM_SYSTEM_SHUTDOWN();
     system_clock_get();
     system_clock_save();
     sync();
