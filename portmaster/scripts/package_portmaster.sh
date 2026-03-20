@@ -4,10 +4,13 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 BUILD_DIR="$ROOT_DIR/dist/portmaster-build"
 PORTS_DIR="$ROOT_DIR/dist/portmaster"
-APP_DIR="$PORTS_DIR/telmi_app"
+APP_DIR="$PORTS_DIR/telmi"
+PORTMASTER_BINARY="telmi_rk3326.aarch64"
+DEVICE_ARCH="${DEVICE_ARCH:-aarch64}"
+PORT_SCRIPT_NAME="Telmi.sh"
 
-if [[ ! -f "$BUILD_DIR/telmi_rk3326.aarch64" ]]; then
-  echo "Missing binary: $BUILD_DIR/telmi_rk3326.aarch64"
+if [[ ! -f "$BUILD_DIR/$PORTMASTER_BINARY" ]]; then
+  echo "Missing binary: $BUILD_DIR/$PORTMASTER_BINARY"
   echo "Run ./portmaster/scripts/build_portmaster.sh first."
   exit 1
 fi
@@ -15,14 +18,14 @@ fi
 rm -rf "$PORTS_DIR"
 mkdir -p "$APP_DIR"
 
-cp "$ROOT_DIR/portmaster/telmi.sh" "$PORTS_DIR/telmi.sh"
-chmod +x "$PORTS_DIR/telmi.sh"
+cp "$ROOT_DIR/portmaster/telmi.sh" "$PORTS_DIR/$PORT_SCRIPT_NAME"
+chmod +x "$PORTS_DIR/$PORT_SCRIPT_NAME"
 
 cp "$ROOT_DIR/portmaster/telmi.gptk" "$APP_DIR/telmi.gptk"
-cp "$BUILD_DIR/telmi_rk3326.aarch64" "$APP_DIR/telmi_rk3326.aarch64"
-chmod +x "$APP_DIR/telmi_rk3326.aarch64"
+cp "$BUILD_DIR/$PORTMASTER_BINARY" "$APP_DIR/$PORTMASTER_BINARY"
+chmod +x "$APP_DIR/$PORTMASTER_BINARY"
 
-mkdir -p "$APP_DIR/data/res" "$APP_DIR/data/Music" "$APP_DIR/data/Stories" "$APP_DIR/data/Saves/Stories" "$APP_DIR/libs"
+mkdir -p "$APP_DIR/data/res" "$APP_DIR/data/Music" "$APP_DIR/data/Stories" "$APP_DIR/data/Saves/Stories" "$APP_DIR/libs.${DEVICE_ARCH}"
 
 if [[ -d "$ROOT_DIR/src/storyTeller/res" ]]; then
   cp -R "$ROOT_DIR"/src/storyTeller/res/. "$APP_DIR/data/res/"

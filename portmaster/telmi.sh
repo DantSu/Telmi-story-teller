@@ -18,13 +18,15 @@ if command -v get_controls >/dev/null 2>&1; then
   get_controls
 fi
 
-GAMEDIR="/roms/ports/telmi_app"
+PORTS_ROOT="${directory:-roms}"
+DEVICE_ARCH="${DEVICE_ARCH:-aarch64}"
+GAMEDIR="/${PORTS_ROOT}/ports/telmi"
 cd "$GAMEDIR" || exit 1
 
 echo "[telmi] launcher invoked $(date)" >> "$GAMEDIR/log.txt" 2>/dev/null
 exec > >(tee -a "$GAMEDIR/log.txt") 2>&1
 
-export LD_LIBRARY_PATH="$GAMEDIR/libs:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$GAMEDIR/libs.${DEVICE_ARCH}:$LD_LIBRARY_PATH"
 export GAMEDIR
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/runtime-ark}"
 mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null

@@ -18,6 +18,7 @@
 #include "./app_volume.h"
 #include "./app_brightness.h"
 #include "platform_display.h"
+#include "platform_audio.h"
 
 #define SDL_ALIGN_LEFT 0
 #define SDL_ALIGN_RIGHT 1
@@ -30,6 +31,7 @@ static SDL_Texture *texture = NULL;
 static SDL_Renderer *renderer = NULL;
 static Mix_Music *music;
 static double musicDuration;
+static PlatformAudioState platformAudioState;
 static pthread_mutex_t durationThreadMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t durationThread;
 static bool durationThreadRunning = false;
@@ -248,7 +250,7 @@ void *audio_calculate_duration_thread(void *arg) {
     pthread_mutex_unlock(&durationThreadMutex);
     Mix_Music *tempMusic = Mix_LoadMUS(pathToCalculate);
     if (tempMusic != NULL) {
-        double duration = Mix_MusicDuration(tempMusic);
+        double duration = platform_audio_query_duration(&platformAudioState, tempMusic);
         Mix_FreeMusic(tempMusic);
         pthread_mutex_lock(&durationThreadMutex);
         if (strcmp(pathToCalculate, currentMusicPath) == 0) {
@@ -273,6 +275,7 @@ void audio_free_music(void) {
         Mix_HaltMusic();
         Mix_FreeMusic(music);
         music = NULL;
+        platform_audio_forget_music(&platformAudioState);
         pthread_mutex_lock(&durationThreadMutex);
         currentMusicPath[0] = '\0';
         pthread_mutex_unlock(&durationThreadMutex);
@@ -281,7 +284,7 @@ void audio_free_music(void) {
 
 void audio_setPosition(double position) {
     if (!audio_isFinished()) {
-        Mix_SetMusicPosition(position);
+        platform_audio_seek(&platformAudioState, music, position);
     }
 }
 
@@ -291,7 +294,7 @@ double audio_getDuration(void) {
 
 double audio_getPosition(void) {
     if (music != NULL) {
-        return Mix_GetMusicPosition(music);
+        return platform_audio_get_position(&platformAudioState, music);
     }
     return 0.0;
 }
@@ -317,8 +320,14 @@ void audio_play_path(char *soundPath, double position) {
         pthread_mutex_unlock(&durationThreadMutex);
 
         Mix_PlayMusic(music, 1);
-        Mix_SetMusicPosition(position);
+        platform_audio_seek(&platformAudioState, music, position);
 
+        if (!platform_audio_can_query_duration(&platformAudioState)) {
+            pthread_mutex_lock(&durationThreadMutex);
+            durationThreadRunning = false;
+            pthread_mutex_unlock(&durationThreadMutex);
+            return;
+        }
         pthread_mutex_lock(&durationThreadMutex);
         strcpy(durationThreadPath, soundPath);
         durationThreadRunning = true;
@@ -351,6 +360,7 @@ void video_audio_init(void) {
     TTF_Init();
     Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
     Mix_Init(MIX_INIT_MP3);
+    platform_audio_init(&platformAudioState);
     Mix_Volume(-1, MIX_MAX_VOLUME);
     Mix_VolumeMusic(MIX_MAX_VOLUME);
 
@@ -390,6 +400,7 @@ void video_audio_quit(void) {
         music = NULL;
     }
     Mix_CloseAudio();
+    platform_audio_quit(&platformAudioState);
 
     SDL_FreeSurface(appSurface);
     SDL_FreeSurface(screen);

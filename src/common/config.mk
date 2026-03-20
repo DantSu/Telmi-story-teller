@@ -52,3 +52,8 @@ LDFLAGS := $(LDFLAGS) -lshmvar
 endif
 
 endif
+
+ifeq ($(PLATFORM),portmaster)
+# Static linking to avoid GLIBC version issues across different systems (ArkOS, pan4elec, etc)
+LDFLAGS := $(LDFLAGS) -static-libgcc -static-libstdc++
+endif

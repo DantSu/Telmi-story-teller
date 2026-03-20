@@ -1,6 +1,10 @@
 # Building for PortMaster (R36S / ArkOS / DarkOS)
 
-Targets ARM64 devices running ArkOS or DarkOS (R36S and similar RK3326 boards).
+Targets ARM64 devices running ArkOS, DarkOS, and similar RK3326 boards. The build
+is intentionally pinned to a Buster userspace so the resulting binary stays at a
+glibc level that remains compatible with the older ArkOS Ubuntu 19.10 base.
+Bookworm ships a newer SDL2_mixer development package, but it also raises the
+glibc baseline beyond what older ArkOS images can load.
 
 ## Prerequisites
 
@@ -45,13 +49,18 @@ Copy the contents of `dist/portmaster/` to `/roms/ports/` on your device SD card
 
 ```
 /roms/ports/
-├── telmi.sh               # PortMaster launcher entry point
-└── telmi_app/
+├── Telmi.sh               # PortMaster launcher entry point
+└── telmi/
     ├── telmi_rk3326.aarch64
     ├── telmi.gptk
+    ├── libs.aarch64/
     └── data/
         ├── res/           # fonts and UI assets
         ├── Music/         # music library
         ├── Stories/       # story content
         └── Saves/         # save states (written at runtime)
 ```
+
+The launcher expects PortMaster's `DEVICE_ARCH`-specific library folder
+convention (`libs.aarch64/`) so any bundled shared libraries stay isolated to
+this port and do not affect the rest of the system.

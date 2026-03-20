@@ -1,6 +1,14 @@
-FROM debian:bookworm
+FROM debian:buster
 
-RUN dpkg --add-architecture arm64 && \
+# Buster keeps the build userspace below ArkOS's Ubuntu 19.10 / glibc 2.30
+# baseline while still providing SDL2_mixer 2.0.4, which is enough now that the
+# PortMaster build no longer hard-requires the 2.6.x-only music position APIs.
+
+RUN sed -i 's|deb.debian.org/debian|archive.debian.org/debian|g' /etc/apt/sources.list && \
+    sed -i 's|deb.debian.org/debian-security|archive.debian.org/debian-security|g' /etc/apt/sources.list && \
+    sed -i '/buster-updates/d' /etc/apt/sources.list && \
+    printf 'Acquire::Check-Valid-Until "false";\n' > /etc/apt/apt.conf.d/99buster-archive && \
+    dpkg --add-architecture arm64 && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       build-essential \
