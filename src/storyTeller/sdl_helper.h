@@ -38,7 +38,7 @@ static Mix_Music *music;
 static double musicDuration;
 static pthread_mutex_t durationThreadMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t durationThread;
-static bool durationThreadRunning = false;
+static bool killDurationThread = false;
 static char durationThreadPath[STR_MAX * 2];
 static char currentMusicPath[STR_MAX * 2];
 static TTF_Font *fontBold24;
@@ -249,23 +249,35 @@ void video_displayBlackScreen(void) {
 
 void *audio_calculate_duration_thread(void *arg) {
     char pathToCalculate[STR_MAX * 2];
-    pthread_mutex_lock(&durationThreadMutex);
-    strcpy(pathToCalculate, durationThreadPath);
-    pthread_mutex_unlock(&durationThreadMutex);
-    Mix_Music *tempMusic = Mix_LoadMUS(pathToCalculate);
-    if (tempMusic != NULL) {
-        double duration = Mix_MusicDuration(tempMusic);
-        Mix_FreeMusic(tempMusic);
+    while (true) {
+
         pthread_mutex_lock(&durationThreadMutex);
-        if (strcmp(pathToCalculate, currentMusicPath) == 0) {
-            musicDuration = duration;
+        if (killDurationThread) {
+            pthread_mutex_unlock(&durationThreadMutex);
+            break;
         }
-        durationThreadRunning = false;
+
+        if (durationThreadPath[0] == '\0') {
+            pthread_mutex_unlock(&durationThreadMutex);
+            sleep(1);
+            continue;
+        }
+
+        strcpy(pathToCalculate, durationThreadPath);
+        durationThreadPath[0] = '\0';
         pthread_mutex_unlock(&durationThreadMutex);
-    } else {
-        pthread_mutex_lock(&durationThreadMutex);
-        durationThreadRunning = false;
-        pthread_mutex_unlock(&durationThreadMutex);
+
+        Mix_Music *tempMusic = Mix_LoadMUS(pathToCalculate);
+        if (tempMusic != NULL) {
+            double duration = Mix_MusicDuration(tempMusic);
+            Mix_FreeMusic(tempMusic);
+
+            pthread_mutex_lock(&durationThreadMutex);
+            if (strcmp(pathToCalculate, currentMusicPath) == 0) {
+                musicDuration = duration;
+            }
+            pthread_mutex_unlock(&durationThreadMutex);
+        }
     }
     return NULL;
 }
@@ -279,10 +291,12 @@ void audio_free_music(void) {
         Mix_HaltMusic();
         Mix_FreeMusic(music);
         music = NULL;
-        pthread_mutex_lock(&durationThreadMutex);
-        currentMusicPath[0] = '\0';
-        pthread_mutex_unlock(&durationThreadMutex);
     }
+    pthread_mutex_lock(&durationThreadMutex);
+    durationThreadPath[0] = '\0';
+    currentMusicPath[0] = '\0';
+    musicDuration = 0.0;
+    pthread_mutex_unlock(&durationThreadMutex);
 }
 
 void audio_setPosition(double position) {
@@ -302,18 +316,7 @@ double audio_getPosition(void) {
     return 0.0;
 }
 
-void audio_play_path(char *soundPath, double position) {
-    pthread_mutex_lock(&durationThreadMutex);
-    bool isThreadRunning = durationThreadRunning;
-    pthread_mutex_unlock(&durationThreadMutex);
-
-    if (isThreadRunning) {
-        pthread_join(durationThread, NULL);
-        pthread_mutex_lock(&durationThreadMutex);
-        durationThreadRunning = false;
-        pthread_mutex_unlock(&durationThreadMutex);
-    }
-
+void audio_play_path(char *soundPath, double position, bool askDuration) {
     audio_free_music();
     music = Mix_LoadMUS(soundPath);
     if (music != NULL) {
@@ -325,27 +328,18 @@ void audio_play_path(char *soundPath, double position) {
         Mix_PlayMusic(music, 1);
         Mix_SetMusicPosition(position);
 
-        pthread_mutex_lock(&durationThreadMutex);
-        strcpy(durationThreadPath, soundPath);
-        durationThreadRunning = true;
-        pthread_mutex_unlock(&durationThreadMutex);
-        if (pthread_create(&durationThread, NULL, audio_calculate_duration_thread, NULL) != 0) {
+        if (askDuration) {
             pthread_mutex_lock(&durationThreadMutex);
-            durationThreadRunning = false;
+            strcpy(durationThreadPath, soundPath);
             pthread_mutex_unlock(&durationThreadMutex);
         }
-    } else {
-        pthread_mutex_lock(&durationThreadMutex);
-        musicDuration = 0.0;
-        currentMusicPath[0] = '\0';
-        pthread_mutex_unlock(&durationThreadMutex);
     }
 }
 
-void audio_play(const char *dir, const char *name, double position) {
+void audio_play(const char *dir, const char *name, double position, bool askDuration) {
     char soundPath[STR_MAX * 2];
     sprintf(soundPath, "%s%s", dir, name);
-    audio_play_path(soundPath, position);
+    audio_play_path(soundPath, position, askDuration);
 }
 
 void video_audio_init(void) {
@@ -372,22 +366,18 @@ void video_audio_init(void) {
     fontRegular20 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 20);
     fontRegular18 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 18);
     fontRegular16 = TTF_OpenFont(FALLBACK_FONT_REGULAR, 16);
+
+    currentMusicPath[0] = '\0';
+    durationThreadPath[0] = '\0';
+    pthread_create(&durationThread, NULL, audio_calculate_duration_thread, NULL);
 }
 
 
 void video_audio_quit(void) {
     pthread_mutex_lock(&durationThreadMutex);
-    bool isThreadRunning = durationThreadRunning;
+    killDurationThread = true;
     pthread_mutex_unlock(&durationThreadMutex);
-
-    if (isThreadRunning) {
-        pthread_join(durationThread, NULL);
-    }
-
-    pthread_mutex_lock(&durationThreadMutex);
-    durationThreadRunning = false;
-    currentMusicPath[0] = '\0';
-    pthread_mutex_unlock(&durationThreadMutex);
+    pthread_join(durationThread, NULL);
 
     TTF_Quit();
 

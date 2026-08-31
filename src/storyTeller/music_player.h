@@ -292,7 +292,7 @@ void musicplayer_load(void) {
 
     bool isPaused = Mix_PlayingMusic() == 1 && Mix_PausedMusic() == 1;
 
-    audio_play(MUSICPLAYER_RESOURCES, musicPlayerTracksList[musicPlayerTrackIndex], musicPlayerTrackPosition);
+    audio_play(MUSICPLAYER_RESOURCES, musicPlayerTracksList[musicPlayerTrackIndex], musicPlayerTrackPosition, true);
 
     if (isPaused) {
         Mix_PauseMusic();
