@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_mixer.h"
@@ -34,6 +35,17 @@ static SDL_Surface *screen = NULL;
 static SDL_Surface *appSurface = NULL;
 static SDL_Texture *texture = NULL;
 static SDL_Renderer *renderer = NULL;
+
+#define SURFACE_CACHE_SIZE 32
+
+typedef struct {
+    uint64_t hash;
+    SDL_Surface *surface;
+} surfaceCacheEntry;
+
+static surfaceCacheEntry surfaceCache[SURFACE_CACHE_SIZE];
+
+
 static Mix_Music *music;
 static double musicDuration;
 static pthread_mutex_t durationThreadMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -41,6 +53,16 @@ static pthread_t durationThread;
 static bool killDurationThread = false;
 static char durationThreadPath[STR_MAX * 2];
 static char currentMusicPath[STR_MAX * 2];
+
+#define AUDIO_DURATION_CACHE_SIZE 128
+
+typedef struct {
+    uint64_t hash;
+    double duration;
+} audioDurationCacheEntry;
+
+static audioDurationCacheEntry audioDurationCache[AUDIO_DURATION_CACHE_SIZE];
+
 static TTF_Font *fontBold24;
 static TTF_Font *fontBold20;
 static TTF_Font *fontBold18;
@@ -55,51 +77,57 @@ static SDL_Color colorOrange = {255, 181, 0};
 static SDL_Color colorRed = {238, 45, 0};
 
 
-static SDL_Surface *cacheSurfaces[16] = {NULL, NULL, NULL, NULL,
-                                         NULL, NULL, NULL, NULL,
-                                         NULL, NULL, NULL, NULL,
-                                         NULL, NULL, NULL, NULL};
-static char cacheSurfacesKeys[16][STR_MAX * 2 + 12] = {{'\0'},{'\0'},{'\0'},{'\0'},
-                                                       {'\0'},{'\0'},{'\0'},{'\0'},
-                                                       {'\0'},{'\0'},{'\0'},{'\0'},
-                                                       {'\0'},{'\0'},{'\0'},{'\0'}};
-
-SDL_Surface *video_findCacheSurface(char* surfaceKey) {
-    for (int i = 0; i < 16; ++i) {
-        if (strcmp(surfaceKey, cacheSurfacesKeys[i]) != 0) {
-            continue;
-        }
-
-        SDL_Surface *tmpSurface = cacheSurfaces[i];
-        for (int j = i; j > 0; --j) {
-            strcpy(cacheSurfacesKeys[j], cacheSurfacesKeys[j - 1]);
-            cacheSurfaces[j] = cacheSurfaces[j - 1];
-        }
-        strcpy(cacheSurfacesKeys[0], surfaceKey);
-        cacheSurfaces[0] = tmpSurface;
-        return tmpSurface;
+static uint64_t string_hash(const char *path) {
+    uint64_t h = 0xcbf29ce484222325ULL;
+    while (*path != '\0') {
+        h ^= (uint8_t) *path;
+        h *= 0x100000001b3ULL;
+        path++;
     }
-    return NULL;
+    return h;
 }
 
-void video_saveCacheSurface(char *surfaceKey, SDL_Surface *surface) {
-    if (cacheSurfaces[15] != NULL) {
-        SDL_FreeSurface(cacheSurfaces[15]);
+static uint64_t video_surfaceCacheHash(const char *path, int width) {
+    uint64_t hash = string_hash(path);
+    uint32_t w = (uint32_t) width;
+    for (int i = 0; i < 4; ++i) {
+        hash ^= (uint8_t) ((w >> (8 * i)) & 0xff);
+        hash *= 0x100000001b3ULL;
     }
-    for (int i = 15; i > 0; --i) {
-        strcpy(cacheSurfacesKeys[i], cacheSurfacesKeys[i - 1]);
-        cacheSurfaces[i] = cacheSurfaces[i - 1];
+    return hash;
+}
+
+SDL_Surface *video_findCacheSurface(uint64_t hash, const char *path) {
+    int i = 0;
+    while (i < SURFACE_CACHE_SIZE && surfaceCache[i].hash != hash) {
+        ++i;
     }
-    strcpy(cacheSurfacesKeys[0], surfaceKey);
-    cacheSurfaces[0] = surface;
+    SDL_Surface *surface = NULL;
+    if (i < SURFACE_CACHE_SIZE) {
+        surfaceCacheEntry entry = surfaceCache[i];
+        memmove(&surfaceCache[1], &surfaceCache[0], i * sizeof(surfaceCache[0]));
+        surfaceCache[0] = entry;
+        surface = entry.surface;
+    }
+    return surface;
+}
+
+void video_saveCacheSurface(uint64_t hash, const char *path, SDL_Surface *surface) {
+    if (surfaceCache[SURFACE_CACHE_SIZE - 1].surface != NULL) {
+        SDL_FreeSurface(surfaceCache[SURFACE_CACHE_SIZE - 1].surface);
+    }
+    memmove(&surfaceCache[1], &surfaceCache[0], (SURFACE_CACHE_SIZE - 1) * sizeof(surfaceCache[0]));
+    surfaceCache[0].hash = hash;
+    surfaceCache[0].surface = surface;
 }
 
 SDL_Surface *video_loadAndCacheImage(char *imagePath) {
-    SDL_Surface *image = video_findCacheSurface(imagePath);
+    uint64_t hash = string_hash(imagePath);
+    SDL_Surface *image = video_findCacheSurface(hash, imagePath);
     if (image == NULL) {
         image = IMG_Load(imagePath);
         if (image != NULL) {
-            video_saveCacheSurface(imagePath, image);
+            video_saveCacheSurface(hash, imagePath, image);
         }
     }
     return image;
@@ -115,11 +143,10 @@ void video_drawRectangle(int x, int y, int width, int height, Uint8 r, Uint8 g, 
 
 void video_screenAddImage(const char *dir, char *name, int x, int y, int width) {
     char imagePath[STR_MAX * 2];
-    char imageKey[STR_MAX * 2 + 12];
     sprintf(imagePath, "%s%s", dir, name);
-    sprintf(imageKey, "%s|%i", imagePath, width);
+    uint64_t hash = video_surfaceCacheHash(imagePath, width);
 
-    SDL_Surface *image = video_findCacheSurface(imageKey);
+    SDL_Surface *image = video_findCacheSurface(hash, imagePath);
 
     if (image != NULL) {
         SDL_BlitSurface(image, NULL, appSurface, &(SDL_Rect) {x, y});
@@ -136,12 +163,12 @@ void video_screenAddImage(const char *dir, char *name, int x, int y, int width) 
         SDL_Surface *imageScaled = rotozoomSurface(image, 0.0, (double) width / (double) image->w, 1);
         if (imageScaled != NULL) {
             SDL_BlitSurface(imageScaled, NULL, appSurface, &(SDL_Rect) {x, y});
-            video_saveCacheSurface(imageKey, imageScaled);
+            video_saveCacheSurface(hash, imagePath, imageScaled);
         }
         SDL_FreeSurface(image);
     } else {
         SDL_BlitSurface(image, NULL, appSurface, &(SDL_Rect) {x, y});
-        video_saveCacheSurface(imageKey, image);
+        video_saveCacheSurface(hash, imagePath, image);
     }
 }
 
@@ -173,6 +200,28 @@ void video_showBattery(void) {
     char strBatteryPercent[6];
     sprintf(strBatteryPercent, "%i%%", batteryPercentage);
     video_screenWriteFont(strBatteryPercent, fontRegular16, colorBattery, 555, 2, SDL_ALIGN_CENTER);
+}
+
+void video_showRam(void) {
+    long totalKb = 0;
+    long availableKb = 0;
+    FILE *file = fopen("/proc/meminfo", "r");
+    if (file != NULL) {
+        char line[128];
+        while (fgets(line, sizeof(line), file) != NULL) {
+            if (strncmp(line, "MemTotal:", 9) == 0) {
+                sscanf(line, "MemTotal: %ld kB", &totalKb);
+            } else if (strncmp(line, "MemAvailable:", 13) == 0) {
+                sscanf(line, "MemAvailable: %ld kB", &availableKb);
+            }
+        }
+        fclose(file);
+    }
+    long usedKb = totalKb - availableKb;
+
+    char ramText[64];
+    sprintf(ramText, "RAM : %ld Mo utilisés, %ld Mo libres, %ld Mo total", usedKb / 1024, availableKb / 1024, totalKb / 1024);
+    video_screenWriteFont(ramText, fontRegular16, colorWhite60, 380, 2, SDL_ALIGN_RIGHT);
 }
 
 void video_showBar(void) {
@@ -214,6 +263,7 @@ void video_showAppLock(void) {
 
 void video_applyToVideo(void) {
     video_showBattery();
+    video_showRam();
     SDL_BlitSurface(appSurface, NULL, screen, NULL);
     video_showAppLock();
     video_showBar();
@@ -247,6 +297,36 @@ void video_displayBlackScreen(void) {
     video_applyToVideo();
 }
 
+double audio_duration_cache_get(const char *path) {
+    uint64_t hash = string_hash(path);
+    pthread_mutex_lock(&durationThreadMutex);
+    double duration = -1.0;
+    int i = 0;
+    while (i < AUDIO_DURATION_CACHE_SIZE && audioDurationCache[i].hash != hash) {
+        ++i;
+    }
+    if (i < AUDIO_DURATION_CACHE_SIZE) {
+        audioDurationCacheEntry entry = audioDurationCache[i];
+        memmove(&audioDurationCache[1], &audioDurationCache[0], i * sizeof(audioDurationCache[0]));
+        audioDurationCache[0] = entry;
+        duration = entry.duration;
+    }
+    pthread_mutex_unlock(&durationThreadMutex);
+    return duration;
+}
+
+void audio_duration_cache_set(const char *path, double duration) {
+    if (duration <= 0.0) {
+        return;
+    }
+    uint64_t hash = string_hash(path);
+    pthread_mutex_lock(&durationThreadMutex);
+    memmove(&audioDurationCache[1], &audioDurationCache[0], (AUDIO_DURATION_CACHE_SIZE - 1) * sizeof(audioDurationCache[0]));
+    audioDurationCache[0].hash = hash;
+    audioDurationCache[0].duration = duration;
+    pthread_mutex_unlock(&durationThreadMutex);
+}
+
 void *audio_calculate_duration_thread(void *arg) {
     char pathToCalculate[STR_MAX * 2];
     while (true) {
@@ -271,6 +351,8 @@ void *audio_calculate_duration_thread(void *arg) {
         if (tempMusic != NULL) {
             double duration = Mix_MusicDuration(tempMusic);
             Mix_FreeMusic(tempMusic);
+
+            audio_duration_cache_set(pathToCalculate, duration);
 
             pthread_mutex_lock(&durationThreadMutex);
             if (strcmp(pathToCalculate, currentMusicPath) == 0) {
@@ -329,9 +411,16 @@ void audio_play_path(char *soundPath, double position, bool askDuration) {
         Mix_SetMusicPosition(position);
 
         if (askDuration) {
-            pthread_mutex_lock(&durationThreadMutex);
-            strcpy(durationThreadPath, soundPath);
-            pthread_mutex_unlock(&durationThreadMutex);
+            double cachedDuration = audio_duration_cache_get(soundPath);
+            if (cachedDuration >= 0.0) {
+                pthread_mutex_lock(&durationThreadMutex);
+                musicDuration = cachedDuration;
+                pthread_mutex_unlock(&durationThreadMutex);
+            } else {
+                pthread_mutex_lock(&durationThreadMutex);
+                strcpy(durationThreadPath, soundPath);
+                pthread_mutex_unlock(&durationThreadMutex);
+            }
         }
     }
 }

@@ -13,7 +13,7 @@ static unsigned long time_lastTime = 0;
 
 bool time_wait300ms(void) {
     unsigned long currentTime = clock() * 1000 / CLOCKS_PER_SEC;
-    if ((currentTime - time_lastTime) > 300) {
+    if ((currentTime - time_lastTime) > 200) {
         time_lastTime = currentTime;
         return true;
     }
