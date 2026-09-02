@@ -11,9 +11,9 @@ long int get_time(void) {
 
 static unsigned long time_lastTime = 0;
 
-bool time_wait300ms(void) {
+bool time_wait(void) {
     unsigned long currentTime = clock() * 1000 / CLOCKS_PER_SEC;
-    if ((currentTime - time_lastTime) > 200) {
+    if ((currentTime - time_lastTime) > 50) {
         time_lastTime = currentTime;
         return true;
     }

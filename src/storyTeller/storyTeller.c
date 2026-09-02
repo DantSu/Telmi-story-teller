@@ -116,40 +116,40 @@ int main(int argc, char *argv[]) {
                             forceRefreshScreen = applock_stopTimer() || forceRefreshScreen;
                             break;
                         case HW_BTN_LEFT:
-                            if (time_wait300ms()) {
+                            if (time_wait()) {
                                 app_previous();
                             }
                             break;
                         case HW_BTN_RIGHT:
-                            if (time_wait300ms()) {
+                            if (time_wait()) {
                                 app_next();
                             }
                             break;
                         case HW_BTN_UP:
-                            if (time_wait300ms()) {
+                            if (time_wait()) {
                                 app_up();
                             }
                             break;
                         case HW_BTN_DOWN:
-                            if (time_wait300ms()) {
+                            if (time_wait()) {
                                 app_down();
                             }
                             break;
                         case HW_BTN_START:
                         case HW_BTN_SELECT:
-                            if (time_wait300ms()) {
+                            if (time_wait()) {
                                 app_pause();
                             }
                             break;
                         case HW_BTN_A:
                         case HW_BTN_B:
-                            if (time_wait300ms()) {
+                            if (time_wait()) {
                                 app_ok();
                             }
                             break;
                         case HW_BTN_Y:
                         case HW_BTN_X:
-                            if (time_wait300ms()) {
+                            if (time_wait()) {
                                 app_home();
                             }
                             break;
