@@ -1,4 +1,4 @@
-![Total Download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/total.svg) [![v1.10.1 download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/1.10.1/total.svg)](https://github.com/DantSu/Telmi-story-teller/releases/tag/1.10.1)
+![Total Download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/total.svg) [![v1.10.2 download](https://img.shields.io/github/downloads/DantSu/Telmi-story-teller/1.10.2/total.svg)](https://github.com/DantSu/Telmi-story-teller/releases/tag/1.10.2)
 
 <p align="center"><img src="https://dantsu.com/files/Telmi_1280.png" alt="Telmi OS splash screen" /></p>
 

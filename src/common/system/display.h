@@ -54,6 +54,10 @@ void display_getResolution(void) {
 //    Save/Clear Display area
 //
 void display_save(void) {
+    if (savebuf) {
+        return;
+    }
+
     stride = finfo.line_length;
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
     bpp = vinfo.bits_per_pixel / 8; // byte per pixel
@@ -99,6 +103,10 @@ void display_reset(void) {
 //    Screen On/Off
 //
 void display_setScreen(bool enabled) {
+    if (display_enabled == enabled) {
+        return;
+    }
+
     // export gpio4, direction: out
     file_write(GPIO_DIR1 "export", "4", 1);
     file_write(GPIO_DIR2 "gpio4/direction", "out", 3);

@@ -220,7 +220,7 @@ void video_showRam(void) {
     long usedKb = totalKb - availableKb;
 
     char ramText[64];
-    sprintf(ramText, "RAM : %ld Mo utilisés, %ld Mo libres, %ld Mo total", usedKb / 1024, availableKb / 1024, totalKb / 1024);
+    sprintf(ramText, "RAM : %ld Ko utilisés, %ld Ko total", usedKb, totalKb);
     video_screenWriteFont(ramText, fontRegular16, colorWhite60, 380, 2, SDL_ALIGN_RIGHT);
 }
 
@@ -263,7 +263,7 @@ void video_showAppLock(void) {
 
 void video_applyToVideo(void) {
     video_showBattery();
-    video_showRam();
+    // video_showRam();
     SDL_BlitSurface(appSurface, NULL, screen, NULL);
     video_showAppLock();
     video_showBar();
