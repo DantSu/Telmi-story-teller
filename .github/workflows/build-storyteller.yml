@@ -1,0 +1,31 @@
+name: Build storyTeller
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or commit to build'
+        required: true
+        default: 'music-album-view-'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Build in the Miyoo Mini toolchain
+        run: |
+          mkdir -p cache
+          docker run --rm -v "$GITHUB_WORKSPACE":/root/workspace aemiii91/miyoomini-toolchain:latest \
+            /bin/bash -c "source /root/.bashrc; cd /root/workspace && make core"
+
+      - name: Upload storyTeller binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: storyTeller-${{ github.run_number }}
+          path: build/.tmp_update/bin/storyTeller
+          if-no-files-found: error
